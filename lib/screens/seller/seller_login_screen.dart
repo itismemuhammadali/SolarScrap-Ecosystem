@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'seller_forgot_password_screen.dart';
+import 'seller_create_account_screen.dart';
+import 'seller_dashboard_screen.dart';
 
 class SellerLoginScreen extends StatefulWidget {
   const SellerLoginScreen({super.key});
@@ -148,7 +152,18 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                 decoration: InputDecoration(
                   hintText: 'Enter Password',
                   hintStyle: const TextStyle(color: Colors.grey),
-                  prefixIcon: const Icon(Icons.lock_outlined, color: Colors.grey),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: SvgPicture.asset(
+                      'assets/icons/lock.svg',
+                      width: 20,
+                      height: 20,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.grey,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -204,7 +219,13 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Navigate to forgot password screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const SellerForgotPasswordScreen(),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Forgot Password?',
@@ -224,9 +245,11 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Handle sign in
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Signing in...')),
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SellerDashboardScreen(),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -296,7 +319,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SvgPicture.asset(
-                            'assets/icons/material-icon-theme_google.svg',
+                            'assets/icons/google.svg',
                             width: 20,
                             height: 20,
                           ),
@@ -326,7 +349,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SvgPicture.asset(
-                            'assets/icons/logos_facebook.svg',
+                            'assets/icons/facebook.svg',
                             width: 20,
                             height: 20,
                           ),
@@ -360,7 +383,16 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                           color: Color(0xFF00A63E),
                           fontWeight: FontWeight.w600,
                         ),
-                        recognizer: null,
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SellerCreateAccountScreen(),
+                              ),
+                            );
+                          },
                       ),
                     ],
                   ),

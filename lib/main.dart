@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/seller/seller_onboarding_screen.dart';
+import 'screens/role_selection_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
       debugShowCheckedModeBanner: false,
-      home: const SellerOnboardingScreen(),
+      home: const RoleSelectionScreen(),
     );
   }
 }
