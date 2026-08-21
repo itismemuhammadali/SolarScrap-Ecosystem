@@ -8,6 +8,7 @@ import 'buyer_notifications_screen.dart';
 import 'buyer_terms_conditions_screen.dart';
 import 'buyer_saved_auctions_screen.dart';
 import 'buyer_auction_details_screen.dart';
+import 'buyer_bid_details_screen.dart';
 
 class BuyerDashboardScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -1782,19 +1783,28 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   }
 
   Widget _buildBidCard(Map<String, dynamic> bid) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFEAEAEA),
-          width: 1.0,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BuyerBidDetailsScreen(bidData: bid),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFFEAEAEA),
+            width: 1.0,
+          ),
         ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Left Image
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -1870,6 +1880,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
