@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'buyer_bid_confirmation_screen.dart';
 
 class BuyerPlaceBidScreen extends StatefulWidget {
   final Map<String, dynamic>? auctionData;
@@ -298,16 +299,16 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
   }
 
   void _finalizeBidSubmission() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Bid of ${_formatPrice(_currentBidAmount)} placed successfully for $_auctionTitle!',
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BuyerBidConfirmationScreen(
+          referenceNumber: '# BUGZGI',
+          auctionTitle: _auctionTitle,
+          bidAmount: _currentBidAmount,
         ),
-        backgroundColor: const Color(0xFF00A63E),
-        duration: const Duration(seconds: 2),
       ),
     );
-    Navigator.pop(context, _currentBidAmount);
   }
 
   @override

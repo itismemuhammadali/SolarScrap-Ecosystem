@@ -10,14 +10,25 @@ import 'buyer_saved_auctions_screen.dart';
 import 'buyer_auction_details_screen.dart';
 
 class BuyerDashboardScreen extends StatefulWidget {
-  const BuyerDashboardScreen({super.key});
+  final int initialTabIndex;
+
+  const BuyerDashboardScreen({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<BuyerDashboardScreen> createState() => _BuyerDashboardScreenState();
 }
 
 class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
-  int _selectedTabIndex = 0;
+  late int _selectedTabIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTabIndex = widget.initialTabIndex;
+  }
 
   // Home Tab State
   String _selectedCategory = 'All';
