@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class BuyerOnboardingScreen3 extends StatefulWidget {
   const BuyerOnboardingScreen3({super.key});
@@ -15,7 +16,7 @@ class _BuyerOnboardingScreen3State extends State<BuyerOnboardingScreen3> {
         image: 'assets/images/buyer_secure_transactions_bg.jpg',
         title: 'Bid Smart, Win More',
         description:
-            'Place competitive bids, track your auctions, and secure the best solar scrap deals.',
+            'Place competitive bids, track your auctions, and\nsecure the best solar scrap deals.',
         onNext: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Onboarding Complete!')),
@@ -58,15 +59,18 @@ class BuyerOnboardingPage3Widget extends StatelessWidget {
           bottom: 0,
           left: 0,
           right: 0,
-          height: MediaQuery.of(context).size.height * 0.5,
+          height: MediaQuery.of(context).size.height * 0.55,
           child: Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
+                stops: [0.0, 0.35, 0.75, 1.0],
                 colors: [
-                  Colors.black.withOpacity(0.1),
-                  Colors.black.withOpacity(0.7),
+                  Color(0x00121821),
+                  Color(0x99121821),
+                  Color(0xEE121821),
+                  Color(0xFF121821),
                 ],
               ),
             ),
@@ -91,52 +95,55 @@ class BuyerOnboardingPage3Widget extends StatelessWidget {
                           // Title
                           Text(
                             title,
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
                               color: Colors.white,
+                              letterSpacing: -0.3,
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           // Description
                           Text(
                             description,
-                            style: const TextStyle(
+                            style: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: Colors.white70,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xCCFFFFFF), // #FFFFFF 80%
                               height: 1.5,
+                              letterSpacing: 0,
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     // Pagination Indicators
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
-                            color: Colors.white30,
+                            color: const Color(0x40FFFFFF),
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
-                            color: Colors.white30,
+                            color: const Color(0x40FFFFFF),
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
                           width: 24,
                           height: 8,
                           decoration: BoxDecoration(
@@ -146,8 +153,8 @@ class BuyerOnboardingPage3Widget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    // Next Button (Change to "Get Started" on last screen)
+                    const SizedBox(height: 20),
+                    // Next Button (Get Started on last screen)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: ElevatedButton(
@@ -155,17 +162,31 @@ class BuyerOnboardingPage3Widget extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF00A63E),
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 56),
+                          minimumSize: const Size(double.infinity, 54),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 0,
                         ),
-                        child: const Text(
-                          'Get Started →',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Get Started',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ],
                         ),
                       ),
                     ),

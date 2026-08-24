@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'seller_verify_otp_screen.dart';
 
 class SellerForgotPasswordScreen extends StatefulWidget {
@@ -32,11 +33,11 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
             height: 40,
             decoration: BoxDecoration(
               color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.arrow_back,
-              color: Colors.black,
+              color: Color(0xFF151516),
               size: 20,
             ),
           ),
@@ -45,12 +46,12 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
           },
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Forgot Password',
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: const Color(0xFF151516),
           ),
         ),
       ),
@@ -63,17 +64,17 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
 
               // Lock Icon in green circle
               Container(
-                width: 100,
-                height: 100,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(50),
+                  borderRadius: BorderRadius.circular(40),
                 ),
                 child: Center(
                   child: SvgPicture.asset(
                     'assets/icons/lock.svg',
-                    width: 50,
-                    height: 50,
+                    width: 36,
+                    height: 36,
                     colorFilter: const ColorFilter.mode(
                       Color(0xFF00A63E),
                       BlendMode.srcIn,
@@ -84,22 +85,22 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
               const SizedBox(height: 32),
 
               // Title
-              const Text(
+              Text(
                 'Reset Password',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF151516),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               // Description
-              const Text(
+              Text(
                 'Enter your email or phone to receive a reset OTP',
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Colors.grey,
+                  color: const Color(0xFF6B7280),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -109,12 +110,12 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
               // Email / Phone Label
               Align(
                 alignment: Alignment.centerLeft,
-                child: const Text(
+                child: Text(
                   'Email or Phone Number',
-                  style: TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF151516),
                   ),
                 ),
               ),
@@ -123,31 +124,51 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
               // Email / Phone Input
               TextField(
                 controller: _emailController,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: const Color(0xFF151516),
+                ),
                 decoration: InputDecoration(
                   hintText: 'ahmed@sunpower.pk',
-                  hintStyle: const TextStyle(color: Colors.grey),
-                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: const Color(0xFF9CA3AF),
+                  ),
+                  prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF9CA3AF), size: 20),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: Color(0xFF00A63E)),
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
+                  fillColor: const Color(0xFFF9FAFB),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
               const SizedBox(height: 32),
 
-              // Send OTP Button
-              SizedBox(
+              // Send OTP Button (Matching Figma Linear Gradient, Radius 16px, Height 56px)
+              Container(
                 width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF00A63E),
+                      Color(0xFF007D2E),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     if (_emailController.text.isNotEmpty) {
@@ -168,18 +189,19 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A63E),
+                    backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Send OTP',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ),

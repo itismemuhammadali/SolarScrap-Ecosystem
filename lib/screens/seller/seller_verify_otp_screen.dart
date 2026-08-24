@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'seller_reset_success_screen.dart';
 
 class SellerVerifyOtpScreen extends StatefulWidget {
@@ -28,12 +29,12 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
 
   void _startTimer() {
     Future.delayed(const Duration(seconds: 1), () {
-      if (_secondsRemaining > 0) {
+      if (_secondsRemaining > 0 && mounted) {
         setState(() {
           _secondsRemaining--;
         });
         _startTimer();
-      } else {
+      } else if (mounted) {
         setState(() {
           _canResend = true;
         });
@@ -66,11 +67,11 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
             height: 40,
             decoration: BoxDecoration(
               color: const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.arrow_back,
-              color: Colors.black,
+              color: Color(0xFF151516),
               size: 20,
             ),
           ),
@@ -79,12 +80,12 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
           },
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Verify OTP',
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: const Color(0xFF151516),
           ),
         ),
       ),
@@ -97,17 +98,17 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
 
               // Phone Icon in green circle
               Container(
-                width: 100,
-                height: 100,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(50),
+                  borderRadius: BorderRadius.circular(40),
                 ),
                 child: Center(
                   child: SvgPicture.asset(
                     'assets/icons/phone_call.svg',
-                    width: 50,
-                    height: 50,
+                    width: 36,
+                    height: 36,
                     colorFilter: const ColorFilter.mode(
                       Color(0xFF00A63E),
                       BlendMode.srcIn,
@@ -118,32 +119,32 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
               const SizedBox(height: 32),
 
               // Title
-              const Text(
+              Text(
                 'Verification Code',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF151516),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               // Description with phone number
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   text: 'Enter the 6-digit code sent to your mobile number\nending in ',
-                  style: const TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 14,
-                    color: Colors.grey,
+                    color: const Color(0xFF6B7280),
                     height: 1.5,
                   ),
                   children: [
                     TextSpan(
                       text: widget.phoneNumber,
-                      style: const TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: 14,
-                        color: Colors.black,
+                        color: const Color(0xFF151516),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -158,30 +159,36 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
                 children: List.generate(
                   6,
                   (index) => SizedBox(
-                    width: 50,
-                    height: 50,
+                    width: 48,
+                    height: 52,
                     child: TextField(
                       controller: _otpControllers[index],
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.center,
                       maxLength: 1,
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF151516),
+                      ),
                       decoration: InputDecoration(
                         counterText: '',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           borderSide:
                               const BorderSide(color: Color(0xFF00A63E)),
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFF5F5F5),
+                        fillColor: const Color(0xFFF9FAFB),
+                        contentPadding: EdgeInsets.zero,
                       ),
                       onChanged: (value) {
                         if (value.isNotEmpty && index < 5) {
@@ -201,15 +208,15 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.schedule,
-                      size: 16, color: Colors.grey),
+                      size: 16, color: Color(0xFF9CA3AF)),
                   const SizedBox(width: 4),
                   Text(
                     _canResend
                         ? 'Resend now'
                         : 'Resend in 00:${_secondsRemaining.toString().padLeft(2, '0')}',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: _canResend ? const Color(0xFF00A63E) : Colors.grey,
+                      color: _canResend ? const Color(0xFF00A63E) : const Color(0xFF9CA3AF),
                       fontWeight: _canResend ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),
@@ -217,9 +224,21 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Verify Button
-              SizedBox(
+              // Verify Button (Matching Figma Linear Gradient, Radius 16px, Height 56px)
+              Container(
                 width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF00A63E),
+                      Color(0xFF007D2E),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     final otp = _getOtpValue();
@@ -239,18 +258,19 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A63E),
+                    backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Verify Account',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -258,11 +278,11 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
               const SizedBox(height: 16),
 
               // Help Text
-              const Text(
+              Text(
                 "Didn't receive the code? Check your spam folder or try resending.",
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: const Color(0xFF9CA3AF),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,

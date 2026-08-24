@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'buyer_forgot_password_screen.dart';
 import 'buyer_create_account_screen.dart';
 import 'buyer_dashboard_screen.dart';
@@ -272,27 +273,32 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
 
               // Divider
               Row(
-                children: const [
-                  Expanded(
+                children: [
+                  const Expanded(
                     child: Divider(
-                      color: Colors.grey,
+                      color: Color(0xFFE5E7EB),
                       height: 1,
+                      thickness: 1,
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'or continue with',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF151516).withValues(alpha: 0.6), // #151516 60%
+                        height: 20 / 14,
+                        letterSpacing: 0,
                       ),
                     ),
                   ),
-                  Expanded(
+                  const Expanded(
                     child: Divider(
-                      color: Colors.grey,
+                      color: Color(0xFFE5E7EB),
                       height: 1,
+                      thickness: 1,
                     ),
                   ),
                 ],

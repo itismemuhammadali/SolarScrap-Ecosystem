@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'seller_account_created_screen.dart';
 
 class SellerCreateAccountVerifyOtpScreen extends StatefulWidget {
@@ -213,8 +214,23 @@ class _SellerCreateAccountVerifyOtpScreenState
               const SizedBox(height: 32),
 
               // Verify Account Button
-              SizedBox(
+              Container(
                 width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: _getOtpValue().length == 6
+                      ? const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFF00A63E),
+                            Color(0xFF007D2E),
+                          ],
+                        )
+                      : null,
+                  color: _getOtpValue().length == 6 ? null : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ElevatedButton(
                   onPressed: _getOtpValue().length == 6
                       ? () {
@@ -231,18 +247,19 @@ class _SellerCreateAccountVerifyOtpScreenState
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A63E),
+                    backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Verify Account',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: _getOtpValue().length == 6 ? Colors.white : Colors.grey.shade600,
                     ),
                   ),
                 ),

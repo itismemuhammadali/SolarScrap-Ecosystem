@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'seller_edit_profile_screen.dart';
 import 'seller_settings_screen.dart';
 import 'seller_new_listing_screen.dart';
@@ -291,6 +292,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
 
           // Ready to Sell Card
           Container(
+            width: double.infinity,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -326,26 +328,26 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'SunTech Solar Pvt. Ltd.',
-                        style: TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: Colors.white70,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Ready to Sell?',
-                        style: TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Post your solar scrap and get competitive offers',
-                        style: TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 13,
                           color: Colors.white70,
                           height: 1.4,
@@ -369,18 +371,19 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.add_circle_outline,
                               size: 18,
                               color: Color(0xFF00A63E),
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
                               'Sell Solar Scrap',
-                              style: TextStyle(
+                              style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
+                                color: const Color(0xFF00A63E),
                               ),
                             ),
                           ],
@@ -579,67 +582,66 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   );
                 },
                 child: Container(
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF0F0F0)),
                   ),
                   child: Row(
                     children: [
                       ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          bottomLeft: Radius.circular(12),
-                        ),
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
                           listing['image'] as String,
-                          width: 80,
-                          height: 80,
+                          width: 60,
+                          height: 60,
                           fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(width: 12),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               listing['title'] as String,
-                              style: const TextStyle(
-                                fontSize: 13,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                                color: const Color(0xFF151516),
+                                height: 20 / 14,
+                                letterSpacing: 0,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               '${listing['id']} · ${listing['time']}',
-                              style: const TextStyle(
+                              style: GoogleFonts.poppins(
                                 fontSize: 11,
-                                color: Colors.grey,
+                                color: const Color(0xFF9CA3AF),
                               ),
                             ),
                             if (listing['status'] == 'Under Review') ...[
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 5),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
-                                  vertical: 3,
+                                  vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFEFCE8),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'Under Review',
-                                  style: TextStyle(
+                                  style: GoogleFonts.poppins(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFFD08700),
+                                    color: const Color(0xFFD08700),
                                   ),
                                 ),
                               ),
@@ -647,34 +649,35 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                           ],
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
+                      const SizedBox(width: 8),
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Asking price',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.grey,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF00A63E), // Green
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             listing['price'] as String,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF00A63E),
+                            textAlign: TextAlign.right,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF999999), // #999999 Grey
+                              height: 20 / 12,
+                              letterSpacing: 0,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -822,99 +825,99 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Container(
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: const Color(0xFFF0F0F0)),
                   ),
                   child: Row(
                     children: [
                       ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          bottomLeft: Radius.circular(16),
-                        ),
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
                           listing['image'] as String,
-                          width: 84,
-                          height: 84,
+                          width: 60,
+                          height: 60,
                           fit: BoxFit.cover,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                listing['title'] as String,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${listing['id']} · ${listing['time']}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              if (listing['status'] == 'Under Review') ...[
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFEFCE8),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'Under Review',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFFD08700),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              'Asking price',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
                             Text(
-                              listing['price'] as String,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF00A63E),
+                              listing['title'] as String,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF151516),
+                                height: 20 / 14,
+                                letterSpacing: 0,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              '${listing['id']} · ${listing['time']}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: const Color(0xFF9CA3AF),
                               ),
                             ),
+                            if (listing['status'] == 'Under Review') ...[
+                              const SizedBox(height: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEFCE8),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Under Review',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFD08700),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Asking price',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF00A63E), // Green
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            listing['price'] as String,
+                            textAlign: TextAlign.right,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF999999), // #999999 Grey
+                              height: 20 / 12,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

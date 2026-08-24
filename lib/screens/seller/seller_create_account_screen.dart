@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'seller_create_account_security_screen.dart';
 
 class SellerCreateAccountScreen extends StatefulWidget {
@@ -58,43 +59,44 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                     height: 40,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back,
-                          color: Colors.black, size: 20),
+                          color: Color(0xFF151516), size: 20),
                       onPressed: () => Navigator.pop(context),
                       padding: EdgeInsets.zero,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  const Text(
+                  const SizedBox(width: 14),
+                  Text(
                     'Create Account',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF151516),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
 
               // Personal Information Section
-              const Text(
+              Text(
                 'Personal Information',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF151516),
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
+              const SizedBox(height: 3),
+              Text(
                 'Tell us about yourself and your company',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF6B7280),
                 ),
               ),
               const SizedBox(height: 16),
@@ -283,6 +285,8 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
 
               // Next Button
               Container(
+                width: double.infinity,
+                height: 56,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     begin: Alignment.topCenter,
@@ -292,7 +296,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                       Color(0xFF007D2E),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: ElevatedButton(
                   onPressed: () {
@@ -307,17 +311,17 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Next',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -341,44 +345,53 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF151516),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         TextField(
           controller: controller,
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: const Color(0xFF151516),
+          ),
           decoration: InputDecoration(
             hintText: placeholder,
-            hintStyle: const TextStyle(color: Colors.grey),
+            hintStyle: GoogleFonts.poppins(
+              fontSize: 14,
+              color: const Color(0xFF9CA3AF),
+            ),
             prefixIcon: Padding(
               padding: const EdgeInsets.all(12),
               child: SvgPicture.asset(
                 icon,
-                width: 16,
-                height: 16,
+                width: 18,
+                height: 18,
                 colorFilter: const ColorFilter.mode(
-                  Colors.grey,
+                  Color(0xFF9CA3AF),
                   BlendMode.srcIn,
                 ),
               ),
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.grey),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Color(0xFF00A63E)),
             ),
             filled: true,
-            fillColor: const Color(0xFFF5F5F5),
+            fillColor: const Color(0xFFF9FAFB),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
         ),
       ],

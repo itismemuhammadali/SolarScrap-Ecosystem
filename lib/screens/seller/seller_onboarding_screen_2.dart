@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SellerOnboardingScreen2 extends StatefulWidget {
   const SellerOnboardingScreen2({super.key});
@@ -12,10 +13,10 @@ class _SellerOnboardingScreen2State extends State<SellerOnboardingScreen2> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: OnboardingPage2Widget(
-        image: 'assets/images/market_value_bg.jpg',
+        image: 'assets/images/market_value_bg.png',
         title: 'Get Best Market Value',
         description:
-            'Connect with verified buyers through a transparent auction process. Every listing gets competitive offers.',
+            'Connect with verified buyers through a\ntransparent auction process. Every listing gets\ncompetitive offers.',
         onNext: () {
           // Navigation to next screen
           ScaffoldMessenger.of(context).showSnackBar(
@@ -59,15 +60,18 @@ class OnboardingPage2Widget extends StatelessWidget {
           bottom: 0,
           left: 0,
           right: 0,
-          height: MediaQuery.of(context).size.height * 0.5,
+          height: MediaQuery.of(context).size.height * 0.55,
           child: Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
+                stops: [0.0, 0.35, 0.75, 1.0],
                 colors: [
-                  Colors.black.withOpacity(0.1),
-                  Colors.black.withOpacity(0.7),
+                  Color(0x00121821),
+                  Color(0x99121821),
+                  Color(0xEE121821),
+                  Color(0xFF121821),
                 ],
               ),
             ),
@@ -92,43 +96,46 @@ class OnboardingPage2Widget extends StatelessWidget {
                           // Title
                           Text(
                             title,
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
                               color: Colors.white,
+                              letterSpacing: -0.3,
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           // Description
                           Text(
                             description,
-                            style: const TextStyle(
+                            style: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: Colors.white70,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xCCFFFFFF), // #FFFFFF 80%
                               height: 1.5,
+                              letterSpacing: 0,
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     // Pagination Indicators
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
-                            color: Colors.white30,
+                            color: const Color(0x40FFFFFF),
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
                           width: 24,
                           height: 8,
                           decoration: BoxDecoration(
@@ -137,17 +144,17 @@ class OnboardingPage2Widget extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
                           width: 8,
                           height: 8,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(4),
-                            color: Colors.white30,
+                            color: const Color(0x40FFFFFF),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     // Next Button
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -156,17 +163,31 @@ class OnboardingPage2Widget extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF00A63E),
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 56),
+                          minimumSize: const Size(double.infinity, 54),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 0,
                         ),
-                        child: const Text(
-                          'Next →',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Next',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ],
                         ),
                       ),
                     ),
