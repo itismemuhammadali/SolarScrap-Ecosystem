@@ -155,7 +155,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           ),
         ),
         Positioned(
-          top: -14,
+          top: -24,
           child: GestureDetector(
             onTap: () {
               Navigator.push(
@@ -1554,7 +1554,7 @@ class NotchedBottomBarPainter extends CustomPainter {
     const double cornerRadius = 20.0;
     const double notchWidth = 124.0;
     const double halfNotch = notchWidth / 2; // 62.0
-    const double notchDepth = 32.0;
+    const double notchDepth = 28.0;
     final double centerX = size.width / 2;
 
     final path = Path();
