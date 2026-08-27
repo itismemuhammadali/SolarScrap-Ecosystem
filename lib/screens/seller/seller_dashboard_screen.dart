@@ -155,7 +155,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           ),
         ),
         Positioned(
-          top: -24,
+          top: -34,
           child: GestureDetector(
             onTap: () {
               Navigator.push(
