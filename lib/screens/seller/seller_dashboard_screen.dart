@@ -841,118 +841,129 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             ...filteredListings.map((listing) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFF0F0F0)),
-                  ),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          listing['image'] as String,
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                        ),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const SellerListingDetailsScreen(),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              listing['title'] as String,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF151516),
-                                height: 20 / 14,
-                                letterSpacing: 0,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '${listing['id']} · ${listing['time']}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: const Color(0xFF9CA3AF),
-                              ),
-                            ),
-                            if (listing['status'] == 'Under Review') ...[
-                              const SizedBox(height: 5),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFF0F0F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            listing['image'] as String,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                listing['title'] as String,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF151516),
+                                  height: 20 / 14,
+                                  letterSpacing: 0,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFEFCE8),
-                                  borderRadius: BorderRadius.circular(4),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${listing['id']} · ${listing['time']}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  color: const Color(0xFF9CA3AF),
                                 ),
-                                child: Text(
-                                  'Under Review',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFFD08700),
+                              ),
+                              if (listing['status'] == 'Under Review') ...[
+                                const SizedBox(height: 5),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEFCE8),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Under Review',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFFD08700),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ShaderMask(
-                            blendMode: BlendMode.srcIn,
-                            shaderCallback: (bounds) => const LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Color(0xFF00A63E),
-                                Color(0xFF007D2E),
                               ],
-                            ).createShader(
-                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ShaderMask(
+                              blendMode: BlendMode.srcIn,
+                              shaderCallback: (bounds) => const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFF00A63E),
+                                  Color(0xFF007D2E),
+                                ],
+                              ).createShader(
+                                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                              ),
+                              child: Text(
+                                'Asking price',
+                                textAlign: TextAlign.right,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  height: 20 / 14,
+                                  letterSpacing: 0,
+                                ),
+                              ),
                             ),
-                            child: Text(
-                              'Asking price',
+                            const SizedBox(height: 2),
+                            Text(
+                              listing['price'] as String,
                               textAlign: TextAlign.right,
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                height: 20 / 14,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF999999), // #999999 Grey
+                                height: 20 / 12,
                                 letterSpacing: 0,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            listing['price'] as String,
-                            textAlign: TextAlign.right,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF999999), // #999999 Grey
-                              height: 20 / 12,
-                              letterSpacing: 0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
