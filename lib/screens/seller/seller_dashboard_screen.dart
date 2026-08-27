@@ -123,71 +123,75 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         child: _buildCurrentView(),
       ),
       // Bottom Navigation Bar
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: BottomAppBar(
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 6,
-          color: const Color(0xFF00A63E),
-          elevation: 10,
-          padding: EdgeInsets.zero,
+      bottomNavigationBar: _buildBottomNavBar(),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.bottomCenter,
+      children: [
+        CustomPaint(
+          size: Size(MediaQuery.of(context).size.width, 68 + MediaQuery.of(context).padding.bottom),
+          painter: const NotchedBottomBarPainter(color: Color(0xFF00A63E)),
           child: SafeArea(
             top: false,
             child: SizedBox(
-              height: 60,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Expanded(child: _buildNavItem('assets/icons/home.svg', 'Home', 0)),
-                  Expanded(child: _buildNavItem('assets/icons/listing.svg', 'Listing', 1)),
-                  const SizedBox(width: 56), // Space for center docked FAB
-                  Expanded(child: _buildNavItem('assets/icons/bell.svg', 'Alerts', 2)),
-                  Expanded(child: _buildNavItem('assets/icons/person.svg', 'Profile', 3)),
+              height: 68,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildNavItem('assets/icons/home.svg', 'Home', 0)),
+                    Expanded(child: _buildNavItem('assets/icons/listing.svg', 'Listing', 1)),
+                    const SizedBox(width: 80), // Space for center notch
+                    Expanded(child: _buildNavItem('assets/icons/bell.svg', 'Alerts', 2)),
+                    Expanded(child: _buildNavItem('assets/icons/person.svg', 'Profile', 3)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: -14,
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SellerNewListingScreen(),
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF00A63E),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-      floatingActionButton: Container(
-        width: 50,
-        height: 50,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          elevation: 0,
-          highlightElevation: 0,
-          backgroundColor: Colors.white,
-          shape: const CircleBorder(
-            side: BorderSide(
-              color: Color(0xFF00A63E),
-              width: 1.5,
-            ),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SellerNewListingScreen(),
+              child: const Icon(
+                Icons.add,
+                color: Color(0xFF00A63E),
+                size: 26,
               ),
-            );
-          },
-          child: const Icon(
-            Icons.add,
-            color: Color(0xFF00A63E),
-            size: 26,
+            ),
           ),
         ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ],
     );
   }
 
@@ -1534,4 +1538,57 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       ),
     );
   }
+}
+
+class NotchedBottomBarPainter extends CustomPainter {
+  final Color color;
+
+  const NotchedBottomBarPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    const double cornerRadius = 20.0;
+    const double notchWidth = 124.0;
+    const double halfNotch = notchWidth / 2; // 62.0
+    const double notchDepth = 32.0;
+    final double centerX = size.width / 2;
+
+    final path = Path();
+    path.moveTo(0, cornerRadius);
+    path.quadraticBezierTo(0, 0, cornerRadius, 0);
+    path.lineTo(centerX - halfNotch, 0);
+
+    // Smooth scoop curve matching Figma FAB BG 124x62
+    path.cubicTo(
+      centerX - halfNotch + 20, 0,
+      centerX - 35, notchDepth,
+      centerX, notchDepth,
+    );
+    path.cubicTo(
+      centerX + 35, notchDepth,
+      centerX + halfNotch - 20, 0,
+      centerX + halfNotch, 0,
+    );
+
+    path.lineTo(size.width - cornerRadius, 0);
+    path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    // Draw subtle top shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.08)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 8);
+    canvas.drawPath(path, shadowPaint);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
