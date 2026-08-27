@@ -123,59 +123,48 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         child: _buildCurrentView(),
       ),
       // Bottom Navigation Bar
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF00A63E),
-              Color(0xFF007D2E),
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         child: BottomAppBar(
-          padding: EdgeInsets.zero,
           shape: const CircularNotchedRectangle(),
-          notchMargin: 5,
-          color: Colors.transparent,
-          elevation: 0,
-          clipBehavior: Clip.antiAlias,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              top: 6,
-              bottom: 4,
-              left: 12,
-              right: 12,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem('assets/icons/home.svg', 'Home', 0),
-                _buildNavItem('assets/icons/listing.svg', 'Listing', 1),
-                const SizedBox(width: 44), // Space for FAB
-                _buildNavItem('assets/icons/bell.svg', 'Alerts', 2),
-                _buildNavItem('assets/icons/person.svg', 'Profile', 3),
-              ],
+          notchMargin: 6,
+          color: const Color(0xFF00A63E),
+          elevation: 10,
+          padding: EdgeInsets.zero,
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 60,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Expanded(child: _buildNavItem('assets/icons/home.svg', 'Home', 0)),
+                  Expanded(child: _buildNavItem('assets/icons/listing.svg', 'Listing', 1)),
+                  const SizedBox(width: 56), // Space for center docked FAB
+                  Expanded(child: _buildNavItem('assets/icons/bell.svg', 'Alerts', 2)),
+                  Expanded(child: _buildNavItem('assets/icons/person.svg', 'Profile', 3)),
+                ],
+              ),
             ),
           ),
         ),
       ),
-      floatingActionButton: SizedBox(
+      floatingActionButton: Container(
         width: 50,
         height: 50,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: FloatingActionButton(
-          elevation: 2,
-          focusElevation: 2,
-          hoverElevation: 2,
-          highlightElevation: 2,
+          elevation: 0,
+          highlightElevation: 0,
           backgroundColor: Colors.white,
           shape: const CircleBorder(
             side: BorderSide(

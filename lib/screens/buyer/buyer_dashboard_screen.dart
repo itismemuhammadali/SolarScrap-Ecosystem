@@ -297,29 +297,25 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
       body: SafeArea(
         child: _buildTabContent(),
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF00A63E),
-              Color(0xFF007D2E),
-            ],
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF00A63E),
           ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 6, bottom: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem('assets/icons/home.svg', 'Home', 0),
-                _buildNavItem('assets/icons/auction.svg', 'Auctions', 1),
-                _buildNavItem('assets/icons/my-bid.svg', 'My Bids', 2),
-                _buildNavItem('assets/icons/person.svg', 'Profile', 3),
-              ],
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem('assets/icons/home.svg', 'Home', 0),
+                  _buildNavItem('assets/icons/auction.svg', 'Auctions', 1),
+                  _buildNavItem('assets/icons/my-bid.svg', 'My Bids', 2),
+                  _buildNavItem('assets/icons/person.svg', 'Profile', 3),
+                ],
+              ),
             ),
           ),
         ),
