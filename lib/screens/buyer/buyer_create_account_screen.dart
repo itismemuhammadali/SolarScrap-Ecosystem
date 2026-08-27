@@ -308,9 +308,7 @@ class _BuyerCreateAccountScreenState extends State<BuyerCreateAccountScreen> {
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     shadowColor: Colors.transparent,
                   ),
                   child: const Text(

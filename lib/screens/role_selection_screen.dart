@@ -340,8 +340,23 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 const SizedBox(height: 40),
 
                 // Continue Button
-                SizedBox(
+                Container(
                   width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: _selectedRole == UserRole.none
+                        ? null
+                        : const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0xFF00A63E),
+                              Color(0xFF007D2E),
+                            ],
+                          ),
+                    color: _selectedRole == UserRole.none ? Colors.grey.shade300 : null,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: ElevatedButton(
                     onPressed: _selectedRole == UserRole.none
                         ? null
@@ -365,13 +380,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             }
                           },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedRole == UserRole.none
-                          ? Colors.grey.shade300
-                          : const Color(0xFF00A63E),
+                      backgroundColor: Colors.transparent,
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 56),
+                      shadowColor: Colors.transparent,
+                      disabledBackgroundColor: Colors.transparent,
+                      disabledForegroundColor: Colors.grey.shade600,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: const Text(

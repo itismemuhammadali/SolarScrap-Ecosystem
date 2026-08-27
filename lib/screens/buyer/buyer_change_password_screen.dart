@@ -192,7 +192,8 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
                           onPressed:
                               _isFormValid ? _handleResetPassword : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00A63E),
+                            backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                             disabledBackgroundColor: const Color(0xFFE5E7EB),
                             foregroundColor: Colors.white,
                             disabledForegroundColor: const Color(0xFF9CA3AF),

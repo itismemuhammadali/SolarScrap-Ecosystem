@@ -81,9 +81,7 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                             color: Color(0xFF00A63E),
                             width: 1.5,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         child: const Text(
                           'Cancel',
@@ -108,12 +106,11 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                           Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00A63E),
+                          backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                           foregroundColor: Colors.white,
                           minimumSize: const Size(double.infinity, 48),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         child: const Text(
                           'Confirm Accept',

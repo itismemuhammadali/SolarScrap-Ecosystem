@@ -149,11 +149,10 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A63E),
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: const Text(
                     'Submit Bid',
@@ -564,14 +563,13 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                         _showBidBottomSheet(auc);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00A63E),
+                        backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         minimumSize: const Size(90, 36),
                         padding: const EdgeInsets.symmetric(horizontal: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text(
                         'Bid Now',

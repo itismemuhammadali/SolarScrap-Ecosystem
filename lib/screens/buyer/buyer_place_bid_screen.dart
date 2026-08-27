@@ -246,9 +246,7 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                             color: Color(0xFFE5E7EB),
                             width: 1.0,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         child: const Text(
                           'Cancel',
@@ -272,12 +270,11 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                           _finalizeBidSubmission();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00A63E),
+                          backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         child: const Text(
                           'Submit Bid',
@@ -589,7 +586,8 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                         child: ElevatedButton(
                           onPressed: _showConfirmBidBottomSheet,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00A63E),
+                            backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(

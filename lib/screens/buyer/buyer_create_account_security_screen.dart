@@ -405,9 +405,7 @@ class _BuyerCreateAccountSecurityScreenState
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     shadowColor: Colors.transparent,
                     disabledBackgroundColor: Colors.grey.shade300,
                   ),
@@ -428,9 +426,7 @@ class _BuyerCreateAccountSecurityScreenState
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 56),
                   side: const BorderSide(color: Color(0xFF00A63E), width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 child: const Text(
                   'Back',

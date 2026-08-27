@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'seller_status_tracking_screen.dart';
 
 class SellerListingDetailsScreen extends StatefulWidget {
@@ -175,49 +176,67 @@ class _SellerListingDetailsScreenState
               const SizedBox(height: 12),
 
               // Price
-              const Text(
-                'Rs.4,80,000',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF00A63E),
+              ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (bounds) => const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF00A63E),
+                    Color(0xFF007D2E),
+                  ],
+                ).createShader(
+                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                ),
+                child: Text(
+                  'Rs.4,80,000',
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 32 / 24,
+                    letterSpacing: 0,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
 
               // Equipment Details Card
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFEAEAEA),
+                    width: 1.09,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Equipment Details',
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                        color: const Color(0xFF18181B),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
 
-                    // Details rows
+                    // Details rows with separator lines
                     _buildDetailRow('Category', 'Solar Panels'),
                     _buildDetailRow('Quantity', '200 panels'),
                     _buildDetailRow('Wattage', '400W per panel'),
                     _buildDetailRow('Manufacturer', 'Waaree Energies'),
                     _buildDetailRow('Condition', 'Good'),
                     _buildDetailRow('Purchase Year', '2019'),
-                    _buildDetailRow('Weight', '~2,400 kg'),
+                    _buildDetailRow('Weight', '~2,400 kg', showDivider: false),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Track Status Card
               GestureDetector(
@@ -233,30 +252,34 @@ class _SellerListingDetailsScreenState
                   );
                 },
                 child: Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
+                    horizontal: 16,
+                    vertical: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE9E9E9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
+                    color: const Color(0xFFF9F9F9),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFEAEAEA),
+                      width: 1.09,
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Track Status',
-                        style: TextStyle(
-                          fontSize: 13,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                          color: const Color(0xFF18181B),
                         ),
                       ),
-                      Icon(
+                      const Icon(
                         Icons.chevron_right,
-                        color: Colors.grey.shade400,
-                        size: 24,
+                        color: Color(0xFF00A63E),
+                        size: 22,
                       ),
                     ],
                   ),
@@ -270,29 +293,40 @@ class _SellerListingDetailsScreenState
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+  Widget _buildDetailRow(String label, String value, {bool showDivider = true}) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF71717A),
+                ),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF18181B),
+                ),
+              ),
+            ],
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
+        ),
+        if (showDivider)
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: Color(0xFFEAEAEA),
           ),
-        ],
-      ),
+      ],
     );
   }
 }

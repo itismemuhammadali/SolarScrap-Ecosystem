@@ -125,6 +125,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       // Bottom Navigation Bar
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF00A63E),
+              Color(0xFF007D2E),
+            ],
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
@@ -137,7 +145,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           padding: EdgeInsets.zero,
           shape: const CircularNotchedRectangle(),
           notchMargin: 5,
-          color: const Color(0xFF00A63E),
+          color: Colors.transparent,
           elevation: 0,
           clipBehavior: Clip.antiAlias,
           child: Padding(
@@ -654,12 +662,28 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            'Asking price',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF00A63E), // Green
+                          ShaderMask(
+                            blendMode: BlendMode.srcIn,
+                            shaderCallback: (bounds) => const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0xFF00A63E),
+                                Color(0xFF007D2E),
+                              ],
+                            ).createShader(
+                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                            ),
+                            child: Text(
+                              'Asking price',
+                              textAlign: TextAlign.right,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                height: 20 / 14,
+                                letterSpacing: 0,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -897,12 +921,28 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            'Asking price',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF00A63E), // Green
+                          ShaderMask(
+                            blendMode: BlendMode.srcIn,
+                            shaderCallback: (bounds) => const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color(0xFF00A63E),
+                                Color(0xFF007D2E),
+                              ],
+                            ).createShader(
+                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                            ),
+                            child: Text(
+                              'Asking price',
+                              textAlign: TextAlign.right,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                height: 20 / 14,
+                                letterSpacing: 0,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -1390,9 +1430,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             onPressed: () {
               Navigator.pop(ctx);

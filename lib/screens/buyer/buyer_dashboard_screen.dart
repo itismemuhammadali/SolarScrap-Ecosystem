@@ -298,7 +298,16 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
         child: _buildTabContent(),
       ),
       bottomNavigationBar: Container(
-        color: const Color(0xFF00A63E),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF00A63E),
+              Color(0xFF007D2E),
+            ],
+          ),
+        ),
         child: SafeArea(
           top: false,
           child: Padding(
@@ -443,9 +452,17 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFF00A63E)
-                            : const Color(0xFFF3F4F6),
+                        gradient: isSelected
+                            ? const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFF00A63E),
+                                  Color(0xFF007D2E),
+                                ],
+                              )
+                            : null,
+                        color: isSelected ? null : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -540,23 +557,37 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF00A63E),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              minimumSize: const Size(110, 34),
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFF00A63E),
+                                  Color(0xFF007D2E),
+                                ],
                               ),
+                              borderRadius: BorderRadius.circular(18),
                             ),
-                            child: const Text(
-                              'View Auction',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                minimumSize: const Size(110, 34),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                              ),
+                              child: const Text(
+                                'View Auction',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
@@ -714,9 +745,17 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? const Color(0xFF00A63E)
-                            : const Color(0xFFF3F4F6),
+                        gradient: isSelected
+                            ? const LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFF00A63E),
+                                  Color(0xFF007D2E),
+                                ],
+                              )
+                            : null,
+                        color: isSelected ? null : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -1316,9 +1355,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             onPressed: () {
               Navigator.pop(ctx);
@@ -1754,14 +1791,13 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00A63E),
+                        backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         minimumSize: const Size(90, 36),
                         padding: const EdgeInsets.symmetric(horizontal: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text(
                         'Bid Now',

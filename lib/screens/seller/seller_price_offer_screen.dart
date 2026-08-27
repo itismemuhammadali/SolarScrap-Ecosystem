@@ -1,3 +1,4 @@
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'seller_accept_offer_screen.dart';
@@ -66,8 +67,16 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                     Container(
                       width: 44,
                       height: 44,
+                      padding: const EdgeInsets.all(10),
                       decoration: const BoxDecoration(
-                        color: Color(0xFF00A63E),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFF00A63E),
+                            Color(0xFF007D2E),
+                          ],
+                        ),
                         shape: BoxShape.circle,
                       ),
                       child: SvgPicture.asset(
@@ -149,12 +158,24 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Rs.4,20,000',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF00A63E),
+                    ShaderMask(
+                      blendMode: BlendMode.srcIn,
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF00A63E),
+                          Color(0xFF007D2E),
+                        ],
+                      ).createShader(bounds),
+                      child: Text(
+                        'Rs.4,20,000',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -223,9 +244,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                           color: Color(0xFF00A63E),
                           width: 1.5,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text(
                         'Reject Offer',
@@ -250,12 +269,11 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00A63E),
+                        backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text(
                         'Accept Offer',

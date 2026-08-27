@@ -3,11 +3,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'seller_price_offer_screen.dart';
 
 class SellerStatusTrackingScreen extends StatefulWidget {
-  final String? currentStatus;
+  final String currentStatus;
 
   const SellerStatusTrackingScreen({
-    this.currentStatus = 'Price Offered',
     super.key,
+    this.currentStatus = 'Price Offered',
   });
 
   @override
@@ -17,76 +17,49 @@ class SellerStatusTrackingScreen extends StatefulWidget {
 
 class _SellerStatusTrackingScreenState
     extends State<SellerStatusTrackingScreen> {
-  late List<Map<String, dynamic>> _statusFlow;
+  static const LinearGradient primaryGreenGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF00A63E),
+      Color(0xFF007D2E),
+    ],
+  );
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeStatusFlow();
-    
-    // Navigate to Price Offer screen after 2 seconds if status is "Price Offered"
-    if (widget.currentStatus == 'Price Offered') {
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const SellerPriceOfferScreen(),
-            ),
-          );
-        }
-      });
-    }
-  }
+  final List<Map<String, dynamic>> _statusFlow = [
+    {
+      'title': 'Submitted',
+      'subtitle': 'Dec 18, 09:30 AM',
+      'isCompleted': true,
+      'isActive': false,
+    },
+    {
+      'title': 'Under Review',
+      'subtitle': 'Admin reviewing your listing',
+      'isCompleted': true,
+      'isActive': false,
+    },
+    {
+      'title': 'Price Offered',
+      'subtitle': 'Awaiting your response',
+      'badge': 'Action Required',
+      'isCompleted': false,
+      'isActive': true,
+    },
+    {
+      'title': 'Negotiation',
+      'subtitle': 'Pending',
+      'isCompleted': false,
+      'isActive': false,
+    },
+    {
+      'title': 'Deal Closed',
+      'subtitle': 'Pending',
+      'isCompleted': false,
+      'isActive': false,
+    },
+  ];
 
-  void _initializeStatusFlow() {
-    _statusFlow = [
-      {
-        'title': 'Submitted',
-        'subtitle': 'Dec 18, 09:30 AM',
-        'isCompleted': _isStatusCompleted('Submitted'),
-        'isActive': widget.currentStatus == 'Submitted',
-      },
-      {
-        'title': 'Under Review',
-        'subtitle': 'Admin reviewing your listing',
-        'isCompleted': _isStatusCompleted('Under Review'),
-        'isActive': widget.currentStatus == 'Under Review',
-      },
-      {
-        'title': 'Price Offered',
-        'subtitle': 'Awaiting your response',
-        'badge': 'Action Required',
-        'isCompleted': _isStatusCompleted('Price Offered'),
-        'isActive': widget.currentStatus == 'Price Offered',
-      },
-      {
-        'title': 'Negotiation',
-        'subtitle': 'Pending',
-        'isCompleted': _isStatusCompleted('Negotiation'),
-        'isActive': false,
-      },
-      {
-        'title': 'Deal Closed',
-        'subtitle': 'Pending',
-        'isCompleted': _isStatusCompleted('Deal Closed'),
-        'isActive': false,
-      },
-    ];
-  }
-
-  bool _isStatusCompleted(String status) {
-    final statusOrder = [
-      'Submitted',
-      'Under Review',
-      'Price Offered',
-      'Negotiation',
-      'Deal Closed'
-    ];
-    final currentIndex = statusOrder.indexOf(widget.currentStatus ?? 'Submitted');
-    final statusIndex = statusOrder.indexOf(status);
-    return statusIndex < currentIndex;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,105 +68,112 @@ class _SellerStatusTrackingScreenState
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        toolbarHeight: 56,
         leading: IconButton(
-          icon: Container(
-            width: 36,
-            height: 36,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF3F4F6),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.arrow_back,
-              color: Colors.black87,
-              size: 18,
-            ),
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
         ),
-        centerTitle: true,
         title: const Text(
           'Status Tracking',
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
             color: Colors.black,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Banner Summary Card
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00A63E),
-                        borderRadius: BorderRadius.circular(8),
+              // Header Listing Info Card
+              GestureDetector(
+                onTap: () {
+                  if (widget.currentStatus == 'Price Offered') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const SellerPriceOfferScreen(),
                       ),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/icons/stocks.svg',
-                          width: 18,
-                          height: 18,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.white,
-                            BlendMode.srcIn,
+                    );
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: primaryGreenGradient,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: SvgPicture.asset(
+                            'assets/icons/stocks.svg',
+                            width: 18,
+                            height: 18,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '200x Solar Panels 400W',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          RichText(
-                            text: TextSpan(
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF6B7280),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '200x Solar Panels 400W',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                              children: [
-                                const TextSpan(text: 'SS-2024-001 · Currently: '),
-                                TextSpan(
-                                  text: widget.currentStatus,
-                                  style: const TextStyle(
-                                    color: Color(0xFF00A63E),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF6B7280),
+                                ),
+                                children: [
+                                  const TextSpan(text: 'SS-2024-001 · Currently: '),
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.middle,
+                                    child: ShaderMask(
+                                      blendMode: BlendMode.srcIn,
+                                      shaderCallback: (bounds) =>
+                                          primaryGreenGradient.createShader(bounds),
+                                      child: Text(
+                                        widget.currentStatus,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 28),
@@ -235,8 +215,9 @@ class _SellerStatusTrackingScreenState
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
+                  gradient: isActive ? primaryGreenGradient : null,
                   color: isActive
-                      ? const Color(0xFF00A63E)
+                      ? null
                       : isCompleted
                           ? const Color(0xFFDCFCE7)
                           : const Color(0xFFF3F4F6),
@@ -244,10 +225,15 @@ class _SellerStatusTrackingScreenState
                 ),
                 child: Center(
                   child: isCompleted
-                      ? const Icon(
-                          Icons.check,
-                          color: Color(0xFF00A63E),
-                          size: 16,
+                      ? ShaderMask(
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (bounds) =>
+                              primaryGreenGradient.createShader(bounds),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 16,
+                          ),
                         )
                       : isActive
                           ? SvgPicture.asset(
@@ -274,7 +260,9 @@ class _SellerStatusTrackingScreenState
                 Expanded(
                   child: Container(
                     width: 1.5,
-                    color: const Color(0xFFE5E7EB),
+                    color: isCompleted
+                        ? const Color(0xFF86EFAC)
+                        : const Color(0xFFE5E7EB),
                   ),
                 ),
             ],
@@ -305,17 +293,29 @@ class _SellerStatusTrackingScreenState
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      Text(
-                        status['subtitle'] as String,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isActive
-                              ? const Color(0xFF00A63E)
-                              : isCompleted
-                                  ? const Color(0xFF6B7280)
-                                  : const Color(0xFFD1D5DB),
+                      if (isActive)
+                        ShaderMask(
+                          blendMode: BlendMode.srcIn,
+                          shaderCallback: (bounds) =>
+                              primaryGreenGradient.createShader(bounds),
+                          child: Text(
+                            status['subtitle'] as String,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        )
+                      else
+                        Text(
+                          status['subtitle'] as String,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isCompleted
+                                ? const Color(0xFF6B7280)
+                                : const Color(0xFFD1D5DB),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                   if (status['badge'] != null) ...[
@@ -336,17 +336,21 @@ class _SellerStatusTrackingScreenState
                             width: 6,
                             height: 6,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF00A63E),
+                              gradient: primaryGreenGradient,
                               shape: BoxShape.circle,
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Text(
-                            status['badge'] as String,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF00A63E),
+                          ShaderMask(
+                            blendMode: BlendMode.srcIn,
+                            shaderCallback: (bounds) =>
+                                primaryGreenGradient.createShader(bounds),
+                            child: Text(
+                              status['badge'] as String,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],

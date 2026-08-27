@@ -218,8 +218,20 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
               const SizedBox(height: 32),
 
               // Verify Button
-              SizedBox(
+              Container(
                 width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF00A63E),
+                      Color(0xFF007D2E),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     final otp = _getOtpValue();
@@ -239,12 +251,11 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A63E),
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: const Text(
                     'Verify Account',

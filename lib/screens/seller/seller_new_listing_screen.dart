@@ -287,9 +287,7 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                         : Colors.grey.shade300,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: const Text(
                     'Continue',

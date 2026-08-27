@@ -169,8 +169,20 @@ class _SellerAccountCreatedScreenState
               child: Column(
                 children: [
                   // Go To Dashboard Button
-                  SizedBox(
+                  Container(
                     width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF00A63E),
+                          Color(0xFF007D2E),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: ElevatedButton(
                       onPressed: () {
                         // Navigate to dashboard
@@ -179,12 +191,11 @@ class _SellerAccountCreatedScreenState
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00A63E),
+                        backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text(
                         'Go To Dashboard',
@@ -212,9 +223,7 @@ class _SellerAccountCreatedScreenState
                         minimumSize: const Size(double.infinity, 56),
                         side: const BorderSide(
                             color: Color(0xFF00A63E), width: 2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text(
                         'Create First Listing',

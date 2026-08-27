@@ -612,7 +612,8 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00A63E),
+                        backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

@@ -146,8 +146,20 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
               const SizedBox(height: 32),
 
               // Send OTP Button
-              SizedBox(
+              Container(
                 width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xFF00A63E),
+                      Color(0xFF007D2E),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     if (_emailController.text.isNotEmpty) {
@@ -168,12 +180,11 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A63E),
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                   child: const Text(
                     'Send OTP',
