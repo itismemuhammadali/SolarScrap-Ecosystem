@@ -81,41 +81,43 @@ class _SellerEquipmentStepSolarPanelsState
           ),
         ),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
           children: _conditions.map((condition) {
             final isSelected = _selectedCondition == condition;
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedCondition = condition;
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFF00A63E)
-                        : const Color(0xFFE5E7EB),
-                    width: isSelected ? 1.5 : 1,
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCondition = condition;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  height: 42.17,
+                  margin: EdgeInsets.only(
+                    right: condition != _conditions.last ? 8 : 0,
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  condition,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isSelected
-                        ? const Color(0xFF00A63E)
-                        : const Color(0xFF6B7280),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF00A63E)
+                          : const Color(0xFFE5E7EB),
+                      width: 1.09,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: Text(
+                      condition,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFF00A63E)
+                            : const Color(0xFF6B7280),
+                      ),
+                    ),
                   ),
                 ),
               ),

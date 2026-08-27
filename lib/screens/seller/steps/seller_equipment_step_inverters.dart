@@ -14,10 +14,16 @@ class _SellerEquipmentStepInvertersState
   String _selectedInverterType = 'Hybrid';
   String _selectedCondition = 'Working';
 
+  final TextEditingController _ratedPowerController = TextEditingController();
+  final TextEditingController _brandController = TextEditingController();
+  final TextEditingController _priceDemandController = TextEditingController();
+
+  final List<String> _conditions = ['Working', 'Non working'];
+
   Widget _buildTextField({
     required String label,
     required String hint,
-    required Function(String) onChanged,
+    required TextEditingController controller,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,27 +33,33 @@ class _SellerEquipmentStepInvertersState
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Color(0xFF18181B),
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF9F9F9),
+            color: const Color(0xFFF9FAFB),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: TextField(
-            onChanged: onChanged,
+            controller: controller,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
+              hintStyle: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 13,
+              ),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
       ],
     );
   }
@@ -66,46 +78,52 @@ class _SellerEquipmentStepInvertersState
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: Color(0xFF18181B),
           ),
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        const SizedBox(height: 10),
+        Row(
           children: options.map((option) {
-            bool isSelected = selectedValue == option;
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  onChanged(option);
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFF00A63E)
-                        : Colors.grey.shade300,
-                    width: isSelected ? 2 : 1,
+            final isSelected = selectedValue == option;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    onChanged(option);
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  height: 42.17,
+                  margin: EdgeInsets.only(right: option != options.last ? 8 : 0),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF00A63E)
+                          : const Color(0xFFE5E7EB),
+                      width: 1.09,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  option,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? const Color(0xFF00A63E) : Colors.grey,
+                  child: Center(
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFF00A63E)
+                            : const Color(0xFF6B7280),
+                      ),
+                    ),
                   ),
                 ),
               ),
             );
           }).toList(),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
       ],
     );
   }
@@ -151,43 +169,84 @@ class _SellerEquipmentStepInvertersState
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Progress indicator
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Step 1 of 2',
+                        Text(
+                          'Step 2 of 7',
                           style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
+                            fontSize: 11,
+                            color: Color(0xFF71717A),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const Text(
-                          '50%',
+                        Text(
+                          '29%',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: Color(0xFF00A63E),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
 
-                    // Progress bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: 0.5,
-                        minHeight: 2,
-                        backgroundColor: Colors.grey.shade300,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF00A63E),
-                        ),
+                    // 7-segment progress bar
+                    Row(
+                      children: List.generate(7, (index) {
+                        return Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
+                            decoration: BoxDecoration(
+                              color: index <= 1
+                                  ? const Color(0xFF00A63E)
+                                  : const Color(0xFFE5E7EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Category Banner / Capsule
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: const [
+                          Icon(
+                            Icons.bolt,
+                            color: Color(0xFF00A63E),
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Inverters',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF00A63E),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -204,27 +263,27 @@ class _SellerEquipmentStepInvertersState
                     _buildTextField(
                       label: 'Rated Power',
                       hint: '200 kW',
-                      onChanged: (_) {},
+                      controller: _ratedPowerController,
                     ),
 
                     // Brand
                     _buildTextField(
                       label: 'Brand',
                       hint: 'Enter Brand name',
-                      onChanged: (_) {},
+                      controller: _brandController,
                     ),
 
                     // Price Demand
                     _buildTextField(
                       label: 'Price Demand',
                       hint: 'Rs, 64,00000',
-                      onChanged: (_) {},
+                      controller: _priceDemandController,
                     ),
 
                     // Condition
                     _buildOptionButtons(
                       label: 'Condition',
-                      options: ['Working', 'Non working'],
+                      options: _conditions,
                       selectedValue: _selectedCondition,
                       onChanged: (val) => _selectedCondition = val,
                     ),
@@ -249,7 +308,9 @@ class _SellerEquipmentStepInvertersState
                           color: Color(0xFF00A63E),
                           width: 1.5,
                         ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: const Text(
                         'Back',
@@ -276,11 +337,12 @@ class _SellerEquipmentStepInvertersState
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                        backgroundColor: const Color(0xFF00A63E),
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: const Text(
                         'Continue',
@@ -298,5 +360,13 @@ class _SellerEquipmentStepInvertersState
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _ratedPowerController.dispose();
+    _brandController.dispose();
+    _priceDemandController.dispose();
+    super.dispose();
   }
 }
