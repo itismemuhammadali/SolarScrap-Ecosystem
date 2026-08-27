@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../widgets/app_button.dart';
+import 'steps/seller_equipment_step_solar_panels.dart';
 import 'steps/seller_equipment_step_batteries.dart';
 import 'steps/seller_equipment_step_inverters.dart';
 import 'steps/seller_equipment_step_cables.dart';
@@ -43,7 +45,7 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
     },
     {
       'name': 'AC',
-      'image': 'assets/images/AC.PNG',
+      'image': 'assets/images/ac.png',
     },
   ];
 
@@ -93,60 +95,66 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Progress indicator
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Step 1 of 7',
                           style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
+                            fontSize: 11,
+                            color: Color(0xFF71717A),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const Text(
+                        Text(
                           '14%',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: Color(0xFF00A63E),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
 
-                    // Progress bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: 0.14,
-                        minHeight: 2,
-                        backgroundColor: Colors.grey.shade300,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF00A63E),
-                        ),
-                      ),
+                    // Segmented Progress Bar
+                    Row(
+                      children: List.generate(7, (index) {
+                        return Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
+                            decoration: BoxDecoration(
+                              color: index == 0
+                                  ? const Color(0xFF00A63E)
+                                  : const Color(0xFFE5E7EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
                     // Title
                     const Text(
                       'Equipment Category',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Color(0xFF18181B),
                       ),
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     const Text(
                       'What type of equipment are you selling?',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
+                        fontSize: 13,
+                        color: Color(0xFF71717A),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
                     // Category Grid
                     GridView.builder(
@@ -154,9 +162,9 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                        childAspectRatio: 0.92,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.98,
                       ),
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
@@ -169,58 +177,72 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                               _selectedCategory = category['name'];
                             });
                           },
-                          child: Container(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                             decoration: BoxDecoration(
                               border: Border.all(
                                 color: isSelected
                                     ? const Color(0xFF00A63E)
-                                    : Colors.grey.shade300,
-                                width: 1.5,
+                                    : const Color(0xFFE5E7EB),
+                                width: isSelected ? 1.5 : 1,
                               ),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                               color: isSelected
-                                  ? const Color(0xFFE8F5E9)
+                                  ? const Color(0xFFF0FDF4)
                                   : Colors.white,
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Image
+                                // Larger Image
                                 Container(
-                                  width: 50,
-                                  height: 50,
+                                  width: 82,
+                                  height: 82,
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    image: DecorationImage(
-                                      image: AssetImage(category['image']!),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.asset(
+                                      category['image']!,
                                       fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => Container(
+                                        width: 82,
+                                        height: 82,
+                                        color: Colors.grey.shade100,
+                                        child: const Icon(
+                                          Icons.image_not_supported,
+                                          color: Colors.grey,
+                                          size: 32,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 10),
 
                                 // Category Name
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 3),
-                                  child: Text(
-                                    category['name']!,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  category['name']!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected
+                                        ? const Color(0xFF00A63E)
+                                        : const Color(0xFF18181B),
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
 
-                                // Selection indicator
+                                // Selection indicator dot
                                 if (isSelected) ...[
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Container(
-                                    width: 5,
-                                    height: 5,
+                                    width: 6,
+                                    height: 6,
                                     decoration: const BoxDecoration(
                                       color: Color(0xFF00A63E),
                                       shape: BoxShape.circle,
@@ -241,62 +263,45 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
             // Continue Button (always visible at bottom)
             Padding(
               padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _selectedCategory != null
-                      ? () {
-                          // Route to appropriate equipment details screen
-                          Widget nextScreen;
-                          switch (_selectedCategory) {
-                            case 'Batteries':
-                              nextScreen = const SellerEquipmentStepBatteries();
-                              break;
-                            case 'Inverters':
-                              nextScreen = const SellerEquipmentStepInverters();
-                              break;
-                            case 'Cables':
-                              nextScreen = const SellerEquipmentStepCables();
-                              break;
-                            case 'AC':
-                              nextScreen = const SellerEquipmentStepAC();
-                              break;
-                            case 'Complete Solar System':
-                              nextScreen = const SellerEquipmentStepCompleteSystem();
-                              break;
-                            case 'Structure':
-                              nextScreen = const SellerEquipmentStepStructure();
-                              break;
-                            case 'Solar Panels':
-                              // TODO: Create screen for Solar Panels
-                              nextScreen = const SellerEquipmentStepAC();
-                              break;
-                            default:
-                              nextScreen = const SellerEquipmentStepAC();
-                          }
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => nextScreen),
-                          );
+              child: AppButton(
+                text: 'Continue',
+                isEnabled: _selectedCategory != null,
+                onPressed: _selectedCategory != null
+                    ? () {
+                        // Route to appropriate equipment details screen
+                        Widget nextScreen;
+                        switch (_selectedCategory) {
+                          case 'Batteries':
+                            nextScreen = const SellerEquipmentStepBatteries();
+                            break;
+                          case 'Inverters':
+                            nextScreen = const SellerEquipmentStepInverters();
+                            break;
+                          case 'Cables':
+                            nextScreen = const SellerEquipmentStepCables();
+                            break;
+                          case 'AC':
+                            nextScreen = const SellerEquipmentStepAC();
+                            break;
+                          case 'Complete Solar System':
+                            nextScreen = const SellerEquipmentStepCompleteSystem();
+                            break;
+                          case 'Structure':
+                            nextScreen = const SellerEquipmentStepStructure();
+                            break;
+                          case 'Solar Panels':
+                            nextScreen = const SellerEquipmentStepSolarPanels();
+                            break;
+                          default:
+                            nextScreen = const SellerEquipmentStepAC();
                         }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _selectedCategory != null
-                        ? const Color(0xFF00A63E)
-                        : Colors.grey.shade300,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => nextScreen),
+                        );
+                      }
+                    : null,
               ),
             ),
           ],

@@ -117,41 +117,47 @@ class _SellerPickupLocationScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Progress indicator
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Step 5 of 7',
                           style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
+                            fontSize: 11,
+                            color: Color(0xFF71717A),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const Text(
+                        Text(
                           '71%',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: Color(0xFF00A63E),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
 
-                    // Progress bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: 0.71,
-                        minHeight: 2,
-                        backgroundColor: Colors.grey.shade300,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF00A63E),
-                        ),
-                      ),
+                    // 7-segment progress bar
+                    Row(
+                      children: List.generate(7, (index) {
+                        return Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
+                            decoration: BoxDecoration(
+                              color: index <= 4
+                                  ? const Color(0xFF00A63E)
+                                  : const Color(0xFFE5E7EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
                     // City
                     _buildTextField(
@@ -163,7 +169,7 @@ class _SellerPickupLocationScreenState
 
                     // Area / Locality
                     _buildTextField(
-                      label: 'Area / Locality (Optional)',
+                      label: 'Area / Locality (optional)',
                       hint: 'DHA Phase 7, karachi',
                       controller: _areaController,
                       icon: Icons.location_on_outlined,
@@ -198,7 +204,9 @@ class _SellerPickupLocationScreenState
                           color: Color(0xFF00A63E),
                           width: 1.5,
                         ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: const Text(
                         'Back',
@@ -223,11 +231,12 @@ class _SellerPickupLocationScreenState
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                        backgroundColor: const Color(0xFF00A63E),
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: const Text(
                         'Continue',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'seller_listing_submitted_screen.dart';
+import 'seller_new_listing_screen.dart';
 
 class SellerListingPreviewScreen extends StatefulWidget {
   const SellerListingPreviewScreen({super.key});
@@ -56,77 +57,128 @@ class _SellerListingPreviewScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Main Listing Card
+                    // Progress indicator
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Step 7 of 7',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF71717A),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '100%',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF00A63E),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // 7-segment progress bar (all green)
+                    Row(
+                      children: List.generate(7, (index) {
+                        return Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00A63E),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Main Listing Preview Card
                     Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                          width: 1,
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Title
-                          Text(
-                            '200x Solar Panels 400W',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Solar Scrap / Decommission',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Preview Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'Preview',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2563EB),
+                          // Title & Badge
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Text(
+                                      '200x Solar Panels 400W',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF18181B),
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Solar Panels · Good Condition',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF71717A),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'Preview',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
+                          const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                          const SizedBox(height: 12),
 
-                          // Equipment Details
+                          // Details
                           _buildDetailRow('Equipment', '200 Solar Panels, 400W each'),
                           _buildDetailRow('Manufacturer', 'Waaree Energies'),
                           _buildDetailRow('Purchase Year', '2019'),
                           _buildDetailRow('Weight', '~2,400 kg'),
-                          _buildDetailRow('Redcoin', 'Project Decommission'),
-                          _buildDetailRow(
-                            'Price Demand',
-                            '42,000000',
-                            valueColor: const Color(0xFF00A63E),
-                          ),
-                          const SizedBox(height: 12),
+                          _buildDetailRow('Reason', 'Project Decommission'),
+                          const SizedBox(height: 16),
 
                           // Images section
                           const Text(
                             'Images (3)',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black,
+                              color: Color(0xFF18181B),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -139,187 +191,49 @@ class _SellerListingPreviewScreenState
                               _buildImageThumbnail('assets/images/inverter.png'),
                             ],
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
 
                           // Location & Contact
                           const Text(
                             'Location & Contact',
                             style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on_outlined,
-                                size: 16,
-                                color: Color(0xFF00A63E),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'DHA Phase 7, karachi',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.phone_outlined,
-                                size: 16,
-                                color: Color(0xFF00A63E),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                '+92 1234 56789',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Additional Section (Battery or other details)
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Section Title
-                          Text(
-                            'Battery Information',
-                            style: const TextStyle(
                               fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Battery Details',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Preview Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'Preview',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF2563EB),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Battery Details
-                          _buildDetailRow('Battery Type', 'Lithium-ion'),
-                          _buildDetailRow('Capacity', '120'),
-                          _buildDetailRow('Voltage', '24V'),
-                          _buildDetailRow('Brand', 'Osaka'),
-                          _buildDetailRow('Quantity', '50'),
-                          _buildDetailRow('Purchase Year', '2020'),
-                          _buildDetailRow('Condition', 'Scrape'),
-                          _buildDetailRow('Weight', '200 kg'),
-                          _buildDetailRow(
-                            'Price',
-                            '840,000',
-                            valueColor: const Color(0xFF00A63E),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Images section
-                          const Text(
-                            'Images (3)',
-                            style: TextStyle(
-                              fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black,
+                              color: Color(0xFF18181B),
                             ),
                           ),
                           const SizedBox(height: 8),
                           Row(
-                            children: [
-                              _buildImageThumbnail('assets/images/battery.jpg'),
-                              const SizedBox(width: 8),
-                              _buildImageThumbnail('assets/images/inverter.png'),
-                              const SizedBox(width: 8),
-                              _buildImageThumbnail('assets/images/cables.jpg'),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Location & Contact
-                          const Text(
-                            'Location & Contact',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(
+                            children: const [
+                              Icon(
                                 Icons.location_on_outlined,
                                 size: 16,
                                 color: Color(0xFF00A63E),
                               ),
-                              const SizedBox(width: 6),
-                              const Text(
+                              SizedBox(width: 6),
+                              Text(
                                 'DHA Phase 7, karachi',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black,
+                                  color: Color(0xFF374151),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 6),
                           Row(
-                            children: [
-                              const Icon(
+                            children: const [
+                              Icon(
                                 Icons.phone_outlined,
                                 size: 16,
                                 color: Color(0xFF00A63E),
                               ),
-                              const SizedBox(width: 6),
-                              const Text(
+                              SizedBox(width: 6),
+                              Text(
                                 '+92 1234 56789',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.black,
+                                  color: Color(0xFF374151),
                                 ),
                               ),
                             ],
@@ -333,15 +247,25 @@ class _SellerListingPreviewScreenState
               ),
             ),
 
-            // Edit and Submit buttons
+            // Bottom Buttons
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
+                  // Create Another Listing button
+                  SizedBox(
+                    width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const SellerNewListingScreen(),
+                          ),
+                          (route) => route.isFirst,
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
@@ -349,56 +273,91 @@ class _SellerListingPreviewScreenState
                           color: Color(0xFF00A63E),
                           width: 1.5,
                         ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.edit_outlined,
-                            size: 18,
-                            color: Color(0xFF00A63E),
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            'Edit',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF00A63E),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const SellerListingSubmittedScreen(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: const Text(
-                        'Submit Listing',
+                        'Create Another Listing',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
+                          color: Color(0xFF00A63E),
                         ),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Edit and Submit Listing buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 48),
+                            side: const BorderSide(
+                              color: Color(0xFF00A63E),
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 18,
+                                color: Color(0xFF00A63E),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Edit',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF00A63E),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SellerListingSubmittedScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00A63E),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 48),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'Submit Listing',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -409,11 +368,7 @@ class _SellerListingPreviewScreenState
     );
   }
 
-  Widget _buildDetailRow(
-    String label,
-    String value, {
-    Color valueColor = Colors.black,
-  }) {
+  Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -421,17 +376,17 @@ class _SellerListingPreviewScreenState
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF71717A),
             ),
           ),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: valueColor,
+              color: Color(0xFF18181B),
             ),
           ),
         ],
@@ -442,7 +397,7 @@ class _SellerListingPreviewScreenState
   Widget _buildImageThumbnail(String imagePath) {
     return Expanded(
       child: Container(
-        height: 60,
+        height: 64,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           image: DecorationImage(

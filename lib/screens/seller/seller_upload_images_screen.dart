@@ -135,41 +135,47 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Progress indicator
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Step 3 of 7',
+                        Text(
+                          'Step 4 of 7',
                           style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
+                            fontSize: 11,
+                            color: Color(0xFF71717A),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const Text(
-                          '43%',
+                        Text(
+                          '57%',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: Color(0xFF00A63E),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
 
-                    // Progress bar
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: 0.43,
-                        minHeight: 2,
-                        backgroundColor: Colors.grey.shade300,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF00A63E),
-                        ),
-                      ),
+                    // 7-Segment Progress Bar
+                    Row(
+                      children: List.generate(7, (index) {
+                        return Expanded(
+                          child: Container(
+                            height: 4,
+                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
+                            decoration: BoxDecoration(
+                              color: index <= 3
+                                  ? const Color(0xFF00A63E)
+                                  : const Color(0xFFE5E7EB),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
 
                     // Title and description
                     const Text(
@@ -177,7 +183,7 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                        color: Color(0xFF18181B),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -202,7 +208,7 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                             child: Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: Colors.grey.shade300,
+                                  color: const Color(0xFFE5E7EB),
                                   width: 1.5,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
@@ -210,18 +216,18 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
+                                children: const [
                                   Icon(
                                     Icons.camera_alt_outlined,
-                                    color: Colors.grey.shade400,
-                                    size: 28,
+                                    color: Color(0xFF9CA3AF),
+                                    size: 26,
                                   ),
-                                  const SizedBox(height: 6),
+                                  SizedBox(height: 6),
                                   Text(
                                     'Add Photo',
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Colors.grey.shade600,
+                                      color: Color(0xFF6B7280),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -250,16 +256,16 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                                 child: GestureDetector(
                                   onTap: () => _removePhoto(index),
                                   child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black87,
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
                                       Icons.close,
                                       color: Colors.white,
-                                      size: 14,
+                                      size: 13,
                                     ),
                                   ),
                                 ),
@@ -279,7 +285,6 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
-                              // TODO: Implement camera
                               _addPhoto('assets/images/inverter.png');
                             },
                             child: Container(
@@ -288,27 +293,27 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                               ),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: Colors.grey.shade300,
-                                  width: 1.5,
+                                  color: const Color(0xFFE5E7EB),
+                                  width: 1,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 color: Colors.white,
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
+                                children: const [
+                                  Icon(
                                     Icons.camera_alt_outlined,
                                     color: Color(0xFF00A63E),
                                     size: 18,
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Text(
+                                  SizedBox(width: 6),
+                                  Text(
                                     'Camera',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF00A63E),
+                                      color: Color(0xFF18181B),
                                     ),
                                   ),
                                 ],
@@ -320,7 +325,6 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
-                              // TODO: Implement gallery
                               _addPhoto('assets/images/cables.jpg');
                             },
                             child: Container(
@@ -329,27 +333,27 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                               ),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: Colors.grey.shade300,
-                                  width: 1.5,
+                                  color: const Color(0xFFE5E7EB),
+                                  width: 1,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 color: Colors.white,
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.image_outlined,
+                                children: const [
+                                  Icon(
+                                    Icons.file_upload_outlined,
                                     color: Color(0xFF00A63E),
                                     size: 18,
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Text(
+                                  SizedBox(width: 6),
+                                  Text(
                                     'Gallery',
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF00A63E),
+                                      color: Color(0xFF18181B),
                                     ),
                                   ),
                                 ],
@@ -380,7 +384,9 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                           color: Color(0xFF00A63E),
                           width: 1.5,
                         ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: const Text(
                         'Back',
@@ -405,11 +411,12 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                        backgroundColor: const Color(0xFF00A63E),
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       child: const Text(
                         'Continue',
