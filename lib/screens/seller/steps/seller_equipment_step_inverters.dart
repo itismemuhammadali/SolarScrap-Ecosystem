@@ -92,9 +92,11 @@ class _SellerEquipmentStepInvertersState
                     onChanged(option);
                   });
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  height: 42.17,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   margin: EdgeInsets.only(right: option != options.last ? 8 : 0),
                   decoration: BoxDecoration(
                     color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,

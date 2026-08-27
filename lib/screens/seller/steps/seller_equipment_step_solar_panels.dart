@@ -16,14 +16,6 @@ class _SellerEquipmentStepSolarPanelsState
   final TextEditingController _priceDemandController = TextEditingController();
   String _selectedCondition = 'Scrap';
 
-  final List<String> _conditions = [
-    'Scrap',
-    'Bullet Hit',
-    'Shatter Glass',
-    'Good Conditions',
-    'Other',
-  ];
-
   Widget _buildTextField({
     required String label,
     required String hint,
@@ -68,6 +60,44 @@ class _SellerEquipmentStepSolarPanelsState
     );
   }
 
+  Widget _buildConditionChip(String condition) {
+    final isSelected = _selectedCondition == condition;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedCondition = condition;
+        });
+      },
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF00A63E)
+                : const Color(0xFFE5E7EB),
+            width: isSelected ? 1.5 : 1,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Center(
+          child: Text(
+            condition,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected
+                  ? const Color(0xFF00A63E)
+                  : const Color(0xFF71717A),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildConditionOptions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,48 +111,24 @@ class _SellerEquipmentStepSolarPanelsState
           ),
         ),
         const SizedBox(height: 10),
+        // Row 1: 3 buttons
         Row(
-          children: _conditions.map((condition) {
-            final isSelected = _selectedCondition == condition;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedCondition = condition;
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  height: 42.17,
-                  margin: EdgeInsets.only(
-                    right: condition != _conditions.last ? 8 : 0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
-                    border: Border.all(
-                      color: isSelected
-                          ? const Color(0xFF00A63E)
-                          : const Color(0xFFE5E7EB),
-                      width: 1.09,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: Text(
-                      condition,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected
-                            ? const Color(0xFF00A63E)
-                            : const Color(0xFF6B7280),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+          children: [
+            Expanded(child: _buildConditionChip('Scrap')),
+            const SizedBox(width: 8),
+            Expanded(child: _buildConditionChip('Bullet Hit')),
+            const SizedBox(width: 8),
+            Expanded(child: _buildConditionChip('Shatter glass')),
+          ],
+        ),
+        const SizedBox(height: 10),
+        // Row 2: 2 buttons
+        Row(
+          children: [
+            Expanded(child: _buildConditionChip('Good Conditions')),
+            const SizedBox(width: 8),
+            Expanded(child: _buildConditionChip('Other')),
+          ],
         ),
         const SizedBox(height: 16),
       ],

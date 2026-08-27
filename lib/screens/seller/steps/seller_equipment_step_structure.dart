@@ -78,41 +78,43 @@ class _SellerEquipmentStepStructureState
           ),
         ),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
           children: options.map((option) {
             final isSelected = selectedValue == option;
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  onChanged(option);
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFF00A63E)
-                        : const Color(0xFFE5E7EB),
-                    width: isSelected ? 1.5 : 1,
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    onChanged(option);
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  option,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: isSelected
-                        ? const Color(0xFF00A63E)
-                        : const Color(0xFF6B7280),
+                  margin: EdgeInsets.only(right: option != options.last ? 8 : 0),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF00A63E)
+                          : const Color(0xFFE5E7EB),
+                      width: 1.09,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Center(
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFF00A63E)
+                            : const Color(0xFF6B7280),
+                      ),
+                    ),
                   ),
                 ),
               ),
