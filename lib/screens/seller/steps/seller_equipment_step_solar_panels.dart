@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../seller_upload_images_screen.dart';
 
 class SellerEquipmentStepSolarPanels extends StatefulWidget {
@@ -238,14 +239,18 @@ class _SellerEquipmentStepSolarPanelsState
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
-                        children: const [
-                          Icon(
-                            Icons.solar_power_outlined,
-                            color: Color(0xFF00A63E),
-                            size: 18,
+                        children: [
+                          SvgPicture.asset(
+                            'assets/icons/solar_scrap_icon.svg',
+                            width: 18,
+                            height: 18,
+                            colorFilter: const ColorFilter.mode(
+                              Color(0xFF00A63E),
+                              BlendMode.srcIn,
+                            ),
                           ),
-                          SizedBox(width: 8),
-                          Text(
+                          const SizedBox(width: 8),
+                          const Text(
                             'Solar Panels',
                             style: TextStyle(
                               fontSize: 13,
