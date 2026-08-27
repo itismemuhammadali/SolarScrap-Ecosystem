@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'buyer_bid_confirmation_screen.dart';
 
 class BuyerPlaceBidScreen extends StatefulWidget {
@@ -20,6 +21,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
   late int _currentHighestBid;
   late String _auctionTitle;
   late String _auctionId;
+
+  late TextEditingController _bidController;
+  final FocusNode _bidFocusNode = FocusNode();
 
   int _selectedPresetIndex = 0; // 0: 93K, 1: 98K, 2: 103K
 
@@ -43,6 +47,15 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
     // Minimum bid is current highest + 1000
     _minimumBidAmount = _currentHighestBid + 1000;
     _currentBidAmount = _minimumBidAmount;
+
+    _bidController = TextEditingController(text: '$_currentBidAmount');
+  }
+
+  @override
+  void dispose() {
+    _bidController.dispose();
+    _bidFocusNode.dispose();
+    super.dispose();
   }
 
   int? _parsePrice(String? priceStr) {
@@ -76,6 +89,10 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
     setState(() {
       _currentBidAmount += 1000;
       _selectedPresetIndex = -1;
+      _bidController.text = '$_currentBidAmount';
+      _bidController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _bidController.text.length),
+      );
     });
   }
 
@@ -84,6 +101,10 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
       setState(() {
         _currentBidAmount -= 1000;
         _selectedPresetIndex = -1;
+        _bidController.text = '$_currentBidAmount';
+        _bidController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _bidController.text.length),
+        );
       });
     }
   }
@@ -92,7 +113,26 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
     setState(() {
       _selectedPresetIndex = index;
       _currentBidAmount = amount;
+      _bidController.text = '$_currentBidAmount';
+      _bidController.selection = TextSelection.fromPosition(
+        TextPosition(offset: _bidController.text.length),
+      );
     });
+  }
+
+  void _onSubmitBid() {
+    if (_currentBidAmount < _minimumBidAmount) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Minimum bid is ${_formatPrice(_minimumBidAmount)}',
+          ),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+      return;
+    }
+    _showConfirmBidBottomSheet();
   }
 
   void _showConfirmBidBottomSheet() {
@@ -504,7 +544,7 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                           ),
                           const SizedBox(width: 12),
 
-                          // Center Bid Amount Display
+                          // Center Bid Amount Display / Input
                           Expanded(
                             child: Container(
                               height: 52,
@@ -517,13 +557,31 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                                 ),
                               ),
                               child: Center(
-                                child: Text(
-                                  '$_currentBidAmount',
+                                child: TextField(
+                                  controller: _bidController,
+                                  focusNode: _bidFocusNode,
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                  ],
                                   style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF00A63E),
                                   ),
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                    isDense: true,
+                                  ),
+                                  onChanged: (val) {
+                                    final parsed = int.tryParse(val) ?? 0;
+                                    setState(() {
+                                      _currentBidAmount = parsed;
+                                      _selectedPresetIndex = -1;
+                                    });
+                                  },
                                 ),
                               ),
                             ),
@@ -584,10 +642,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                         width: double.infinity,
                         height: 54,
                         child: ElevatedButton(
-                          onPressed: _showConfirmBidBottomSheet,
+                          onPressed: _onSubmitBid,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                            backgroundColor: const Color(0xFF00A63E),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
