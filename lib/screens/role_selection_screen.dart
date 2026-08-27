@@ -53,7 +53,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: _selectedRole == UserRole.seller
@@ -70,8 +73,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       children: [
                         // Seller Icon
                         Container(
-                          width: 50,
-                          height: 50,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             color: _selectedRole == UserRole.seller
                                 ? const Color(0xFF00A63E)
@@ -81,8 +84,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                           child: Center(
                             child: SvgPicture.asset(
                               'assets/icons/building.svg',
-                              width: 28,
-                              height: 28,
+                              width: 26,
+                              height: 26,
                               colorFilter: const ColorFilter.mode(
                                 Colors.white,
                                 BlendMode.srcIn,
@@ -90,39 +93,40 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 14),
 
                         // Seller Text
-                        Expanded(
+                        const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Solar EPC Company /\nScraped Seller',
+                                'Solar EPC Company /\nScrap Seller',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black,
-                                  height: 1.2,
+                                  height: 1.25,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 'List and sell your solar scrap\nequipment',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: const Color(0xFF6A7282),
-                                  height: 1.4,
+                                  color: Color(0xFF6A7282),
+                                  height: 1.35,
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(width: 12),
 
                         // Radio Button
                         Container(
-                          width: 24,
-                          height: 24,
+                          width: 22,
+                          height: 22,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -142,55 +146,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                 )
                               : null,
                         ),
-
-                        // Badge
-                        const SizedBox(width: 12),
-                        _selectedRole == UserRole.seller
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF00A63E),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'Seller',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              )
-                            : Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey.shade400,
-                                    width: 1,
-                                  ),
-                                  color: Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Seller',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Buyer Option
                 GestureDetector(
@@ -200,7 +160,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: _selectedRole == UserRole.buyer
@@ -217,8 +180,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       children: [
                         // Buyer Icon
                         Container(
-                          width: 50,
-                          height: 50,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             color: _selectedRole == UserRole.buyer
                                 ? const Color(0xFF00A63E)
@@ -228,8 +191,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                           child: Center(
                             child: SvgPicture.asset(
                               'assets/icons/buyer.svg',
-                              width: 28,
-                              height: 28,
+                              width: 26,
+                              height: 26,
                               colorFilter: const ColorFilter.mode(
                                 Colors.white,
                                 BlendMode.srcIn,
@@ -237,39 +200,40 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 14),
 
                         // Buyer Text
-                        Expanded(
+                        const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Scrap Dealer / Solar\nBuyer',
+                                'Scrap Dealer /\nSolar Buyer',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black,
-                                  height: 1.2,
+                                  height: 1.25,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Text(
                                 'Browse and buy solar scrap at\nbest prices',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: const Color(0xFF6A7282),
-                                  height: 1.4,
+                                  color: Color(0xFF6A7282),
+                                  height: 1.35,
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(width: 12),
 
                         // Radio Button
                         Container(
-                          width: 24,
-                          height: 24,
+                          width: 22,
+                          height: 22,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -289,50 +253,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                 )
                               : null,
                         ),
-
-                        // Badge
-                        const SizedBox(width: 12),
-                        _selectedRole == UserRole.buyer
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF00A63E),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'Buyer',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              )
-                            : Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.grey.shade400,
-                                    width: 1,
-                                  ),
-                                  color: Colors.grey.shade300,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Buyer',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
                       ],
                     ),
                   ),

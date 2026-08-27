@@ -95,28 +95,42 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Confirm accept offer
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Offer accepted successfully!'),
-                            ),
-                          );
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 48),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Text(
-                          'Confirm Accept',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Navigate back to seller dashboard listing screen
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Offer accepted successfully!'),
+                              ),
+                            );
+                            // Pop back through the navigation stack to reach the listing screen
+                            // Accept Offer → Price Offer → Status Tracking → Listing
+                            Navigator.pop(context); // Close Accept Offer
+                            Navigator.pop(context); // Close Price Offer
+                            Navigator.pop(context); // Close Status Tracking
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 48),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: const Text(
+                            'Confirm Accept',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),

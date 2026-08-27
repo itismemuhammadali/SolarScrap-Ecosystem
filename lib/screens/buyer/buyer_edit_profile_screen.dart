@@ -168,9 +168,17 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
                       const SizedBox(height: 24),
 
                       // Save Changes Button
-                      SizedBox(
+                      Container(
                         width: double.infinity,
                         height: 52,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
+                          ),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                         child: ElevatedButton(
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -183,7 +191,7 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(

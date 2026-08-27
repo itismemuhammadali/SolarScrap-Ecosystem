@@ -133,9 +133,17 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              SizedBox(
+              Container(
                 width: double.infinity,
                 height: 48,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
@@ -558,24 +566,34 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                         ),
                       ],
                     ),
-                    ElevatedButton(
-                      onPressed: () {
-                        _showBidBottomSheet(auc);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size(90, 36),
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Text(
-                        'Bid Now',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _showBidBottomSheet(auc);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          minimumSize: const Size(90, 36),
+                          padding: const EdgeInsets.symmetric(horizontal: 18),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: const Text(
+                          'Bid Now',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),

@@ -185,15 +185,24 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
                       const SizedBox(height: 24),
 
                       // Reset Password Button
-                      SizedBox(
+                      Container(
                         width: double.infinity,
                         height: 52,
+                        decoration: BoxDecoration(
+                          gradient: _isFormValid
+                              ? const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
+                                )
+                              : null,
+                        ),
                         child: ElevatedButton(
                           onPressed:
                               _isFormValid ? _handleResetPassword : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                            backgroundColor: _isFormValid ? Colors.transparent : const Color(0xFFE5E7EB),
+                            shadowColor: Colors.transparent,
                             disabledBackgroundColor: const Color(0xFFE5E7EB),
                             foregroundColor: Colors.white,
                             disabledForegroundColor: const Color(0xFF9CA3AF),

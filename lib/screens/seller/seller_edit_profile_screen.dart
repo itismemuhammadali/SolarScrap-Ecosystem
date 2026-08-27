@@ -177,9 +177,17 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
               const SizedBox(height: 32),
 
               // Save Changes Button
-              SizedBox(
+              Container(
                 width: double.infinity,
                 height: 48,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: ElevatedButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(

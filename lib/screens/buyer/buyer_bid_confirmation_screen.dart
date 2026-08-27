@@ -131,9 +131,17 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                 const Spacer(flex: 3),
 
                 // Go To My Bids Button
-                SizedBox(
+                Container(
                   width: double.infinity,
                   height: 54,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
@@ -148,7 +156,7 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
