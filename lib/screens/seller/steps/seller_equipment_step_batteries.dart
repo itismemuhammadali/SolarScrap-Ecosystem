@@ -100,7 +100,7 @@ class _SellerEquipmentStepBatteriesState
                   ),
                   margin: EdgeInsets.only(right: option != options.last ? 8 : 0),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                    color: isSelected ? const Color(0xFFE6F9ED) : Colors.white,
                     border: Border.all(
                       color: isSelected
                           ? const Color(0xFF00A63E)
@@ -232,7 +232,7 @@ class _SellerEquipmentStepBatteriesState
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4),
+                        color: const Color(0xFFE6F9ED),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(

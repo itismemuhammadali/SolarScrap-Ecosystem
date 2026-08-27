@@ -189,7 +189,7 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                               ),
                               borderRadius: BorderRadius.circular(16),
                               color: isSelected
-                                  ? const Color(0xFFF0FDF4)
+                                  ? const Color(0xFFE6F9ED)
                                   : Colors.white,
                             ),
                             child: Column(

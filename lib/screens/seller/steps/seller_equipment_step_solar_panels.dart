@@ -69,17 +69,17 @@ class _SellerEquipmentStepSolarPanelsState
         });
       },
       child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        height: 42.17,
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+          color: isSelected ? const Color(0xFFE6F9ED) : Colors.white,
           border: Border.all(
             color: isSelected
                 ? const Color(0xFF00A63E)
                 : const Color(0xFFE5E7EB),
-            width: isSelected ? 1.5 : 1,
+            width: 1.09,
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Center(
           child: Text(
@@ -234,7 +234,7 @@ class _SellerEquipmentStepSolarPanelsState
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4),
+                        color: const Color(0xFFE6F9ED),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
