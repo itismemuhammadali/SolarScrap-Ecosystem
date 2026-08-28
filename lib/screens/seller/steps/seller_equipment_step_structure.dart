@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../seller_upload_images_screen.dart';
+import 'seller_equipment_step_others.dart';
 
 class SellerEquipmentStepStructure extends StatefulWidget {
   final bool isCompleteSolarSystem;
@@ -327,17 +328,27 @@ class _SellerEquipmentStepStructureState
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  SellerUploadImagesScreen(
-                                selectedCategory: widget.isCompleteSolarSystem
-                                    ? 'Complete Solar System'
-                                    : 'Structure',
+                          if (widget.isCompleteSolarSystem) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SellerEquipmentStepOthers(
+                                  isCompleteSolarSystem: true,
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SellerUploadImagesScreen(
+                                  selectedCategory: 'Structure',
+                                ),
+                              ),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
