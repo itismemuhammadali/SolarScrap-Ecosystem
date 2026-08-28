@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'buyer_dashboard_screen.dart';
 
 class BuyerBidConfirmationScreen extends StatelessWidget {
@@ -17,54 +18,48 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.center,
-            colors: [
-              Color(0xFFEDF8F1),
-              Colors.white,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Spacer(flex: 2),
-
                 // Success Gavel Icon in Green Circle
                 Container(
-                  width: 108,
-                  height: 108,
+                  width: 84,
+                  height: 84,
                   decoration: const BoxDecoration(
                     color: Color(0xFF00A63E),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
                         color: Color(0x3300A63E),
-                        blurRadius: 20,
-                        offset: Offset(0, 10),
+                        blurRadius: 18,
+                        offset: Offset(0, 8),
                       ),
                     ],
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.gavel_rounded,
-                      color: Colors.white,
-                      size: 52,
+                  child: Center(
+                    child: SvgPicture.asset(
+                      'assets/icons/bid-submitted.svg',
+                      width: 40,
+                      height: 40,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
 
                 // Title
                 const Text(
                   'Bid Submitted!',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
                     letterSpacing: -0.5,
@@ -77,21 +72,24 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                 const Text(
                   "Your bid is now live. You'll be notified if you win.",
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: Color(0xFF6B7280),
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Reference Number Card
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 18,
+                    horizontal: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: const Color(0xFFE5E7EB),
                       width: 1.0,
@@ -100,7 +98,7 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.02),
                         blurRadius: 8,
-                        offset: const Offset(0, 4),
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -109,16 +107,16 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                       const Text(
                         'Reference Number',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           color: Color(0xFF9CA3AF),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         referenceNumber,
                         style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF00A63E),
                           letterSpacing: 1.0,
@@ -127,8 +125,7 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                const Spacer(flex: 3),
+                const SizedBox(height: 24),
 
                 // Go To My Bids Button
                 Container(
@@ -136,11 +133,11 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                   height: 54,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                       colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
                     ),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: ElevatedButton(
                     onPressed: () {
@@ -159,8 +156,9 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                       shadowColor: Colors.transparent,
                       foregroundColor: Colors.white,
                       elevation: 0,
+                      minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: const Text(
@@ -172,7 +170,6 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
               ],
             ),
           ),

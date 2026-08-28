@@ -88,33 +88,41 @@ class _SellerCreateAccountSecurityScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Back Button and Title
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(12),
+              // Header with Back Button and Centered Title
+              SizedBox(
+                height: 40,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back,
+                              color: Color(0xFF151516), size: 20),
+                          onPressed: () => Navigator.pop(context),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: Color(0xFF151516), size: 20),
-                      onPressed: () => Navigator.pop(context),
-                      padding: EdgeInsets.zero,
+                    Center(
+                      child: Text(
+                        'Create Account',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF151516),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Text(
-                    'Create Account',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF151516),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -427,53 +435,51 @@ class _SellerCreateAccountSecurityScreenState
               const SizedBox(height: 20),
 
               // Create Account Button (Matching Figma)
-              Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: isFormValid
-                      ? const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xFF00A63E),
-                            Color(0xFF007D2E),
-                          ],
-                        )
-                      : null,
-                  color: isFormValid ? null : const Color(0xFFE5E7EB),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: ElevatedButton(
-                  onPressed: isFormValid
-                      ? () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const SellerCreateAccountVerifyOtpScreen(
-                                phoneNumber: '•••3210',
-                                companyName: 'SunTech Solar Pvt. Ltd.',
-                                location: 'Mumbai',
-                              ),
-                            ),
-                          );
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              Opacity(
+                opacity: isFormValid ? 1.0 : 0.5,
+                child: Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF00A63E),
+                        Color(0xFF007D2E),
+                      ],
                     ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Text(
-                    'Create Account',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isFormValid ? Colors.white : const Color(0xFF9CA3AF),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const SellerCreateAccountVerifyOtpScreen(
+                            phoneNumber: '•••3210',
+                            companyName: 'SunTech Solar Pvt. Ltd.',
+                            location: 'Mumbai',
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      'Create Account',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),

@@ -4,8 +4,6 @@ import 'steps/seller_equipment_step_solar_panels.dart';
 import 'steps/seller_equipment_step_batteries.dart';
 import 'steps/seller_equipment_step_inverters.dart';
 import 'steps/seller_equipment_step_cables.dart';
-import 'steps/seller_equipment_step_ac.dart';
-import 'steps/seller_equipment_step_complete_system.dart';
 import 'steps/seller_equipment_step_structure.dart';
 
 class SellerNewListingScreen extends StatefulWidget {
@@ -42,10 +40,6 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
     {
       'name': 'Complete Solar System',
       'image': 'assets/images/complete-solar-system.jpg',
-    },
-    {
-      'name': 'AC',
-      'image': 'assets/images/ac.png',
     },
   ];
 
@@ -280,11 +274,10 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                           case 'Cables':
                             nextScreen = const SellerEquipmentStepCables();
                             break;
-                          case 'AC':
-                            nextScreen = const SellerEquipmentStepAC();
-                            break;
                           case 'Complete Solar System':
-                            nextScreen = const SellerEquipmentStepCompleteSystem();
+                            nextScreen = const SellerEquipmentStepSolarPanels(
+                              isCompleteSolarSystem: true,
+                            );
                             break;
                           case 'Structure':
                             nextScreen = const SellerEquipmentStepStructure();
@@ -293,7 +286,7 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                             nextScreen = const SellerEquipmentStepSolarPanels();
                             break;
                           default:
-                            nextScreen = const SellerEquipmentStepAC();
+                            nextScreen = const SellerEquipmentStepSolarPanels();
                         }
 
                         Navigator.push(

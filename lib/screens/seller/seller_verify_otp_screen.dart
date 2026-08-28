@@ -230,8 +230,8 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
                 height: 56,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
                       Color(0xFF00A63E),
                       Color(0xFF007D2E),

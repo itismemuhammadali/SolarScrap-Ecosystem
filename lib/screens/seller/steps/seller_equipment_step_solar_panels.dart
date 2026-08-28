@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../seller_upload_images_screen.dart';
+import 'seller_equipment_step_batteries.dart';
 
 class SellerEquipmentStepSolarPanels extends StatefulWidget {
-  const SellerEquipmentStepSolarPanels({super.key});
+  final bool isCompleteSolarSystem;
+
+  const SellerEquipmentStepSolarPanels({
+    super.key,
+    this.isCompleteSolarSystem = false,
+  });
 
   @override
   State<SellerEquipmentStepSolarPanels> createState() =>
@@ -56,22 +62,22 @@ class _SellerEquipmentStepSolarPanelsState
             ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget _buildConditionChip(String condition) {
+  Widget _buildConditionChip(String condition, {bool expand = false}) {
     final isSelected = _selectedCondition == condition;
-    return GestureDetector(
+    final chip = GestureDetector(
       onTap: () {
         setState(() {
           _selectedCondition = condition;
         });
       },
       child: Container(
-        height: 42.17,
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFE6F9ED) : Colors.white,
           border: Border.all(
@@ -97,6 +103,11 @@ class _SellerEquipmentStepSolarPanelsState
         ),
       ),
     );
+
+    if (expand) {
+      return Expanded(child: chip);
+    }
+    return chip;
   }
 
   Widget _buildConditionOptions() {
@@ -112,23 +123,25 @@ class _SellerEquipmentStepSolarPanelsState
           ),
         ),
         const SizedBox(height: 10),
-        // Row 1: 3 buttons
+        // Row 1: 3 buttons stretched across full width
         Row(
           children: [
-            Expanded(child: _buildConditionChip('Scrap')),
+            _buildConditionChip('Scrap', expand: true),
             const SizedBox(width: 8),
-            Expanded(child: _buildConditionChip('Bullet Hit')),
+            _buildConditionChip('Bullet Hit', expand: true),
             const SizedBox(width: 8),
-            Expanded(child: _buildConditionChip('Shatter glass')),
+            _buildConditionChip('Shatter lass', expand: true),
           ],
         ),
         const SizedBox(height: 10),
-        // Row 2: 2 buttons
+        // Row 2: 2 buttons matching width of Row 1
         Row(
           children: [
-            Expanded(child: _buildConditionChip('Good Conditions')),
+            _buildConditionChip('Good Conditions', expand: true),
             const SizedBox(width: 8),
-            Expanded(child: _buildConditionChip('Other')),
+            _buildConditionChip('Other', expand: true),
+            const SizedBox(width: 8),
+            const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 16),
@@ -163,9 +176,11 @@ class _SellerEquipmentStepSolarPanelsState
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Equipment Details',
-          style: TextStyle(
+        title: Text(
+          widget.isCompleteSolarSystem
+              ? 'Complete System: Panels'
+              : 'Equipment Details',
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -173,128 +188,124 @@ class _SellerEquipmentStepSolarPanelsState
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Progress indicator
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Step 2 of 7',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF71717A),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          '29%',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF00A63E),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Progress indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    widget.isCompleteSolarSystem
+                        ? 'Step 1 of 5 (Complete System)'
+                        : 'Step 2 of 7',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF71717A),
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 8),
-
-                    // 7-segment progress bar
-                    Row(
-                      children: List.generate(7, (index) {
-                        return Expanded(
-                          child: Container(
-                            height: 4,
-                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
-                            decoration: BoxDecoration(
-                              color: index <= 1
-                                  ? const Color(0xFF00A63E)
-                                  : const Color(0xFFE5E7EB),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        );
-                      }),
+                  ),
+                  Text(
+                    widget.isCompleteSolarSystem ? '20%' : '29%',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF00A63E),
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
 
-                    // Category Banner / Capsule
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
+              // Progress bar
+              Row(
+                children: List.generate(widget.isCompleteSolarSystem ? 5 : 7, (index) {
+                  return Expanded(
+                    child: Container(
+                      height: 4,
+                      margin: EdgeInsets.only(
+                          right: index < (widget.isCompleteSolarSystem ? 4 : 6)
+                              ? 6
+                              : 0),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE6F9ED),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/solar_scrap_icon.svg',
-                            width: 18,
-                            height: 18,
-                            colorFilter: const ColorFilter.mode(
-                              Color(0xFF00A63E),
-                              BlendMode.srcIn,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Solar Panels',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF00A63E),
-                            ),
-                          ),
-                        ],
+                        color: index <= 0
+                            ? const Color(0xFF00A63E)
+                            : const Color(0xFFE5E7EB),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
 
-                    // Number of Panels
-                    _buildTextField(
-                      label: 'Number of Panels',
-                      hint: 'e.g. 200',
-                      controller: _panelsCountController,
+              // Category Banner / Capsule
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F9ED),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/solar_scrap_icon.svg',
+                      width: 18,
+                      height: 18,
+                      colorFilter: const ColorFilter.mode(
+                        Color(0xFF00A63E),
+                        BlendMode.srcIn,
+                      ),
                     ),
-
-                    // Watts per Panel (W)
-                    _buildTextField(
-                      label: 'Watts per Panel (W)',
-                      hint: 'e.g. 400',
-                      controller: _wattsController,
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.isCompleteSolarSystem
+                          ? 'Complete System · Solar Panels'
+                          : 'Solar Panels',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF00A63E),
+                      ),
                     ),
-
-                    // Price Demand
-                    _buildTextField(
-                      label: 'Price Demand',
-                      hint: 'Rs 45, 000 000',
-                      controller: _priceDemandController,
-                    ),
-
-                    // Panel Condition
-                    _buildConditionOptions(),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: 16),
 
-            // Back and Continue buttons
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
+              // Number of Panels
+              _buildTextField(
+                label: 'Number of Panels',
+                hint: 'e.g. 200',
+                controller: _panelsCountController,
+              ),
+
+              // Watts per Panel (W)
+              _buildTextField(
+                label: 'Watts per Panel (W)',
+                hint: 'e.g. 400',
+                controller: _wattsController,
+              ),
+
+              // Price Demand
+              _buildTextField(
+                label: 'Price Demand',
+                hint: 'Rs 45, 000 000',
+                controller: _priceDemandController,
+              ),
+
+              // Panel Condition
+              _buildConditionOptions(),
+              const SizedBox(height: 24),
+
+              // Back and Continue buttons
+              Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
@@ -302,7 +313,7 @@ class _SellerEquipmentStepSolarPanelsState
                         Navigator.pop(context);
                       },
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
+                        minimumSize: const Size(double.infinity, 52),
                         side: const BorderSide(
                           color: Color(0xFF00A63E),
                           width: 1.5,
@@ -324,10 +335,11 @@ class _SellerEquipmentStepSolarPanelsState
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
+                      height: 52,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                           colors: [
                             Color(0xFF00A63E),
                             Color(0xFF007D2E),
@@ -337,20 +349,34 @@ class _SellerEquipmentStepSolarPanelsState
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const SellerUploadImagesScreen(
-                                selectedCategory: 'Solar Panels',
+                          if (widget.isCompleteSolarSystem) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SellerEquipmentStepBatteries(
+                                  isCompleteSolarSystem: true,
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const SellerUploadImagesScreen(
+                                  selectedCategory: 'Solar Panels',
+                                ),
+                              ),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 48),
+                          minimumSize: const Size(double.infinity, 52),
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -367,8 +393,9 @@ class _SellerEquipmentStepSolarPanelsState
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

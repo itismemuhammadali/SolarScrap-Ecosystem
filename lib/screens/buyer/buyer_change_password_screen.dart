@@ -87,23 +87,44 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
                     children: [
                       const SizedBox(height: 12),
 
-                      // Back Button
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF3F4F6),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.black87,
-                            size: 20,
-                          ),
+                      // Header with Back Button and Centered Title
+                      SizedBox(
+                        height: 40,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5F5F5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.black87,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Center(
+                              child: Text(
+                                'Change Password',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -185,37 +206,37 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
                       const SizedBox(height: 24),
 
                       // Reset Password Button
-                      Container(
-                        width: double.infinity,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          gradient: _isFormValid
-                              ? const LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
-                                )
-                              : null,
-                        ),
-                        child: ElevatedButton(
-                          onPressed:
-                              _isFormValid ? _handleResetPassword : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isFormValid ? Colors.transparent : const Color(0xFFE5E7EB),
-                            shadowColor: Colors.transparent,
-                            disabledBackgroundColor: const Color(0xFFE5E7EB),
-                            foregroundColor: Colors.white,
-                            disabledForegroundColor: const Color(0xFF9CA3AF),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                      Opacity(
+                        opacity: _isFormValid ? 1.0 : 0.5,
+                        child: Container(
+                          width: double.infinity,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
                             ),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          child: const Text(
-                            'Reset Password',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                          child: ElevatedButton(
+                            onPressed: _handleResetPassword,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Reset Password',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),

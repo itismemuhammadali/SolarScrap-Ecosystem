@@ -50,33 +50,41 @@ class _BuyerCreateAccountScreenState extends State<BuyerCreateAccountScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Back Button and Title
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
+              // Header with Back Button and Centered Title
+              SizedBox(
+                height: 40,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back,
+                              color: Colors.black, size: 20),
+                          onPressed: () => Navigator.pop(context),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: Colors.black, size: 20),
-                      onPressed: () => Navigator.pop(context),
-                      padding: EdgeInsets.zero,
+                    const Center(
+                      child: Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'Create Account',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
 
@@ -283,16 +291,18 @@ class _BuyerCreateAccountScreenState extends State<BuyerCreateAccountScreen> {
 
               // Next Button
               Container(
+                width: double.infinity,
+                height: 56,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
                       Color(0xFF00A63E),
                       Color(0xFF007D2E),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: ElevatedButton(
                   onPressed: () {

@@ -82,33 +82,41 @@ class _BuyerCreateAccountSecurityScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Back Button and Title
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      borderRadius: BorderRadius.circular(8),
+              // Header with Back Button and Centered Title
+              SizedBox(
+                height: 40,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back,
+                              color: Colors.black, size: 20),
+                          onPressed: () => Navigator.pop(context),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ),
                     ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: Colors.black, size: 20),
-                      onPressed: () => Navigator.pop(context),
-                      padding: EdgeInsets.zero,
+                    const Center(
+                      child: Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'Create Account',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -373,47 +381,51 @@ class _BuyerCreateAccountSecurityScreenState
               const SizedBox(height: 32),
 
               // Create Account Button
-              Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFF00A63E),
-                      Color(0xFF007D2E),
-                    ],
+              Opacity(
+                opacity: _agreeTerms && _agreePrivacy ? 1.0 : 0.5,
+                child: Container(
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF00A63E),
+                        Color(0xFF007D2E),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ElevatedButton(
-                  onPressed: _agreeTerms && _agreePrivacy
-                      ? () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const BuyerCreateAccountVerifyOtpScreen(
-                                phoneNumber: '•••3210',
-                                companyName: 'SunTech Solar Pvt. Ltd.',
-                                location: 'Mumbai',
-                              ),
-                            ),
-                          );
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    shadowColor: Colors.transparent,
-                    disabledBackgroundColor: Colors.grey.shade300,
-                  ),
-                  child: const Text(
-                    'Create Account',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const BuyerCreateAccountVerifyOtpScreen(
+                            phoneNumber: '•••3210',
+                            companyName: 'SunTech Solar Pvt. Ltd.',
+                            location: 'Mumbai',
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      shadowColor: Colors.transparent,
+                    ),
+                    child: const Text(
+                      'Create Account',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),

@@ -18,13 +18,34 @@ class SellerStatusTrackingScreen extends StatefulWidget {
 class _SellerStatusTrackingScreenState
     extends State<SellerStatusTrackingScreen> {
   static const LinearGradient primaryGreenGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
     colors: [
       Color(0xFF00A63E),
       Color(0xFF007D2E),
     ],
   );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.currentStatus == 'Price Offered') {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          _navigateToPriceOffer();
+        }
+      });
+    }
+  }
+
+  void _navigateToPriceOffer() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SellerPriceOfferScreen(),
+      ),
+    );
+  }
 
   final List<Map<String, dynamic>> _statusFlow = [
     {
@@ -59,7 +80,6 @@ class _SellerStatusTrackingScreenState
       'isActive': false,
     },
   ];
-
 
   @override
   Widget build(BuildContext context) {
@@ -205,11 +225,7 @@ class _SellerStatusTrackingScreenState
 
     return IntrinsicHeight(
       child: GestureDetector(
-        onTap: isActive
-            ? () {
-                _showHighestBidBottomSheet();
-              }
-            : null,
+        onTap: isActive ? _navigateToPriceOffer : null,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -327,7 +343,7 @@ class _SellerStatusTrackingScreenState
                     if (status['badge'] != null) ...[
                       const SizedBox(height: 6),
                       GestureDetector(
-                        onTap: _showHighestBidBottomSheet,
+                        onTap: _navigateToPriceOffer,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -373,180 +389,6 @@ class _SellerStatusTrackingScreenState
           ],
         ),
       ),
-    );
-  }
-
-  void _showHighestBidBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Title
-                const Text(
-                  'Highest Bid Offer',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Listing info
-                Text(
-                  '200x Solar Panels 400W',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Bid amount card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFF00A63E),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Offered Price',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ShaderMask(
-                        blendMode: BlendMode.srcIn,
-                        shaderCallback: (bounds) =>
-                            primaryGreenGradient.createShader(bounds),
-                        child: const Text(
-                          'Rs.4,20,000',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Your asking: Rs.4,80,000',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Accept button
-                Container(
-                  width: double.infinity,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    gradient: primaryGreenGradient,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const SellerPriceOfferScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      'View Full Details',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Reject button
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                    side: const BorderSide(
-                      color: Color(0xFF00A63E),
-                      width: 1.5,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Close',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF00A63E),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

@@ -51,9 +51,6 @@ class _SellerCreateAccountVerifyOtpScreenState
     super.dispose();
   }
 
-  String _getOtpValue() {
-    return _otpControllers.map((c) => c.text).join();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -218,34 +215,29 @@ class _SellerCreateAccountVerifyOtpScreenState
                 width: double.infinity,
                 height: 56,
                 decoration: BoxDecoration(
-                  gradient: _getOtpValue().length == 6
-                      ? const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Color(0xFF00A63E),
-                            Color(0xFF007D2E),
-                          ],
-                        )
-                      : null,
-                  color: _getOtpValue().length == 6 ? null : Colors.grey.shade300,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF00A63E),
+                      Color(0xFF007D2E),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: ElevatedButton(
-                  onPressed: _getOtpValue().length == 6
-                      ? () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  SellerAccountCreatedScreen(
-                                companyName: widget.companyName,
-                                location: widget.location,
-                              ),
-                            ),
-                          );
-                        }
-                      : null,
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SellerAccountCreatedScreen(
+                          companyName: widget.companyName,
+                          location: widget.location,
+                        ),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
@@ -259,7 +251,7 @@ class _SellerCreateAccountVerifyOtpScreenState
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: _getOtpValue().length == 6 ? Colors.white : Colors.grey.shade600,
+                      color: Colors.white,
                     ),
                   ),
                 ),

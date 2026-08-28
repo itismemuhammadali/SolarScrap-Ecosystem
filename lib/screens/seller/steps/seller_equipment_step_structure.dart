@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import '../seller_upload_images_screen.dart';
 
 class SellerEquipmentStepStructure extends StatefulWidget {
-  const SellerEquipmentStepStructure({super.key});
+  final bool isCompleteSolarSystem;
+
+  const SellerEquipmentStepStructure({
+    super.key,
+    this.isCompleteSolarSystem = false,
+  });
 
   @override
   State<SellerEquipmentStepStructure> createState() =>
@@ -163,90 +168,94 @@ class _SellerEquipmentStepStructureState
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Progress indicator
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Step 2 of 7',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF71717A),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          '29%',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF00A63E),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Progress indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    widget.isCompleteSolarSystem
+                        ? 'Step 5 of 5 (Complete System)'
+                        : 'Step 2 of 7',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF71717A),
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 8),
-
-                    // 7-segment progress bar
-                    Row(
-                      children: List.generate(7, (index) {
-                        return Expanded(
-                          child: Container(
-                            height: 4,
-                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
-                            decoration: BoxDecoration(
-                              color: index <= 1
-                                  ? const Color(0xFF00A63E)
-                                  : const Color(0xFFE5E7EB),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        );
-                      }),
+                  ),
+                  Text(
+                    widget.isCompleteSolarSystem ? '100%' : '29%',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF00A63E),
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
 
-                    // Category Banner / Capsule
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
+              // Progress bar
+              Row(
+                children: List.generate(widget.isCompleteSolarSystem ? 5 : 7, (index) {
+                  return Expanded(
+                    child: Container(
+                      height: 4,
+                      margin: EdgeInsets.only(
+                          right: index < (widget.isCompleteSolarSystem ? 4 : 6)
+                              ? 6
+                              : 0),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE6F9ED),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: const [
-                          Icon(
-                            Icons.grid_view,
-                            color: Color(0xFF00A63E),
-                            size: 18,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Structure',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF00A63E),
-                            ),
-                          ),
-                        ],
+                        color: index <= (widget.isCompleteSolarSystem ? 4 : 1)
+                            ? const Color(0xFF00A63E)
+                            : const Color(0xFFE5E7EB),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+
+              // Category Banner / Capsule
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE6F9ED),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.grid_view,
+                      color: Color(0xFF00A63E),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.isCompleteSolarSystem
+                          ? 'Complete System · Structure'
+                          : 'Structure',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF00A63E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
                     const SizedBox(height: 16),
 
                     // Structure Type
@@ -265,21 +274,16 @@ class _SellerEquipmentStepStructureState
                       onChanged: (val) => _selectedStructureMetal = val,
                     ),
 
-                    // Price Demand
-                    _buildTextField(
-                      label: 'Price Demand',
-                      hint: 'Rs, 64,00000',
-                      controller: _priceDemandController,
-                    ),
-                  ],
-                ),
+              // Price Demand
+              _buildTextField(
+                label: 'Price Demand',
+                hint: 'Rs, 64,00000',
+                controller: _priceDemandController,
               ),
-            ),
+              const SizedBox(height: 24),
 
-            // Back and Continue buttons
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
+              // Back and Continue buttons
+              Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
@@ -287,7 +291,7 @@ class _SellerEquipmentStepStructureState
                         Navigator.pop(context);
                       },
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
+                        minimumSize: const Size(double.infinity, 52),
                         side: const BorderSide(
                           color: Color(0xFF00A63E),
                           width: 1.5,
@@ -309,10 +313,11 @@ class _SellerEquipmentStepStructureState
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
+                      height: 52,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                           colors: [
                             Color(0xFF00A63E),
                             Color(0xFF007D2E),
@@ -326,8 +331,10 @@ class _SellerEquipmentStepStructureState
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  const SellerUploadImagesScreen(
-                                selectedCategory: 'Structure',
+                                  SellerUploadImagesScreen(
+                                selectedCategory: widget.isCompleteSolarSystem
+                                    ? 'Complete Solar System'
+                                    : 'Structure',
                               ),
                             ),
                           );
@@ -335,7 +342,9 @@ class _SellerEquipmentStepStructureState
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 48),
+                          minimumSize: const Size(double.infinity, 52),
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -352,8 +361,9 @@ class _SellerEquipmentStepStructureState
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

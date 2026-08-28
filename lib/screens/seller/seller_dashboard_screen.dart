@@ -134,7 +134,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       children: [
         CustomPaint(
           size: Size(MediaQuery.of(context).size.width, 68 + MediaQuery.of(context).padding.bottom),
-          painter: const NotchedBottomBarPainter(color: Color(0xFF00A63E)),
+          painter: const NotchedBottomBarPainter(),
           child: SafeArea(
             top: false,
             child: SizedBox(
@@ -1556,17 +1556,27 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
 }
 
 class NotchedBottomBarPainter extends CustomPainter {
-  final Color color;
+  final Gradient gradient;
 
-  const NotchedBottomBarPainter({required this.color});
+  const NotchedBottomBarPainter({
+    this.gradient = const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF00A63E),
+        Color(0xFF007D2E),
+      ],
+    ),
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
     final paint = Paint()
-      ..color = color
+      ..shader = gradient.createShader(rect)
       ..style = PaintingStyle.fill;
 
-    const double cornerRadius = 20.0;
+    const double cornerRadius = 24.0;
     const double notchWidth = 124.0;
     const double halfNotch = notchWidth / 2; // 62.0
     const double notchDepth = 28.0;

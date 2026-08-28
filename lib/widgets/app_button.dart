@@ -23,8 +23,8 @@ class AppButton extends StatelessWidget {
   });
 
   static const LinearGradient greenGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
     colors: [
       Color(0xFF00A63E),
       Color(0xFF007D2E),
@@ -35,35 +35,37 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final active = isEnabled && onPressed != null;
 
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        gradient: active ? greenGradient : null,
-        color: active ? null : Colors.grey.shade300,
-        borderRadius: BorderRadius.circular(borderRadius),
-      ),
-      child: ElevatedButton(
-        onPressed: active ? onPressed : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          disabledBackgroundColor: Colors.transparent,
-          disabledForegroundColor: Colors.grey.shade600,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
-          ),
-          padding: EdgeInsets.zero,
+    return Opacity(
+      opacity: active ? 1.0 : 0.5,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          gradient: greenGradient,
+          borderRadius: BorderRadius.circular(borderRadius),
         ),
-        child: child ??
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: textColor ?? (active ? Colors.white : Colors.grey.shade600),
-              ),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            disabledBackgroundColor: Colors.transparent,
+            disabledForegroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
             ),
+            padding: EdgeInsets.zero,
+          ),
+          child: child ??
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: textColor ?? Colors.white,
+                ),
+              ),
+        ),
       ),
     );
   }

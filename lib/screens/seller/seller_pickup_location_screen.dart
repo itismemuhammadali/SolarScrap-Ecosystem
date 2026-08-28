@@ -108,90 +108,82 @@ class _SellerPickupLocationScreenState
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Progress indicator
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Step 5 of 7',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF71717A),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          '71%',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF00A63E),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Progress indicator
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Step 5 of 7',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF71717A),
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 8),
-
-                    // 7-segment progress bar
-                    Row(
-                      children: List.generate(7, (index) {
-                        return Expanded(
-                          child: Container(
-                            height: 4,
-                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
-                            decoration: BoxDecoration(
-                              color: index <= 4
-                                  ? const Color(0xFF00A63E)
-                                  : const Color(0xFFE5E7EB),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        );
-                      }),
+                  ),
+                  Text(
+                    '71%',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF00A63E),
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 20),
-
-                    // City
-                    _buildTextField(
-                      label: 'City',
-                      hint: 'Karachi',
-                      controller: _cityController,
-                      icon: Icons.location_on_outlined,
-                    ),
-
-                    // Area / Locality
-                    _buildTextField(
-                      label: 'Area / Locality (optional)',
-                      hint: 'DHA Phase 7, karachi',
-                      controller: _areaController,
-                      icon: Icons.location_on_outlined,
-                    ),
-
-                    // Complete Address
-                    _buildTextField(
-                      label: 'Complete Address',
-                      hint: 'Any defects, special conditions, original warranty info...',
-                      controller: _addressController,
-                      icon: Icons.location_on_outlined,
-                      isMultiline: true,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
+              const SizedBox(height: 8),
 
-            // Back and Continue buttons
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
+              // 7-segment progress bar
+              Row(
+                children: List.generate(7, (index) {
+                  return Expanded(
+                    child: Container(
+                      height: 4,
+                      margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
+                      decoration: BoxDecoration(
+                        color: index <= 4
+                            ? const Color(0xFF00A63E)
+                            : const Color(0xFFE5E7EB),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 20),
+
+              // City
+              _buildTextField(
+                label: 'City',
+                hint: 'Karachi',
+                controller: _cityController,
+                icon: Icons.location_on_outlined,
+              ),
+
+              // Area / Locality
+              _buildTextField(
+                label: 'Area / Locality (optional)',
+                hint: 'DHA Phase 7, karachi',
+                controller: _areaController,
+                icon: Icons.location_on_outlined,
+              ),
+
+              // Complete Address
+              _buildTextField(
+                label: 'Complete Address',
+                hint: 'Any defects, special conditions, original warranty info...',
+                controller: _addressController,
+                icon: Icons.location_on_outlined,
+                isMultiline: true,
+              ),
+              const SizedBox(height: 24),
+
+              // Back and Continue buttons
+              Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
@@ -199,7 +191,7 @@ class _SellerPickupLocationScreenState
                         Navigator.pop(context);
                       },
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
+                        minimumSize: const Size(double.infinity, 52),
                         side: const BorderSide(
                           color: Color(0xFF00A63E),
                           width: 1.5,
@@ -221,10 +213,11 @@ class _SellerPickupLocationScreenState
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
+                      height: 52,
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                           colors: [
                             Color(0xFF00A63E),
                             Color(0xFF007D2E),
@@ -245,7 +238,7 @@ class _SellerPickupLocationScreenState
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 48),
+                          minimumSize: const Size(double.infinity, 52),
                           shadowColor: Colors.transparent,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -264,8 +257,9 @@ class _SellerPickupLocationScreenState
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'buyer_privacy_policy_screen.dart';
 import 'buyer_terms_conditions_screen.dart';
+import 'buyer_help_center_screen.dart';
 
 class BuyerSettingsScreen extends StatefulWidget {
   const BuyerSettingsScreen({super.key});
@@ -256,7 +257,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) =>
-                                const BuyerTermsConditionsScreen(),
+                                const BuyerHelpCenterScreen(),
                           ),
                         );
                       },

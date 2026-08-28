@@ -50,9 +50,6 @@ class _BuyerCreateAccountVerifyOtpScreenState
     super.dispose();
   }
 
-  String _getOtpValue() {
-    return _otpControllers.map((c) => c.text).join();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -218,8 +215,8 @@ class _BuyerCreateAccountVerifyOtpScreenState
                 height: 56,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
                       Color(0xFF00A63E),
                       Color(0xFF007D2E),
@@ -228,26 +225,26 @@ class _BuyerCreateAccountVerifyOtpScreenState
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: ElevatedButton(
-                  onPressed: _getOtpValue().length == 6
-                      ? () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  BuyerAccountCreatedScreen(
-                                companyName: widget.companyName,
-                                location: widget.location,
-                              ),
-                            ),
-                          );
-                        }
-                      : null,
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            BuyerAccountCreatedScreen(
+                          companyName: widget.companyName,
+                          location: widget.location,
+                        ),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: const Text(
                     'Verify Account',

@@ -5,10 +5,10 @@ import 'buyer_edit_profile_screen.dart';
 import 'buyer_change_password_screen.dart';
 import 'buyer_settings_screen.dart';
 import 'buyer_notifications_screen.dart';
-import 'buyer_terms_conditions_screen.dart';
 import 'buyer_saved_auctions_screen.dart';
 import 'buyer_auction_details_screen.dart';
 import 'buyer_bid_details_screen.dart';
+import 'buyer_help_center_screen.dart';
 
 class BuyerDashboardScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -297,25 +297,29 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
       body: SafeArea(
         child: _buildTabContent(),
       ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF00A63E),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF00A63E),
+              Color(0xFF007D2E),
+            ],
           ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem('assets/icons/home.svg', 'Home', 0),
-                  _buildNavItem('assets/icons/auction.svg', 'Auctions', 1),
-                  _buildNavItem('assets/icons/my-bid.svg', 'My Bids', 2),
-                  _buildNavItem('assets/icons/person.svg', 'Profile', 3),
-                ],
-              ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem('assets/icons/home.svg', 'Home', 0),
+                _buildNavItem('assets/icons/auction.svg', 'Auctions', 1),
+                _buildNavItem('assets/icons/my-bid.svg', 'My Bids', 2),
+                _buildNavItem('assets/icons/person.svg', 'Profile', 3),
+              ],
             ),
           ),
         ),
@@ -1148,8 +1152,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            const BuyerNotificationsScreen(),
+                        builder: (context) => const BuyerSettingsScreen(),
                       ),
                     );
                   },
@@ -1190,7 +1193,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            const BuyerTermsConditionsScreen(),
+                            const BuyerHelpCenterScreen(),
                       ),
                     );
                   },
