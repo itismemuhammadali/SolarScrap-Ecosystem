@@ -1,9 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/listing.dart';
+import '../../services/listing_service.dart';
 import 'seller_status_tracking_screen.dart';
 
 class SellerListingDetailsScreen extends StatefulWidget {
-  const SellerListingDetailsScreen({super.key});
+  final Listing? listing;
+
+  const SellerListingDetailsScreen({
+    this.listing,
+    super.key,
+  });
 
   @override
   State<SellerListingDetailsScreen> createState() =>
@@ -12,8 +20,124 @@ class SellerListingDetailsScreen extends StatefulWidget {
 
 class _SellerListingDetailsScreenState
     extends State<SellerListingDetailsScreen> {
+  Listing get _listing {
+    if (widget.listing != null) return widget.listing!;
+    return Listing(
+      id: 'SS-ACTIVE',
+      sellerId: '',
+      category: 'Solar Panels',
+      status: 'active',
+      priceDemand: 240000.0,
+      specs: {
+        'panels_count': '200',
+        'watts_per_panel': '400',
+        'panel_condition': 'Good',
+      },
+      imageUrls: [],
+      pickupCity: 'Karachi',
+      pickupArea: 'DHA Phase 7',
+      pickupAddress: 'Street 5, Commercial Area',
+      contactName: 'Abdul Samad',
+      contactPhone: '+92 3012345678',
+      contactEmail: 'seller@suntech.com',
+    );
+  }
+
+  String _getDisplayTitle() {
+    final l = _listing;
+    if (l.category == 'Solar Panels' && l.specs['panels_count'] != null) {
+      return '${l.specs['panels_count']}x Solar Panels ${l.specs['watts_per_panel'] ?? ''}W';
+    } else if (l.category == 'Batteries' && l.specs['battery_count'] != null) {
+      return '${l.specs['battery_count']}x ${l.specs['battery_type'] ?? ''} Batteries';
+    } else if (l.category == 'Inverters' && l.specs['rated_power'] != null) {
+      return '${l.specs['inverter_brand'] ?? ''} ${l.specs['inverter_type'] ?? ''} Inverter';
+    } else if (l.category == 'Cables') {
+      return '${l.specs['cable_type'] ?? ''} Cables ${l.specs['cable_size'] ?? ''}';
+    } else if (l.category == 'Structure') {
+      return '${l.specs['structure_type'] ?? ''} (${l.specs['structure_metal'] ?? ''}) Structure';
+    }
+    return l.category.isNotEmpty ? l.category : 'Equipment Listing';
+  }
+
+  String _formatPrice(double price) {
+    if (price >= 100000) {
+      return 'Rs. ${(price / 100000).toStringAsFixed(1)} Lakh';
+    }
+    return 'Rs. ${price.toStringAsFixed(0)}';
+  }
+
+  String _getFallbackAsset() {
+    final cat = _listing.category;
+    if (cat == 'Batteries') return 'assets/images/battery.jpg';
+    if (cat == 'Inverters') return 'assets/images/inverter.png';
+    if (cat == 'Cables') return 'assets/images/cables.jpg';
+    if (cat == 'Structure') return 'assets/images/structure.png';
+    if (cat == 'Complete Solar System') return 'assets/images/complete-solar-system.jpg';
+    return 'assets/images/solar-panel.jpg';
+  }
+
+  Widget _buildImage(String urlOrPath, {required double width, required double height, required double radius}) {
+    if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://') || urlOrPath.startsWith('/api/')) {
+      final fullUrl = ListingService.instance.getFullImageUrl(urlOrPath);
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: Image.network(
+          fullUrl ?? urlOrPath,
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Image.asset(
+            _getFallbackAsset(),
+            width: width,
+            height: height,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    } else if (urlOrPath.startsWith('/') || urlOrPath.startsWith('file://')) {
+      final clean = urlOrPath.replaceFirst('file://', '');
+      final file = File(clean);
+      if (file.existsSync()) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(radius),
+          child: Image.file(
+            file,
+            width: width,
+            height: height,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Image.asset(
+              _getFallbackAsset(),
+              width: width,
+              height: height,
+              fit: BoxFit.cover,
+            ),
+          ),
+        );
+      }
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: Image.asset(
+        urlOrPath.isNotEmpty ? urlOrPath : _getFallbackAsset(),
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          _getFallbackAsset(),
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l = _listing;
+    final displayId = l.id.length > 12 ? l.id.substring(0, 12).toUpperCase() : l.id.toUpperCase();
+    final statusLabel = l.status == 'active' ? 'Active' : (l.status == 'under_review' ? 'Under Review' : l.status);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -47,27 +171,6 @@ class _SellerListingDetailsScreenState
             color: Colors.black,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.edit_outlined,
-                color: Color(0xFF00A63E),
-                size: 18,
-              ),
-            ),
-            onPressed: () {
-              // TODO: Navigate to edit listing
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -76,53 +179,29 @@ class _SellerListingDetailsScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image Gallery
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    // Main large image
-                    Container(
-                      width: 260,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/solar-panel.jpg'),
-                          fit: BoxFit.cover,
+              if (l.imageUrls.isNotEmpty)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: l.imageUrls.asMap().entries.map((entry) {
+                      final idx = entry.key;
+                      final url = entry.value;
+                      final isFirst = idx == 0;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: _buildImage(
+                          url,
+                          width: isFirst ? 260 : 120,
+                          height: 180,
+                          radius: isFirst ? 16 : 12,
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
+                      );
+                    }).toList(),
+                  ),
+                )
+              else
+                _buildImage(_getFallbackAsset(), width: double.infinity, height: 200, radius: 16),
 
-                    // Secondary images
-                    Container(
-                      width: 100,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/battery.jpg'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-
-                    // Third image
-                    Container(
-                      width: 100,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: const DecorationImage(
-                          image: AssetImage('assets/images/inverter.png'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 16),
 
               // Title and Badge
@@ -134,17 +213,17 @@ class _SellerListingDetailsScreenState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          '200x Solar Panels 400W',
-                          style: TextStyle(
-                            fontSize: 16,
+                        Text(
+                          _getDisplayTitle(),
+                          style: const TextStyle(
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'SS-2024-001 · Posted Dec 18, 2024',
+                          '$displayId · ${l.category}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade600,
@@ -162,9 +241,9 @@ class _SellerListingDetailsScreenState
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
-                      'Price Offered',
-                      style: TextStyle(
+                    child: Text(
+                      statusLabel,
+                      style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF00A63E),
@@ -189,7 +268,7 @@ class _SellerListingDetailsScreenState
                   Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                 ),
                 child: Text(
-                  'Rs.4,80,000',
+                  _formatPrice(l.priceDemand),
                   style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
@@ -225,14 +304,20 @@ class _SellerListingDetailsScreenState
                     ),
                     const SizedBox(height: 8),
 
-                    // Details rows with separator lines
-                    _buildDetailRow('Category', 'Solar Panels'),
-                    _buildDetailRow('Quantity', '200 panels'),
-                    _buildDetailRow('Wattage', '400W per panel'),
-                    _buildDetailRow('Manufacturer', 'Waaree Energies'),
-                    _buildDetailRow('Condition', 'Good'),
-                    _buildDetailRow('Purchase Year', '2019'),
-                    _buildDetailRow('Weight', '~2,400 kg', showDivider: false),
+                    _buildDetailRow('Category', l.category),
+                    ...l.specs.entries.map((e) {
+                      final keyFormatted = e.key
+                          .split('_')
+                          .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+                          .join(' ');
+                      return _buildDetailRow(keyFormatted, e.value.toString());
+                    }),
+                    _buildDetailRow('Pickup City', l.pickupCity),
+                    if (l.pickupArea != null && l.pickupArea!.isNotEmpty)
+                      _buildDetailRow('Pickup Area', l.pickupArea!),
+                    _buildDetailRow('Address', l.pickupAddress),
+                    _buildDetailRow('Contact Person', l.contactName),
+                    _buildDetailRow('Contact Phone', l.contactPhone, showDivider: false),
                   ],
                 ),
               ),
@@ -244,9 +329,8 @@ class _SellerListingDetailsScreenState
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const SellerStatusTrackingScreen(
-                        currentStatus: 'Price Offered',
+                      builder: (context) => SellerStatusTrackingScreen(
+                        currentStatus: statusLabel,
                       ),
                     ),
                   );
@@ -309,12 +393,16 @@ class _SellerListingDetailsScreenState
                   color: const Color(0xFF71717A),
                 ),
               ),
-              Text(
-                value,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF18181B),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.right,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF18181B),
+                  ),
                 ),
               ),
             ],

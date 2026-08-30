@@ -1,11 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../models/listing_draft.dart';
+import '../../services/listing_service.dart';
 import 'seller_pickup_location_screen.dart';
 
 class SellerUploadImagesScreen extends StatefulWidget {
   final String selectedCategory;
+  final ListingDraft? draft;
 
   const SellerUploadImagesScreen({
     required this.selectedCategory,
+    this.draft,
     super.key,
   });
 
@@ -15,45 +21,49 @@ class SellerUploadImagesScreen extends StatefulWidget {
 }
 
 class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
-  late final List<String> _uploadedImages;
+  final List<File> _pickedImageFiles = [];
   final int _maxImages = 10;
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
 
-  final List<String> _sampleImages = [
-    'assets/images/solar-panel.jpg',
-    'assets/images/battery.jpg',
-    'assets/images/inverter.png',
-    'assets/images/cables.jpg',
-    'assets/images/structure.png',
-    'assets/images/complete-solar-system.jpg',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    // Pre-populate with 3 random images
-    _uploadedImages = [];
-    for (int i = 0; i < 3; i++) {
-      _uploadedImages.add(_sampleImages[i % _sampleImages.length]);
-    }
-  }
-
-  void _addPhoto(String imagePath) {
-    if (_uploadedImages.length < _maxImages) {
-      setState(() {
-        _uploadedImages.add(imagePath);
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Maximum $_maxImages photos allowed'),
-        ),
-      );
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      if (source == ImageSource.gallery) {
+        final List<XFile> picked = await _picker.pickMultiImage(imageQuality: 80);
+        if (picked.isNotEmpty) {
+          setState(() {
+            for (var xFile in picked) {
+              if (_pickedImageFiles.length < _maxImages) {
+                _pickedImageFiles.add(File(xFile.path));
+              }
+            }
+          });
+        }
+      } else {
+        final XFile? picked = await _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 80,
+        );
+        if (picked != null) {
+          if (_pickedImageFiles.length < _maxImages) {
+            setState(() {
+              _pickedImageFiles.add(File(picked.path));
+            });
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
     }
   }
 
   void _removePhoto(int index) {
     setState(() {
-      _uploadedImages.removeAt(index);
+      _pickedImageFiles.removeAt(index);
     });
   }
 
@@ -70,8 +80,7 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
               title: const Text('Camera'),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Implement camera functionality
-                _addPhoto('assets/images/solar-panel.jpg');
+                _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
@@ -79,14 +88,63 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
               title: const Text('Gallery'),
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Implement gallery functionality
-                _addPhoto('assets/images/battery.jpg');
+                _pickImage(ImageSource.gallery);
               },
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _onContinue() async {
+    final currentDraft = widget.draft ?? ListingDraft(category: widget.selectedCategory);
+
+    // If images were picked, upload them to the server/storage
+    if (_pickedImageFiles.isNotEmpty) {
+      setState(() {
+        _isUploading = true;
+      });
+
+      final List<String> uploadedUrls = [];
+      for (final file in _pickedImageFiles) {
+        final url = await ListingService.instance.uploadListingImage(file);
+        if (url != null) {
+          uploadedUrls.add(url);
+        }
+        // If upload fails, skip — don't store useless local device paths
+      }
+
+      if (uploadedUrls.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Image upload failed. Please check your connection and try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isUploading = false);
+        return;
+      }
+
+      currentDraft.imageUrls = uploadedUrls;
+
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SellerPickupLocationScreen(
+            draft: currentDraft,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -195,11 +253,11 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                   mainAxisSpacing: 10,
                   childAspectRatio: 1,
                 ),
-                itemCount: _uploadedImages.length + 1,
+                itemCount: _pickedImageFiles.length + 1,
                 itemBuilder: (context, index) {
                   // Add photo button
-                  if (index == _uploadedImages.length &&
-                      _uploadedImages.length < _maxImages) {
+                  if (index == _pickedImageFiles.length &&
+                      _pickedImageFiles.length < _maxImages) {
                     return GestureDetector(
                       onTap: _showPhotoOptions,
                       child: Container(
@@ -235,14 +293,15 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                   }
 
                   // Uploaded images
-                  if (index < _uploadedImages.length) {
+                  if (index < _pickedImageFiles.length) {
+                    final file = _pickedImageFiles[index];
                     return Stack(
                       children: [
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             image: DecorationImage(
-                              image: AssetImage(_uploadedImages[index]),
+                              image: FileImage(file),
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -281,9 +340,7 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        _addPhoto('assets/images/inverter.png');
-                      },
+                      onTap: () => _pickImage(ImageSource.camera),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           vertical: 12,
@@ -321,9 +378,7 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        _addPhoto('assets/images/cables.jpg');
-                      },
+                      onTap: () => _pickImage(ImageSource.gallery),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           vertical: 12,
@@ -367,9 +422,11 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      onPressed: _isUploading
+                          ? null
+                          : () {
+                              Navigator.pop(context);
+                            },
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 52),
                         side: const BorderSide(
@@ -406,15 +463,7 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const SellerPickupLocationScreen(),
-                            ),
-                          );
-                        },
+                        onPressed: _isUploading ? null : _onContinue,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,
@@ -425,13 +474,22 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: _isUploading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Continue',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ),

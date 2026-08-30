@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../models/listing_draft.dart';
+import '../../services/profile_service.dart';
 import 'seller_listing_preview_screen.dart';
 
 class SellerContactInformationScreen extends StatefulWidget {
-  const SellerContactInformationScreen({super.key});
+  final ListingDraft? draft;
+
+  const SellerContactInformationScreen({
+    this.draft,
+    super.key,
+  });
 
   @override
   State<SellerContactInformationScreen> createState() =>
@@ -11,15 +18,41 @@ class SellerContactInformationScreen extends StatefulWidget {
 
 class _SellerContactInformationScreenState
     extends State<SellerContactInformationScreen> {
-  final TextEditingController _nameController = TextEditingController(
-    text: 'Abdul Samad',
-  );
-  final TextEditingController _phoneController = TextEditingController(
-    text: '+92 3012345678',
-  );
-  final TextEditingController _emailController = TextEditingController(
-    text: 'abdul@suntech.com',
-  );
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillContactInfo();
+  }
+
+  Future<void> _prefillContactInfo() async {
+    // If draft already has contact info, use that
+    if (widget.draft?.contactName != null && widget.draft!.contactName!.isNotEmpty) {
+      _nameController.text = widget.draft!.contactName!;
+      _phoneController.text = widget.draft!.contactPhone ?? '';
+      _emailController.text = widget.draft!.contactEmail ?? '';
+      return;
+    }
+
+    // Otherwise load from profile service
+    final profile = await ProfileService.instance.fetchProfile();
+    if (profile != null && mounted) {
+      setState(() {
+        if (_nameController.text.isEmpty && profile.displayName.isNotEmpty) {
+          _nameController.text = profile.displayName;
+        }
+        if (_phoneController.text.isEmpty && profile.phoneNumber.isNotEmpty) {
+          _phoneController.text = profile.phoneNumber;
+        }
+        if (_emailController.text.isEmpty && profile.email.isNotEmpty) {
+          _emailController.text = profile.email;
+        }
+      });
+    }
+  }
 
   Widget _buildTextField({
     required String label,
@@ -72,6 +105,22 @@ class _SellerContactInformationScreenState
         ),
         const SizedBox(height: 12),
       ],
+    );
+  }
+
+  void _onContinue() {
+    final currentDraft = widget.draft ?? ListingDraft();
+    currentDraft.contactName = _nameController.text.trim();
+    currentDraft.contactPhone = _phoneController.text.trim();
+    currentDraft.contactEmail = _emailController.text.trim();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SellerListingPreviewScreen(
+          draft: currentDraft,
+        ),
+      ),
     );
   }
 
@@ -262,15 +311,7 @@ class _SellerContactInformationScreenState
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const SellerListingPreviewScreen(),
-                            ),
-                          );
-                        },
+                        onPressed: _onContinue,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,

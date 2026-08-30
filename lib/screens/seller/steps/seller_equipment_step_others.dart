@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../../models/listing_draft.dart';
 import '../seller_upload_images_screen.dart';
 
 class SellerEquipmentStepOthers extends StatefulWidget {
   final bool isCompleteSolarSystem;
+  final ListingDraft? draft;
 
   const SellerEquipmentStepOthers({
     super.key,
     this.isCompleteSolarSystem = true,
+    this.draft,
   });
 
   @override
@@ -17,7 +20,7 @@ class SellerEquipmentStepOthers extends StatefulWidget {
 class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
   final TextEditingController _commentsController = TextEditingController();
   final TextEditingController _priceDemandController = TextEditingController();
-  String _totalPriceDemand = 'Rs, 64,00000';
+  String _totalPriceDemand = 'Rs 0';
 
   @override
   void initState() {
@@ -29,7 +32,7 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
               ? _priceDemandController.text
               : 'Rs, ${_priceDemandController.text}';
         } else {
-          _totalPriceDemand = 'Rs, 64,00000';
+          _totalPriceDemand = 'Rs 0';
         }
       });
     });
@@ -131,43 +134,53 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Progress indicator
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Step 4 of 4',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF71717A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    '100%',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF00A63E),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+              Builder(
+                builder: (context) {
+                  final bool isHybrid = (widget.draft?.specs['inverter_type'] as String?)?.trim().toLowerCase() == 'hybrid';
+                  final int totalSteps = isHybrid ? 5 : 4;
+                  final String stepText = 'Step $totalSteps of $totalSteps (Final Details)';
 
-              // 4-segment progress bar (100% filled green)
-              Row(
-                children: List.generate(4, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(right: index < 3 ? 6 : 0),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00A63E),
-                        borderRadius: BorderRadius.circular(2),
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            stepText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF71717A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const Text(
+                            '100%',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF00A63E),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: List.generate(totalSteps, (index) {
+                          return Expanded(
+                            child: Container(
+                              height: 4,
+                              margin: EdgeInsets.only(right: index < totalSteps - 1 ? 6 : 0),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00A63E),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   );
-                }),
+                },
               ),
               const SizedBox(height: 20),
 
@@ -262,11 +275,17 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
                       ),
                       child: ElevatedButton(
                         onPressed: () {
+                          final currentDraft = widget.draft ?? ListingDraft(category: 'Complete Solar System');
+                          currentDraft.specs['others_comments'] = _commentsController.text.trim();
+
+                          final clean = _priceDemandController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+                          currentDraft.priceDemand = double.tryParse(clean) ?? 0.0;
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const SellerUploadImagesScreen(
+                              builder: (context) => SellerUploadImagesScreen(
+                                draft: currentDraft,
                                 selectedCategory: 'Complete Solar System',
                               ),
                             ),

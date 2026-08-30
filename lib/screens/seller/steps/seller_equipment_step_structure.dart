@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../../models/listing_draft.dart';
 import '../seller_upload_images_screen.dart';
 import 'seller_equipment_step_others.dart';
 
 class SellerEquipmentStepStructure extends StatefulWidget {
   final bool isCompleteSolarSystem;
+  final ListingDraft? draft;
 
   const SellerEquipmentStepStructure({
     super.key,
     this.isCompleteSolarSystem = false,
+    this.draft,
   });
 
   @override
@@ -178,50 +181,61 @@ class _SellerEquipmentStepStructureState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Progress indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.isCompleteSolarSystem
-                        ? 'Step 5 of 5 (Complete System)'
-                        : 'Step 2 of 7',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF71717A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    widget.isCompleteSolarSystem ? '100%' : '29%',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF00A63E),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+              Builder(
+                builder: (context) {
+                  final bool isHybrid = (widget.draft?.specs['inverter_type'] as String?)?.trim().toLowerCase() == 'hybrid';
+                  final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 5 : 4) : 7;
+                  final int currentStep = widget.isCompleteSolarSystem ? (isHybrid ? 5 : 4) : 2;
+                  final String stepText = widget.isCompleteSolarSystem
+                      ? 'Step $currentStep of $totalSteps (Structure)'
+                      : 'Step 2 of 7';
+                  final String percentText = widget.isCompleteSolarSystem
+                      ? '${((currentStep / totalSteps) * 100).round()}%'
+                      : '29%';
 
-              // Progress bar
-              Row(
-                children: List.generate(widget.isCompleteSolarSystem ? 5 : 7, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(
-                          right: index < (widget.isCompleteSolarSystem ? 4 : 6)
-                              ? 6
-                              : 0),
-                      decoration: BoxDecoration(
-                        color: index <= (widget.isCompleteSolarSystem ? 4 : 1)
-                            ? const Color(0xFF00A63E)
-                            : const Color(0xFFE5E7EB),
-                        borderRadius: BorderRadius.circular(2),
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            stepText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF71717A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            percentText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF00A63E),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: List.generate(totalSteps, (index) {
+                          return Expanded(
+                            child: Container(
+                              height: 4,
+                              margin: EdgeInsets.only(right: index < totalSteps - 1 ? 6 : 0),
+                              decoration: BoxDecoration(
+                                color: index < currentStep
+                                    ? const Color(0xFF00A63E)
+                                    : const Color(0xFFE5E7EB),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   );
-                }),
+                },
               ),
               const SizedBox(height: 16),
 
@@ -275,12 +289,13 @@ class _SellerEquipmentStepStructureState
                       onChanged: (val) => _selectedStructureMetal = val,
                     ),
 
-              // Price Demand
-              _buildTextField(
-                label: 'Price Demand',
-                hint: 'Rs, 64,00000',
-                controller: _priceDemandController,
-              ),
+              // Price Demand (only if not Complete Solar System)
+              if (!widget.isCompleteSolarSystem)
+                _buildTextField(
+                  label: 'Price Demand',
+                  hint: 'Rs, 64,00000',
+                  controller: _priceDemandController,
+                ),
               const SizedBox(height: 24),
 
               // Back and Continue buttons
@@ -328,13 +343,22 @@ class _SellerEquipmentStepStructureState
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          if (widget.isCompleteSolarSystem) {
+                          final currentDraft = widget.draft ?? ListingDraft(
+                            category: widget.isCompleteSolarSystem ? 'Complete Solar System' : 'Structure',
+                          );
+
+                          currentDraft.specs['structure_type'] = _selectedStructureType;
+                          currentDraft.specs['structure_metal'] = _selectedStructureMetal;
+
+                          if (!widget.isCompleteSolarSystem) {
+                            final clean = _priceDemandController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+                            currentDraft.priceDemand = double.tryParse(clean) ?? 0.0;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const SellerEquipmentStepOthers(
-                                  isCompleteSolarSystem: true,
+                                builder: (context) => SellerUploadImagesScreen(
+                                  draft: currentDraft,
+                                  selectedCategory: 'Structure',
                                 ),
                               ),
                             );
@@ -342,9 +366,9 @@ class _SellerEquipmentStepStructureState
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const SellerUploadImagesScreen(
-                                  selectedCategory: 'Structure',
+                                builder: (context) => SellerEquipmentStepOthers(
+                                  isCompleteSolarSystem: true,
+                                  draft: currentDraft,
                                 ),
                               ),
                             );

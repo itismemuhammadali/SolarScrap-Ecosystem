@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../models/listing_draft.dart';
 import '../seller_upload_images_screen.dart';
-import 'seller_equipment_step_batteries.dart';
+import 'seller_equipment_step_inverters.dart';
 
 class SellerEquipmentStepSolarPanels extends StatefulWidget {
   final bool isCompleteSolarSystem;
+  final ListingDraft? draft;
 
   const SellerEquipmentStepSolarPanels({
     super.key,
     this.isCompleteSolarSystem = false,
+    this.draft,
   });
 
   @override
@@ -147,6 +150,47 @@ class _SellerEquipmentStepSolarPanelsState
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  double _parsePrice(String text) {
+    final clean = text.replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(clean) ?? 0.0;
+  }
+
+  void _onContinue() {
+    final currentDraft = widget.draft ?? ListingDraft(
+      category: widget.isCompleteSolarSystem ? 'Complete Solar System' : 'Solar Panels',
+    );
+
+    final panelCount = int.tryParse(_panelsCountController.text.trim());
+    final watts = int.tryParse(_wattsController.text.trim());
+
+    currentDraft.specs['panels_count'] = panelCount ?? _panelsCountController.text.trim();
+    currentDraft.specs['watts_per_panel'] = watts ?? _wattsController.text.trim();
+    currentDraft.specs['panel_condition'] = _selectedCondition;
+
+    if (!widget.isCompleteSolarSystem) {
+      currentDraft.priceDemand = _parsePrice(_priceDemandController.text);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SellerUploadImagesScreen(
+            draft: currentDraft,
+            selectedCategory: 'Solar Panels',
+          ),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SellerEquipmentStepInverters(
+            isCompleteSolarSystem: true,
+            draft: currentDraft,
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -293,12 +337,13 @@ class _SellerEquipmentStepSolarPanelsState
                 controller: _wattsController,
               ),
 
-              // Price Demand
-              _buildTextField(
-                label: 'Price Demand',
-                hint: 'Rs 45, 000 000',
-                controller: _priceDemandController,
-              ),
+              // Price Demand (only for individual category)
+              if (!widget.isCompleteSolarSystem)
+                _buildTextField(
+                  label: 'Price Demand',
+                  hint: 'Rs 45, 000 000',
+                  controller: _priceDemandController,
+                ),
 
               // Panel Condition
               _buildConditionOptions(),
@@ -348,29 +393,7 @@ class _SellerEquipmentStepSolarPanelsState
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
-                          if (widget.isCompleteSolarSystem) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const SellerEquipmentStepBatteries(
-                                  isCompleteSolarSystem: true,
-                                ),
-                              ),
-                            );
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const SellerUploadImagesScreen(
-                                  selectedCategory: 'Solar Panels',
-                                ),
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: _onContinue,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,

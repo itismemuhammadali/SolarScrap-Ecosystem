@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../models/listing_draft.dart';
 import '../seller_upload_images_screen.dart';
+import 'seller_equipment_step_batteries.dart';
 import 'seller_equipment_step_cables.dart';
 
 class SellerEquipmentStepInverters extends StatefulWidget {
   final bool isCompleteSolarSystem;
+  final ListingDraft? draft;
 
   const SellerEquipmentStepInverters({
     super.key,
     this.isCompleteSolarSystem = false,
+    this.draft,
   });
 
   @override
@@ -182,50 +186,60 @@ class _SellerEquipmentStepInvertersState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Progress indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.isCompleteSolarSystem
-                        ? 'Step 3 of 5 (Complete System)'
-                        : 'Step 2 of 7',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF71717A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    widget.isCompleteSolarSystem ? '60%' : '29%',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF00A63E),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+              Builder(
+                builder: (context) {
+                  final bool isHybrid = _selectedInverterType.trim().toLowerCase() == 'hybrid';
+                  final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 5 : 4) : 7;
+                  final String stepText = widget.isCompleteSolarSystem
+                      ? 'Step 2 of $totalSteps (Inverters)'
+                      : 'Step 2 of 7';
+                  final String percentText = widget.isCompleteSolarSystem
+                      ? '${((2 / totalSteps) * 100).round()}%'
+                      : '29%';
 
-              // Progress bar
-              Row(
-                children: List.generate(widget.isCompleteSolarSystem ? 5 : 7, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(
-                          right: index < (widget.isCompleteSolarSystem ? 4 : 6)
-                              ? 6
-                              : 0),
-                      decoration: BoxDecoration(
-                        color: index <= (widget.isCompleteSolarSystem ? 2 : 1)
-                            ? const Color(0xFF00A63E)
-                            : const Color(0xFFE5E7EB),
-                        borderRadius: BorderRadius.circular(2),
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            stepText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF71717A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            percentText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF00A63E),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: List.generate(totalSteps, (index) {
+                          return Expanded(
+                            child: Container(
+                              height: 4,
+                              margin: EdgeInsets.only(right: index < totalSteps - 1 ? 6 : 0),
+                              decoration: BoxDecoration(
+                                color: index <= 1
+                                    ? const Color(0xFF00A63E)
+                                    : const Color(0xFFE5E7EB),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   );
-                }),
+                },
               ),
               const SizedBox(height: 16),
 
@@ -285,12 +299,13 @@ class _SellerEquipmentStepInvertersState
                       controller: _brandController,
                     ),
 
-                    // Price Demand
-                    _buildTextField(
-                      label: 'Price Demand',
-                      hint: 'Rs, 64,00000',
-                      controller: _priceDemandController,
-                    ),
+                    // Price Demand (only if not Complete Solar System)
+                    if (!widget.isCompleteSolarSystem)
+                      _buildTextField(
+                        label: 'Price Demand',
+                        hint: 'Rs, 64,00000',
+                        controller: _priceDemandController,
+                      ),
 
               // Condition
               _buildOptionButtons(
@@ -346,26 +361,59 @@ class _SellerEquipmentStepInvertersState
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          if (widget.isCompleteSolarSystem) {
+                          final currentDraft = widget.draft ?? ListingDraft(
+                            category: widget.isCompleteSolarSystem ? 'Complete Solar System' : 'Inverters',
+                          );
+
+                          currentDraft.specs['inverter_type'] = _selectedInverterType;
+                          currentDraft.specs['rated_power'] = _ratedPowerController.text.trim();
+                          currentDraft.specs['inverter_brand'] = _brandController.text.trim();
+                          currentDraft.specs['inverter_condition'] = _selectedCondition;
+
+                          if (!widget.isCompleteSolarSystem) {
+                            final clean = _priceDemandController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+                            currentDraft.priceDemand = double.tryParse(clean) ?? 0.0;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const SellerEquipmentStepCables(
-                                  isCompleteSolarSystem: true,
-                                ),
-                              ),
-                            );
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const SellerUploadImagesScreen(
+                                builder: (context) => SellerUploadImagesScreen(
+                                  draft: currentDraft,
                                   selectedCategory: 'Inverters',
                                 ),
                               ),
                             );
+                          } else {
+                            final isHybrid = _selectedInverterType.trim().toLowerCase() == 'hybrid';
+                            if (isHybrid) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SellerEquipmentStepBatteries(
+                                    isCompleteSolarSystem: true,
+                                    draft: currentDraft,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              // On-Grid: Clean up any battery fields and skip directly to Cables
+                              currentDraft.specs.remove('battery_type');
+                              currentDraft.specs.remove('battery_count');
+                              currentDraft.specs.remove('battery_capacity');
+                              currentDraft.specs.remove('battery_brand');
+                              currentDraft.specs.remove('battery_purchase_year');
+                              currentDraft.specs.remove('battery_years_used');
+                              currentDraft.specs.remove('battery_condition');
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SellerEquipmentStepCables(
+                                    isCompleteSolarSystem: true,
+                                    draft: currentDraft,
+                                  ),
+                                ),
+                              );
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(

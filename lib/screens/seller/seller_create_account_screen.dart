@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../models/registration_data.dart';
 import 'seller_create_account_security_screen.dart';
 
 class SellerCreateAccountScreen extends StatefulWidget {
@@ -20,6 +23,9 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
   final TextEditingController _areaController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
+
   String _selectedCompanyType = 'Private Limited';
   final List<String> _companyTypes = [
     'Private Limited',
@@ -28,6 +34,193 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
     'Sole Proprietorship',
     'Corporation',
   ];
+
+  Future<void> _pickProfileImage(ImageSource source) async {
+    try {
+      final picked = await _picker.pickImage(source: source, imageQuality: 85);
+      if (picked != null) {
+        setState(() {
+          _profileImage = File(picked.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
+    }
+  }
+
+  void _showImagePickerModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Add Profile Photo',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF151516),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.camera_alt, color: Color(0xFF00A63E), size: 20),
+                ),
+                title: Text(
+                  'Take Photo (Camera)',
+                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickProfileImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.photo_library, color: Color(0xFF00A63E), size: 20),
+                ),
+                title: Text(
+                  'Choose from Gallery',
+                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickProfileImage(ImageSource.gallery);
+                },
+              ),
+              if (_profileImage != null)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                  ),
+                  title: Text(
+                    'Remove Photo',
+                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _profileImage = null);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfilePhotoPicker() {
+    return Center(
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              GestureDetector(
+                onTap: _showImagePickerModal,
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFF3F4F6),
+                    border: Border.all(
+                      color: _profileImage != null
+                          ? const Color(0xFF00A63E)
+                          : const Color(0xFFE5E7EB),
+                      width: 2.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: _profileImage != null
+                        ? Image.file(
+                            _profileImage!,
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.person_outline,
+                                size: 40,
+                                color: Colors.grey.shade400,
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: GestureDetector(
+                  onTap: _showImagePickerModal,
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00A63E),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Icon(
+                      _profileImage != null ? Icons.edit : Icons.camera_alt,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _profileImage != null ? 'Change Photo' : 'Upload Profile Picture (Optional)',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF00A63E),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -107,7 +300,11 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                   color: const Color(0xFF6B7280),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+
+              // Profile Photo Picker Avatar
+              _buildProfilePhotoPicker(),
+              const SizedBox(height: 20),
 
               // Full Name Input
               _buildInputField(
@@ -308,11 +505,37 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                 ),
                 child: ElevatedButton(
                   onPressed: () {
+                    // Validation
+                    if (_fullNameController.text.trim().isEmpty ||
+                        _emailController.text.trim().isEmpty ||
+                        _phoneController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please fill in Name, Email, and Phone'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    final data = RegistrationData(
+                      role: 'seller',
+                      fullName: _fullNameController.text.trim(),
+                      email: _emailController.text.trim(),
+                      phoneNumber: _phoneController.text.trim(),
+                      companyName: _companyNameController.text.trim(),
+                      city: _cityController.text.trim(),
+                      area: _areaController.text.trim(),
+                      address: _addressController.text.trim(),
+                      companyType: _selectedCompanyType,
+                      profilePhotoFile: _profileImage,
+                    );
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            const SellerCreateAccountSecurityScreen(),
+                            SellerCreateAccountSecurityScreen(data: data),
                       ),
                     );
                   },

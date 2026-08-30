@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../seller/seller_new_listing_screen.dart';
 import 'buyer_dashboard_screen.dart';
 
 class BuyerAccountCreatedScreen extends StatefulWidget {
@@ -216,17 +215,18 @@ class _BuyerAccountCreatedScreenState
                 ),
                 const SizedBox(height: 12),
 
-                // Create First Listing Button
+                // Browse Auctions Button
                 SizedBox(
                   width: double.infinity,
                   height: 54,
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SellerNewListingScreen(),
+                          builder: (context) => const BuyerDashboardScreen(),
                         ),
+                        (route) => false,
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -240,7 +240,7 @@ class _BuyerAccountCreatedScreenState
                       ),
                     ),
                     child: const Text(
-                      'Create First Listing',
+                      'Browse Auctions',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

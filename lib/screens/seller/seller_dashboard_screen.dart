@@ -1,11 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/listing.dart';
+import '../../models/notification_item.dart';
+import '../../models/seller_profile.dart';
+import '../../models/seller_stats.dart';
+import '../../services/listing_service.dart';
+import '../../services/notification_service.dart';
+import '../../services/profile_service.dart';
 import 'seller_edit_profile_screen.dart';
 import 'seller_settings_screen.dart';
 import 'seller_new_listing_screen.dart';
 import 'seller_listing_details_screen.dart';
 import '../role_selection_screen.dart';
+
 
 class SellerDashboardScreen extends StatefulWidget {
   const SellerDashboardScreen({super.key});
@@ -19,101 +28,188 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   String _selectedFilter = 'All';
   String _searchQuery = '';
 
-  final List<Map<String, dynamic>> _allListings = [
-    {
-      'image': 'assets/images/home-listing-1.jpg',
-      'title': '200x Solar Panels 400W',
-      'id': 'SS-2024-001',
-      'time': '2 hours ago',
-      'status': 'Under Review',
-      'price': 'Rs. 2,40,000',
-    },
-    {
-      'image': 'assets/images/home-listing-2.jpg',
-      'title': '50x Li-ion Batteries 200Ah',
-      'id': 'SS-2024-002',
-      'time': '1 day ago',
-      'status': 'Submitted',
-      'price': 'Rs. 2,40,000',
-    },
-    {
-      'image': 'assets/images/home-listing-3.jpg',
-      'title': '20x 5kW Inverters',
-      'id': 'SS-2024-003',
-      'time': '3 days ago',
-      'status': 'Submitted',
-      'price': 'Rs. 2,40,000',
-    },
-    {
-      'image': 'assets/images/listing-4.jpg',
-      'title': '15x 10kW Inverters',
-      'id': 'SS-2024-004',
-      'time': '2 days ago',
-      'status': 'Submitted',
-      'price': 'Rs. 3,50,000',
-    },
-    {
-      'image': 'assets/images/listing-5.jpg',
-      'title': '30x 3kW Inverters',
-      'id': 'SS-2024-005',
-      'time': '1 week ago',
-      'status': 'Submitted',
-      'price': 'Rs. 1,80,000',
-    },
-  ];
+  SellerProfile? _profile;
+  SellerStats? _stats;
+  List<Listing> _myListings = [];
+  List<NotificationItem> _notifications = [];
+  bool _isProfileLoading = false;
 
-  final List<Map<String, dynamic>> _alerts = [
-    {
-      'id': '1',
-      'icon': 'assets/icons/dollar.svg',
-      'iconBg': const Color(0xFFDCFCE7),
-      'iconColor': const Color(0xFF16A34A),
-      'title': 'New Price Offer',
-      'isUnread': true,
-      'description': 'Admin offered Rs.4,20,000 for your Solar Panels listing',
-      'time': '2 min ago',
-    },
-    {
-      'id': '2',
-      'icon': 'assets/icons/clock.svg',
-      'iconBg': const Color(0xFFEFF6FF),
-      'iconColor': const Color(0xFF2563EB),
-      'title': 'Listing Under Review',
-      'isUnread': true,
-      'description': 'SS-2024-005 is now being reviewed by our team',
-      'time': '1 hr ago',
-    },
-    {
-      'id': '3',
-      'icon': 'assets/icons/stocks.svg',
-      'iconBg': const Color(0xFFF3E8FF),
-      'iconColor': const Color(0xFF9333EA),
-      'title': 'Auction Live!',
-      'isUnread': false,
-      'description': 'SS-2024-003 (20x Inverters) auction has started',
-      'time': '3 hrs ago',
-    },
-    {
-      'id': '4',
-      'icon': 'assets/icons/dollar.svg',
-      'iconBg': const Color(0xFFDCFCE7),
-      'iconColor': const Color(0xFF16A34A),
-      'title': 'Deal Closed',
-      'isUnread': false,
-      'description': 'Congratulations! SS-2024-004 deal is finalized',
-      'time': '2 days ago',
-    },
-    {
-      'id': '5',
-      'icon': 'assets/icons/bell.svg',
-      'iconBg': const Color(0xFFF3F4F6),
-      'iconColor': const Color(0xFF6B7280),
-      'title': 'Profile Verified',
-      'isUnread': false,
-      'description': 'Your company documents have been verified successfully',
-      'time': '5 days ago',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    setState(() => _isProfileLoading = true);
+    final profileFuture = ProfileService.instance.fetchProfile();
+    final statsFuture = ProfileService.instance.fetchStats();
+    final listingsFuture = ListingService.instance.fetchMyListings();
+    final notifsFuture = NotificationService.instance.fetchNotifications();
+
+    final results = await Future.wait([profileFuture, statsFuture, listingsFuture, notifsFuture]);
+    if (!mounted) return;
+
+    setState(() {
+      if (results[0] != null) {
+        _profile = results[0] as SellerProfile;
+      }
+      if (results[1] != null) {
+        _stats = results[1] as SellerStats;
+      }
+      final fetchedListings = results[2] as List<Listing>;
+      _myListings = fetchedListings;
+      _allListings = fetchedListings.map((l) => _mapListingToDashboard(l)).toList();
+      final fetchedNotifs = results[3] as List<NotificationItem>;
+      _notifications = fetchedNotifs;
+      _isProfileLoading = false;
+    });
+  }
+
+  static bool _isServerUrl(String url) {
+    return url.startsWith('http://') ||
+        url.startsWith('https://') ||
+        url.startsWith('/api/');
+  }
+
+  static bool _isLocalDevicePath(String url) {
+    return url.startsWith('/data/') ||
+        url.startsWith('/storage/') ||
+        url.startsWith('/sdcard/') ||
+        url.startsWith('file://');
+  }
+
+  Map<String, dynamic> _mapListingToDashboard(Listing l) {
+    String imagePath = 'assets/images/home-listing-1.jpg';
+    if (l.category == 'Batteries') {
+      imagePath = 'assets/images/battery.jpg';
+    } else if (l.category == 'Inverters') {
+      imagePath = 'assets/images/inverter.png';
+    } else if (l.category == 'Cables') {
+      imagePath = 'assets/images/cables.jpg';
+    } else if (l.category == 'Structure') {
+      imagePath = 'assets/images/structure.png';
+    } else if (l.category == 'Complete Solar System') {
+      imagePath = 'assets/images/complete-solar-system.jpg';
+    }
+
+    final priceStr = l.priceDemand >= 100000
+        ? 'Rs. ${(l.priceDemand / 100000).toStringAsFixed(1)}L'
+        : 'Rs. ${l.priceDemand.toStringAsFixed(0)}';
+
+    String title = l.category;
+    if (l.category == 'Solar Panels' && l.specs['panels_count'] != null) {
+      title = '${l.specs['panels_count']}x Solar Panels ${l.specs['watts_per_panel'] ?? ''}W';
+    } else if (l.category == 'Batteries' && l.specs['battery_count'] != null) {
+      title = '${l.specs['battery_count']}x ${l.specs['battery_type'] ?? ''} Batteries';
+    } else if (l.category == 'Inverters' && l.specs['rated_power'] != null) {
+      title = '${l.specs['inverter_brand'] ?? ''} ${l.specs['inverter_type'] ?? ''} Inverter';
+    }
+
+    // Determine image to show and whether it's a real network URL
+    String displayImage = imagePath;
+    bool isRemote = false;
+    bool isLocalFile = false;
+
+    if (l.imageUrls.isNotEmpty) {
+      final firstUrl = l.imageUrls.first;
+      if (_isServerUrl(firstUrl)) {
+        displayImage = firstUrl;
+        isRemote = true;
+      } else if (_isLocalDevicePath(firstUrl)) {
+        // Stored local device path — render as file image
+        displayImage = firstUrl;
+        isLocalFile = true;
+      }
+      // Otherwise it's garbage data — fall back to asset
+    }
+
+    return {
+      'rawId': l.id,
+      'image': displayImage,
+      'isRemote': isRemote,
+      'isLocalFile': isLocalFile,
+      'title': title,
+      'id': l.id.length > 10 ? l.id.substring(0, 10).toUpperCase() : l.id.toUpperCase(),
+      'time': 'Recently',
+      'status': l.status == 'active' ? 'Active' : l.status,
+      'price': priceStr,
+    };
+  }
+
+  Listing? _getListingFromItem(Map<String, dynamic> item) {
+    try {
+      final rawId = item['rawId'];
+      if (rawId != null) {
+        return _myListings.firstWhere((l) => l.id == rawId);
+      }
+      final displayId = item['id']?.toString() ?? '';
+      return _myListings.firstWhere((l) => l.id.toUpperCase().startsWith(displayId));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _getProfileInitials() {
+    final name = _profile?.displayName.trim() ?? '';
+    if (name.isEmpty) return 'S';
+    final parts = name.split(' ').where((s) => s.isNotEmpty).toList();
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
+  }
+
+  Widget _buildThumbnailWidget(String imagePath, {bool isRemote = false, bool isLocalFile = false}) {
+    // Remote server URL
+    if (isRemote || imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('/api/')) {
+      final fullUrl = ListingService.instance.getFullImageUrl(imagePath);
+      return Image.network(
+        fullUrl ?? imagePath,
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          'assets/images/home-listing-1.jpg',
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    // Local device file path (e.g. Android cache: /data/user/0/...)
+    if (isLocalFile || imagePath.startsWith('/data/') || imagePath.startsWith('/storage/') || imagePath.startsWith('/sdcard/') || imagePath.startsWith('file://')) {
+      final cleanPath = imagePath.replaceFirst('file://', '');
+      final file = File(cleanPath);
+      return Image.file(
+        file,
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          'assets/images/home-listing-1.jpg',
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    // Asset path
+    return Image.asset(
+      imagePath,
+      width: 60,
+      height: 60,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Image.asset(
+        'assets/images/home-listing-1.jpg',
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _allListings = [];
 
   @override
   Widget build(BuildContext context) {
@@ -216,14 +312,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
 
   // Common Header Widget
   Widget _buildHeader({Widget? rightWidget}) {
-    bool hasUnreadAlerts = _alerts.any((a) => a['isUnread'] == true);
+    bool hasUnreadAlerts = _notifications.any((a) => !a.isRead);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
+          children: [
+            const Text(
               'Good morning,',
               style: TextStyle(
                 fontSize: 14,
@@ -231,8 +327,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               ),
             ),
             Text(
-              'Abdul Samad',
-              style: TextStyle(
+              _profile?.displayName.isNotEmpty == true
+                  ? _profile!.displayName
+                  : 'Seller',
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -287,294 +385,339 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
 
   // Home Screen View
   Widget _buildHomeView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 24),
+    final totalListingsCount = _myListings.isNotEmpty ? _myListings.length : (_stats?.listingsCount ?? 0);
+    final activeListingsCount = _myListings.where((l) => l.status == 'active').length;
 
-          // Ready to Sell Card
-          Container(
-            width: double.infinity,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF00A63E),
-                  Color(0xFF007D2E),
+    return RefreshIndicator(
+      onRefresh: _loadProfileData,
+      color: const Color(0xFF00A63E),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 24),
+
+            // Ready to Sell Card
+            Container(
+              width: double.infinity,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF00A63E),
+                    Color(0xFF007D2E),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: 12,
+                    top: 12,
+                    child: Opacity(
+                      opacity: 0.25,
+                      child: SvgPicture.asset(
+                        'assets/icons/solar_scrap_icon.svg',
+                        width: 85,
+                        height: 85,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _profile?.companyName.isNotEmpty == true ? _profile!.companyName : 'SunTech Solar Pvt. Ltd.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ready to Sell?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Post your solar scrap and get competitive offers',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.white70,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SellerNewListingScreen(),
+                              ),
+                            );
+                            _loadProfileData();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF00A63E),
+                            minimumSize: const Size(130, 40),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.add_circle_outline,
+                                size: 18,
+                                color: Color(0xFF00A63E),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Sell Solar Scrap',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF00A63E),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(20),
             ),
-            child: Stack(
+            const SizedBox(height: 24),
+
+            // Stats Cards
+            Row(
               children: [
-                Positioned(
-                  right: 12,
-                  top: 12,
-                  child: Opacity(
-                    opacity: 0.25,
-                    child: SvgPicture.asset(
-                      'assets/icons/solar_scrap_icon.svg',
-                      width: 85,
-                      height: 85,
-                      colorFilter: const ColorFilter.mode(
-                        Colors.white,
-                        BlendMode.srcIn,
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = 1;
+                        _selectedFilter = 'All';
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: SvgPicture.asset(
+                                  'assets/icons/file.svg',
+                                  width: 20,
+                                  height: 20,
+                                  colorFilter: const ColorFilter.mode(
+                                    Color(0xFF2563EB),
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
+                              ),
+                              Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey.shade400,
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '$totalListingsCount',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Total Listings',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SunTech Solar Pvt. Ltd.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.white70,
-                        ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = 1;
+                        _selectedFilter = 'All';
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Ready to Sell?',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Post your solar scrap and get competitive offers',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.white70,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _selectedIndex = 1;
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF00A63E),
-                          minimumSize: const Size(130, 40),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.add_circle_outline,
-                              size: 18,
-                              color: Color(0xFF00A63E),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Sell Solar Scrap',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF00A63E),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: SvgPicture.asset(
+                                  'assets/icons/clock.svg',
+                                  width: 20,
+                                  height: 20,
+                                  colorFilter: const ColorFilter.mode(
+                                    Color(0xFF16A34A),
+                                    BlendMode.srcIn,
+                                  ),
+                                ),
                               ),
+                              Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey.shade400,
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '$activeListingsCount',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Active Listings',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
-          // Stats Cards
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = 1;
-                      _selectedFilter = 'All';
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: SvgPicture.asset(
-                                'assets/icons/file.svg',
-                                width: 20,
-                                height: 20,
-                                colorFilter: const ColorFilter.mode(
-                                  Color(0xFF2563EB),
-                                  BlendMode.srcIn,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right,
-                              color: Colors.grey.shade400,
-                              size: 20,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          '12',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Total Listings',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = 1;
-                      _selectedFilter = 'Under Review';
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFEF9C3),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: SvgPicture.asset(
-                                'assets/icons/clock.svg',
-                                width: 20,
-                                height: 20,
-                                colorFilter: const ColorFilter.mode(
-                                  Color(0xFFD97706),
-                                  BlendMode.srcIn,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right,
-                              color: Colors.grey.shade400,
-                              size: 20,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          '3',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Under Review',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Recent Listings Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Recent Listings',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = 1;
-                  });
-                },
-                child: const Text(
-                  'View All',
+            // Recent Listings Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Recent Listings',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF00A63E),
-                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex = 1;
+                    });
+                  },
+                  child: const Text(
+                    'View All',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF00A63E),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-          // Home Recent Listings (First 3)
-          ..._allListings.take(3).map((listing) {
+            // Home Recent Listings (First 3) or Empty State
+            if (_allListings.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF0F0F0)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.inventory_2_outlined, size: 40, color: Colors.grey.shade400),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No listings yet',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tap "Sell Solar Scrap" above to add your first listing!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ..._allListings.take(3).map((listing) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: GestureDetector(
@@ -582,7 +725,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SellerListingDetailsScreen(),
+                      builder: (context) => SellerListingDetailsScreen(
+                        listing: _getListingFromItem(listing),
+                      ),
                     ),
                   );
                 },
@@ -597,11 +742,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
+                        child: _buildThumbnailWidget(
                           listing['image'] as String,
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
+                          isRemote: listing['isRemote'] == true,
+                          isLocalFile: listing['isLocalFile'] == true,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -706,8 +850,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           const SizedBox(height: 80),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // Listing Screen View
   Widget _buildListingView() {
@@ -731,118 +876,149 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       return matchesFilter && matchesSearch;
     }).toList();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 24),
+    return RefreshIndicator(
+      onRefresh: _loadProfileData,
+      color: const Color(0xFF00A63E),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 24),
 
-          // Search Bar & Filter Icon Row
-          Row(
-            children: [
-              Expanded(
-                child: Container(
+            // Search Bar & Filter Icon Row
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, color: Colors.grey, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            onChanged: (val) {
+                              setState(() {
+                                _searchQuery = val;
+                              });
+                            },
+                            decoration: const InputDecoration(
+                              hintText: 'Search listings...',
+                              hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF5F5F5),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.search, color: Colors.grey, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          onChanged: (val) {
-                            setState(() {
-                              _searchQuery = val;
-                            });
-                          },
-                          decoration: const InputDecoration(
-                            hintText: 'Search listings...',
-                            hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
-                            border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  child: SvgPicture.asset(
+                    'assets/icons/filter.svg',
+                    width: 20,
+                    height: 20,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.black87,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Filter Pills Row
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: ['All', 'Active', 'Submitted', 'Under Review', 'Price Offered'].map((filter) {
+                  bool isSelected = _selectedFilter == filter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedFilter = filter;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0xFF00A63E) : const Color(0xFFF5F5F5),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          filter,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: isSelected ? Colors.white : const Color(0xFF555555),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                }).toList(),
               ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: SvgPicture.asset(
-                  'assets/icons/filter.svg',
-                  width: 20,
-                  height: 20,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.black87,
-                    BlendMode.srcIn,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+            ),
+            const SizedBox(height: 24),
 
-          // Filter Pills Row
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: ['All', 'Submitted', 'Under Review', 'Price Offered'].map((filter) {
-                bool isSelected = _selectedFilter == filter;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF00A63E) : const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        filter,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? Colors.white : const Color(0xFF555555),
-                        ),
+            // Listings List
+            if (filteredListings.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF0F0F0)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.inventory_2_outlined, size: 44, color: Colors.grey.shade400),
+                    const SizedBox(height: 12),
+                    Text(
+                      _searchQuery.isNotEmpty || _selectedFilter != 'All'
+                          ? 'No matching listings'
+                          : 'No listings created yet',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
                       ),
                     ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Listings List
-          if (filteredListings.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Text(
-                  'No listings found',
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                    const SizedBox(height: 4),
+                    Text(
+                      _searchQuery.isNotEmpty || _selectedFilter != 'All'
+                          ? 'Try changing the search keyword or filter'
+                          : 'Tap the + button below to create your first listing',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            )
-          else
-            ...filteredListings.map((listing) {
+              )
+            else
+              ...filteredListings.map((listing) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: GestureDetector(
@@ -850,8 +1026,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            const SellerListingDetailsScreen(),
+                        builder: (context) => SellerListingDetailsScreen(
+                          listing: _getListingFromItem(listing),
+                        ),
                       ),
                     );
                   },
@@ -866,11 +1043,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
+                          child: _buildThumbnailWidget(
                             listing['image'] as String,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
+                            isRemote: listing['isRemote'] == true,
+                            isLocalFile: listing['isLocalFile'] == true,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -975,8 +1151,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           const SizedBox(height: 80),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // Alerts Screen View
   Widget _buildAlertsView() {
@@ -988,12 +1165,22 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           // Header with Mark all read
           _buildHeader(
             rightWidget: GestureDetector(
-              onTap: () {
-                setState(() {
-                  for (var alert in _alerts) {
-                    alert['isUnread'] = false;
-                  }
-                });
+              onTap: () async {
+                await NotificationService.instance.markAllAsRead();
+                if (mounted) {
+                  setState(() {
+                    _notifications = _notifications.map((n) => NotificationItem(
+                      id: n.id,
+                      userId: n.userId,
+                      type: n.type,
+                      title: n.title,
+                      description: n.description,
+                      listingId: n.listingId,
+                      isRead: true,
+                      createdAt: n.createdAt,
+                    )).toList();
+                  });
+                }
               },
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
@@ -1011,413 +1198,535 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           const SizedBox(height: 24),
 
           // Alert Cards
-          ..._alerts.map((alert) {
-            bool isUnread = alert['isUnread'] as bool;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    alert['isUnread'] = false;
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Icon Box
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: alert['iconBg'] as Color,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: SvgPicture.asset(
-                          alert['icon'] as String,
-                          width: 20,
-                          height: 20,
-                          colorFilter: ColorFilter.mode(
-                            alert['iconColor'] as Color,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      // Alert Details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  alert['title'] as String,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                if (isUnread) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF00A63E),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              alert['description'] as String,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF666666),
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              alert['time'] as String,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+          if (_notifications.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 60),
+              child: Center(
+                child: Text(
+                  'No notifications yet',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
                 ),
               ),
-            );
-          }),
+            )
+          else
+            ..._notifications.map((alert) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: GestureDetector(
+                  onTap: () async {
+                    if (!alert.isRead) {
+                      NotificationService.instance.markAsRead(alert.id);
+                      setState(() {
+                        final idx = _notifications.indexWhere((n) => n.id == alert.id);
+                        if (idx != -1) {
+                          _notifications[idx] = NotificationItem(
+                            id: alert.id,
+                            userId: alert.userId,
+                            type: alert.type,
+                            title: alert.title,
+                            description: alert.description,
+                            listingId: alert.listingId,
+                            isRead: true,
+                            createdAt: alert.createdAt,
+                          );
+                        }
+                      });
+                    }
+                    if (alert.listingId != null && alert.listingId!.isNotEmpty) {
+                      Listing? targetListing;
+                      try {
+                        targetListing = _myListings.firstWhere((l) => l.id == alert.listingId);
+                      } catch (_) {
+                        targetListing = null;
+                      }
+                      if (targetListing != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SellerListingDetailsScreen(listing: targetListing),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Icon Box
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: alert.iconBgColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: SvgPicture.asset(
+                            alert.iconAsset,
+                            width: 20,
+                            height: 20,
+                            colorFilter: ColorFilter.mode(
+                              alert.iconColor,
+                              BlendMode.srcIn,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        // Alert Details
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    alert.title,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  if (!alert.isRead) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF00A63E),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                alert.description,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF666666),
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                alert.timeFormatted,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
           const SizedBox(height: 80),
         ],
       ),
     );
-  }
-
-  // Profile Screen View
+  }  // Profile Screen View
   Widget _buildProfileView() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // User Avatar & Name Header
-          Row(
-            children: [
-              // Avatar with edit badge
-              Stack(
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: const DecorationImage(
-                        image: AssetImage('assets/images/samad.jpg'),
-                        fit: BoxFit.cover,
-                      ),
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SellerEditProfileScreen(),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF00A63E),
-                          shape: BoxShape.circle,
-                        ),
-                        child: SvgPicture.asset(
-                          'assets/icons/edit.svg',
-                          width: 12,
-                          height: 12,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.white,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              // User info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    if (_isProfileLoading && _profile == null) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF00A63E),
+        ),
+      );
+    }
+
+    final fullImageUrl = ProfileService.instance.getFullImageUrl(_profile?.profilePhotoUrl);
+    final displayName = _profile?.displayName.isNotEmpty == true
+        ? _profile!.displayName
+        : 'Seller';
+    final companyName = _profile?.companyName.isNotEmpty == true
+        ? _profile!.companyName
+        : 'SunTech Solar Pvt. Ltd.';
+    final email = _profile?.email.isNotEmpty == true ? _profile!.email : '-';
+    final phone = _profile?.phoneNumber.isNotEmpty == true ? _profile!.phoneNumber : '-';
+    final gst = _profile?.gstNumber.isNotEmpty == true ? _profile!.gstNumber : '-';
+    final companyType = _profile?.companyType.isNotEmpty == true
+        ? _profile!.companyType
+        : 'Private Limited';
+
+    return RefreshIndicator(
+      onRefresh: _loadProfileData,
+      color: const Color(0xFF00A63E),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // User Avatar & Name Header
+            Row(
+              children: [
+                // Avatar with edit badge
+                Stack(
                   children: [
-                    const Text(
-                      'Abdul Samad',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'SunTech Solar Pvt. Ltd.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF666666),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
+                      width: 72,
+                      height: 72,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(6),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: const Text(
-                        'Verified Seller',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF00A63E),
+                      child: ClipOval(
+                        child: fullImageUrl != null
+                            ? Image.network(
+                                fullImageUrl,
+                                width: 72,
+                                height: 72,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  width: 72,
+                                  height: 72,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF00A63E),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      _getProfileInitials(),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                width: 72,
+                                height: 72,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF00A63E),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    _getProfileInitials(),
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final updated = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  SellerEditProfileScreen(profile: _profile),
+                            ),
+                          );
+                          if (updated == true) {
+                            _loadProfileData();
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF00A63E),
+                            shape: BoxShape.circle,
+                          ),
+                          child: SvgPicture.asset(
+                            'assets/icons/edit.svg',
+                            width: 12,
+                            height: 12,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.white,
+                              BlendMode.srcIn,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(width: 16),
+                // User info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        companyName,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Verified Seller',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF00A63E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Summary Stats Card (Listings, Deals, Earnings)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          '${(_stats?.listingsCount != null && _stats!.listingsCount > 0) ? _stats!.listingsCount : _myListings.length}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF00A63E),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Listings',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 30,
+                    width: 1,
+                    color: Colors.grey.shade200,
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          '${_stats?.dealsCount ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF00A63E),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Deals',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 30,
+                    width: 1,
+                    color: Colors.grey.shade200,
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          _stats?.totalEarnings ?? 'Rs. 0',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF00A63E),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Earnings',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
 
-          // Summary Stats Card (Listings, Deals, Earnings)
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
+            // Personal Information Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Personal Information',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Divider(height: 24, color: Colors.grey.shade100),
+                  _buildInfoRow('Full Name', displayName),
+                  Divider(height: 24, color: Colors.grey.shade100),
+                  _buildInfoRow('Email', email),
+                  Divider(height: 24, color: Colors.grey.shade100),
+                  _buildInfoRow('Phone', phone),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: const [
-                      Text(
-                        '12',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF00A63E),
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Listings',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: 30,
-                  width: 1,
-                  color: Colors.grey.shade200,
-                ),
-                Expanded(
-                  child: Column(
-                    children: const [
-                      Text(
-                        '4',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF00A63E),
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Deals',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: 30,
-                  width: 1,
-                  color: Colors.grey.shade200,
-                ),
-                Expanded(
-                  child: Column(
-                    children: const [
-                      Text(
-                        'Rs. 7.3L',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF00A63E),
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Earnings',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Personal Information Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Personal Information',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+            // Company Information Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Company Information',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
-                ),
-                Divider(height: 24, color: Colors.grey.shade100),
-                _buildInfoRow('Full Name', 'Abdul Samad'),
-                Divider(height: 24, color: Colors.grey.shade100),
-                _buildInfoRow('Email', 'abdule@suntech.com'),
-                Divider(height: 24, color: Colors.grey.shade100),
-                _buildInfoRow('Phone', '+92 3345678974'),
-              ],
+                  Divider(height: 24, color: Colors.grey.shade100),
+                  _buildInfoRow('Company', companyName),
+                  Divider(height: 24, color: Colors.grey.shade100),
+                  _buildInfoRow('GST', gst),
+                  Divider(height: 24, color: Colors.grey.shade100),
+                  _buildInfoRow('Type', companyType),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Company Information Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Company Information',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+            // Action Menu Card (Edit Profile, Settings, Logout)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  _buildActionRow(
+                    icon: 'assets/icons/edit.svg',
+                    label: 'Edit Profile',
+                    onTap: () async {
+                      final updated = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              SellerEditProfileScreen(profile: _profile),
+                        ),
+                      );
+                      if (updated == true) {
+                        _loadProfileData();
+                      }
+                    },
                   ),
-                ),
-                Divider(height: 24, color: Colors.grey.shade100),
-                _buildInfoRow('Company', 'SunTech Solar Pvt. Ltd.'),
-                Divider(height: 24, color: Colors.grey.shade100),
-                _buildInfoRow('GST', '22AAAAA0000A1Z5'),
-                Divider(height: 24, color: Colors.grey.shade100),
-                _buildInfoRow('Type', 'Private Limited'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Action Menu Card (Edit Profile, Settings, Logout)
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              children: [
-                _buildActionRow(
-                  icon: 'assets/icons/edit.svg',
-                  label: 'Edit Profile',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SellerEditProfileScreen(),
-                      ),
-                    );
-                  },
-                ),
-                Divider(height: 1, color: Colors.grey.shade100),
-                _buildActionRow(
-                  icon: 'assets/icons/setting.svg',
-                  label: 'Settings',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SellerSettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                Divider(height: 1, color: Colors.grey.shade100),
-                _buildActionRow(
-                  icon: null,
-                  iconWidget: const Icon(
-                    Icons.logout_rounded,
-                    color: Color(0xFFEF4444),
-                    size: 20,
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  _buildActionRow(
+                    icon: 'assets/icons/setting.svg',
+                    label: 'Settings',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SellerSettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
-                  label: 'Logout',
-                  textColor: const Color(0xFFEF4444),
-                  onTap: () {
-                    _showLogoutDialog();
-                  },
-                ),
-              ],
+                  Divider(height: 1, color: Colors.grey.shade100),
+                  _buildActionRow(
+                    icon: null,
+                    iconWidget: const Icon(
+                      Icons.logout_rounded,
+                      color: Color(0xFFEF4444),
+                      size: 20,
+                    ),
+                    label: 'Logout',
+                    textColor: const Color(0xFFEF4444),
+                    onTap: () {
+                      _showLogoutDialog();
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 80),
-        ],
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
     );
   }

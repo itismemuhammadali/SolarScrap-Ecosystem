@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../../models/listing_draft.dart';
 import '../seller_upload_images_screen.dart';
-import 'seller_equipment_step_inverters.dart';
+import 'seller_equipment_step_cables.dart';
 
 class SellerEquipmentStepBatteries extends StatefulWidget {
   final bool isCompleteSolarSystem;
+  final ListingDraft? draft;
 
   const SellerEquipmentStepBatteries({
     super.key,
     this.isCompleteSolarSystem = false,
+    this.draft,
   });
 
   @override
@@ -190,7 +193,7 @@ class _SellerEquipmentStepBatteriesState
                 children: [
                   Text(
                     widget.isCompleteSolarSystem
-                        ? 'Step 2 of 5 (Complete System)'
+                        ? 'Step 3 of 5 (Batteries)'
                         : 'Step 2 of 7',
                     style: const TextStyle(
                       fontSize: 11,
@@ -199,7 +202,7 @@ class _SellerEquipmentStepBatteriesState
                     ),
                   ),
                   Text(
-                    widget.isCompleteSolarSystem ? '40%' : '29%',
+                    widget.isCompleteSolarSystem ? '60%' : '29%',
                     style: const TextStyle(
                       fontSize: 11,
                       color: Color(0xFF00A63E),
@@ -221,7 +224,7 @@ class _SellerEquipmentStepBatteriesState
                               ? 6
                               : 0),
                       decoration: BoxDecoration(
-                        color: index <= (widget.isCompleteSolarSystem ? 1 : 1)
+                        color: index <= (widget.isCompleteSolarSystem ? 2 : 1)
                             ? const Color(0xFF00A63E)
                             : const Color(0xFFE5E7EB),
                         borderRadius: BorderRadius.circular(2),
@@ -297,12 +300,13 @@ class _SellerEquipmentStepBatteriesState
                       controller: _brandController,
                     ),
 
-                    // Price Demand
-                    _buildTextField(
-                      label: 'Price Demand',
-                      hint: 'Rs 45, 000 000',
-                      controller: _priceDemandController,
-                    ),
+                    // Price Demand (only if not Complete Solar System)
+                    if (!widget.isCompleteSolarSystem)
+                      _buildTextField(
+                        label: 'Price Demand',
+                        hint: 'Rs 45, 000 000',
+                        controller: _priceDemandController,
+                      ),
 
                     // Purchase Year
                     _buildTextField(
@@ -372,13 +376,29 @@ class _SellerEquipmentStepBatteriesState
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          if (widget.isCompleteSolarSystem) {
+                          final currentDraft = widget.draft ?? ListingDraft(
+                            category: widget.isCompleteSolarSystem ? 'Complete Solar System' : 'Batteries',
+                          );
+
+                          final bCount = int.tryParse(_batteryCountController.text.trim());
+
+                          currentDraft.specs['battery_type'] = _selectedBatteryType;
+                          currentDraft.specs['battery_count'] = bCount ?? _batteryCountController.text.trim();
+                          currentDraft.specs['battery_capacity'] = _capacityController.text.trim();
+                          currentDraft.specs['battery_brand'] = _brandController.text.trim();
+                          currentDraft.specs['battery_purchase_year'] = _purchaseYearController.text.trim();
+                          currentDraft.specs['battery_years_used'] = _yearsUsedController.text.trim();
+                          currentDraft.specs['battery_condition'] = _selectedCondition;
+
+                          if (!widget.isCompleteSolarSystem) {
+                            final clean = _priceDemandController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+                            currentDraft.priceDemand = double.tryParse(clean) ?? 0.0;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const SellerEquipmentStepInverters(
-                                  isCompleteSolarSystem: true,
+                                builder: (context) => SellerUploadImagesScreen(
+                                  draft: currentDraft,
+                                  selectedCategory: 'Batteries',
                                 ),
                               ),
                             );
@@ -386,9 +406,9 @@ class _SellerEquipmentStepBatteriesState
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const SellerUploadImagesScreen(
-                                  selectedCategory: 'Batteries',
+                                builder: (context) => SellerEquipmentStepCables(
+                                  isCompleteSolarSystem: true,
+                                  draft: currentDraft,
                                 ),
                               ),
                             );

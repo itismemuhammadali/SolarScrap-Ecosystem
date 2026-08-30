@@ -33,7 +33,7 @@ class _BuyerCreateAccountVerifyOtpScreenState
 
   void _startTimer() {
     Future.delayed(const Duration(seconds: 1), () {
-      if (_secondsRemaining > 0) {
+      if (mounted && _secondsRemaining > 0) {
         setState(() {
           _secondsRemaining--;
         });
@@ -226,16 +226,26 @@ class _BuyerCreateAccountVerifyOtpScreenState
                 ),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            BuyerAccountCreatedScreen(
-                          companyName: widget.companyName,
-                          location: widget.location,
+                    String enteredOtp = _otpControllers.map((c) => c.text).join();
+                    if (enteredOtp == '000000') {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              BuyerAccountCreatedScreen(
+                            companyName: widget.companyName,
+                            location: widget.location,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Invalid OTP. Please enter 000000 for testing.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,

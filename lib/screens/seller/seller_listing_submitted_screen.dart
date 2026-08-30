@@ -3,7 +3,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'seller_dashboard_screen.dart';
 
 class SellerListingSubmittedScreen extends StatefulWidget {
-  const SellerListingSubmittedScreen({super.key});
+  final String listingId;
+
+  const SellerListingSubmittedScreen({
+    this.listingId = 'SS-ACTIVE',
+    super.key,
+  });
 
   @override
   State<SellerListingSubmittedScreen> createState() =>
@@ -14,6 +19,10 @@ class _SellerListingSubmittedScreenState
     extends State<SellerListingSubmittedScreen> {
   @override
   Widget build(BuildContext context) {
+    final displayId = widget.listingId.length > 12
+        ? widget.listingId.substring(0, 12).toUpperCase()
+        : widget.listingId.toUpperCase();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -27,8 +36,8 @@ class _SellerListingSubmittedScreenState
                 Container(
                   width: 120,
                   height: 120,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE8F5E9),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -47,7 +56,7 @@ class _SellerListingSubmittedScreenState
 
                 // Title
                 const Text(
-                  'Listing Submitted!',
+                  'Listing Created & Live!',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -59,7 +68,7 @@ class _SellerListingSubmittedScreenState
 
                 // Description
                 Text(
-                  'Your listing has been submitted successfully and is awaiting admin review. We will notify you within 24 hours.',
+                  'Your listing has been created successfully and is now active on the Solar Scrap marketplace.',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade600,
@@ -90,9 +99,9 @@ class _SellerListingSubmittedScreenState
                               color: Colors.grey.shade600,
                             ),
                           ),
-                          const Text(
-                            'SS-2024-1155',
-                            style: TextStyle(
+                          Text(
+                            displayId,
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: Colors.black,
@@ -126,15 +135,15 @@ class _SellerListingSubmittedScreenState
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFEF3C7),
+                              color: const Color(0xFFE6F9ED),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
-                              'Submitted',
+                              'Active',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFFD08700),
+                                color: Color(0xFF00A63E),
                               ),
                             ),
                           ),
@@ -172,7 +181,7 @@ class _SellerListingSubmittedScreenState
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(

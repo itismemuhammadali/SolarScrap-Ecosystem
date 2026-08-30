@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import '../../models/listing_draft.dart';
+import '../../services/profile_service.dart';
 import 'seller_contact_information_screen.dart';
 
 class SellerPickupLocationScreen extends StatefulWidget {
-  const SellerPickupLocationScreen({super.key});
+  final ListingDraft? draft;
+
+  const SellerPickupLocationScreen({
+    this.draft,
+    super.key,
+  });
 
   @override
   State<SellerPickupLocationScreen> createState() =>
@@ -14,6 +21,38 @@ class _SellerPickupLocationScreenState
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _areaController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _prefillLocation();
+  }
+
+  Future<void> _prefillLocation() async {
+    // If draft already has location, use that
+    if (widget.draft?.pickupCity != null && widget.draft!.pickupCity!.isNotEmpty) {
+      _cityController.text = widget.draft!.pickupCity!;
+      _areaController.text = widget.draft!.pickupArea ?? '';
+      _addressController.text = widget.draft!.pickupAddress ?? '';
+      return;
+    }
+
+    // Otherwise pre-fill from user profile
+    final profile = await ProfileService.instance.fetchProfile();
+    if (profile != null && mounted) {
+      setState(() {
+        if (_cityController.text.isEmpty && profile.city.isNotEmpty) {
+          _cityController.text = profile.city;
+        }
+        if (_areaController.text.isEmpty && profile.area.isNotEmpty) {
+          _areaController.text = profile.area;
+        }
+        if (_addressController.text.isEmpty && profile.address.isNotEmpty) {
+          _addressController.text = profile.address;
+        }
+      });
+    }
+  }
 
   Widget _buildTextField({
     required String label,
@@ -68,6 +107,22 @@ class _SellerPickupLocationScreenState
         ),
         const SizedBox(height: 12),
       ],
+    );
+  }
+
+  void _onContinue() {
+    final currentDraft = widget.draft ?? ListingDraft();
+    currentDraft.pickupCity = _cityController.text.trim();
+    currentDraft.pickupArea = _areaController.text.trim().isNotEmpty ? _areaController.text.trim() : null;
+    currentDraft.pickupAddress = _addressController.text.trim();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SellerContactInformationScreen(
+          draft: currentDraft,
+        ),
+      ),
     );
   }
 
@@ -175,7 +230,7 @@ class _SellerPickupLocationScreenState
               // Complete Address
               _buildTextField(
                 label: 'Complete Address',
-                hint: 'Any defects, special conditions, original warranty info...',
+                hint: 'Street, building, area details...',
                 controller: _addressController,
                 icon: Icons.location_on_outlined,
                 isMultiline: true,
@@ -226,15 +281,7 @@ class _SellerPickupLocationScreenState
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const SellerContactInformationScreen(),
-                            ),
-                          );
-                        },
+                        onPressed: _onContinue,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,

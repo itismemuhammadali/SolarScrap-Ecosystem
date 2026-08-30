@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../models/registration_data.dart';
+import '../../services/auth_service.dart';
+import '../../services/profile_service.dart';
 import 'seller_create_account_verify_otp_screen.dart';
 
 class SellerCreateAccountSecurityScreen extends StatefulWidget {
-  const SellerCreateAccountSecurityScreen({super.key});
+  final RegistrationData data;
+
+  const SellerCreateAccountSecurityScreen({
+    super.key,
+    required this.data,
+  });
 
   @override
   State<SellerCreateAccountSecurityScreen> createState() =>
@@ -21,6 +29,7 @@ class _SellerCreateAccountSecurityScreenState
   bool _obscureConfirmPassword = true;
   bool _agreeTerms = false;
   bool _agreePrivacy = false;
+  bool _isLoading = false;
 
   int _passwordStrength = 0; // 0: empty, 1: weak, 2: fair, 3: strong
 
@@ -77,8 +86,11 @@ class _SellerCreateAccountSecurityScreenState
   Widget build(BuildContext context) {
     final bool isFormValid = _agreeTerms &&
         _agreePrivacy &&
+        _agreePrivacy &&
         _passwordController.text.isNotEmpty &&
-        _confirmPasswordController.text.isNotEmpty;
+        _confirmPasswordController.text.isNotEmpty &&
+        _passwordController.text == _confirmPasswordController.text &&
+        !_isLoading;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -452,19 +464,53 @@ class _SellerCreateAccountSecurityScreenState
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const SellerCreateAccountVerifyOtpScreen(
-                            phoneNumber: '•••3210',
-                            companyName: 'SunTech Solar Pvt. Ltd.',
-                            location: 'Mumbai',
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: isFormValid
+                        ? () async {
+                            setState(() {
+                              _isLoading = true;
+                            });
+
+                            widget.data.password = _passwordController.text;
+                            final result = await AuthService.instance.register(widget.data);
+
+                            if (!mounted) return;
+
+                            setState(() {
+                              _isLoading = false;
+                            });
+
+                            if (result.isSuccess) {
+                              if (widget.data.profilePhotoFile != null) {
+                                try {
+                                  await ProfileService.instance.uploadProfilePhoto(widget.data.profilePhotoFile!);
+                                } catch (e) {
+                                  debugPrint('Failed to upload DP during signup: $e');
+                                }
+                              }
+
+                              if (!mounted) return;
+
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      SellerCreateAccountVerifyOtpScreen(
+                                    phoneNumber: result.maskedPhone ?? widget.data.phoneNumber,
+                                    companyName: widget.data.companyName.isEmpty ? 'SunTech Solar Pvt. Ltd.' : widget.data.companyName,
+                                    location: widget.data.city.isEmpty ? 'Mumbai' : widget.data.city,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(result.message ?? 'Registration failed'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       foregroundColor: Colors.white,
@@ -473,14 +519,23 @@ class _SellerCreateAccountSecurityScreenState
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: Text(
-                      'Create Account',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Create Account',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
               ),

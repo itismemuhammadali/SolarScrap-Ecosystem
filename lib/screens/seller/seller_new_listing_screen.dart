@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../models/listing_draft.dart';
 import '../../widgets/app_button.dart';
 import 'steps/seller_equipment_step_solar_panels.dart';
 import 'steps/seller_equipment_step_batteries.dart';
@@ -262,31 +263,34 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                 isEnabled: _selectedCategory != null,
                 onPressed: _selectedCategory != null
                     ? () {
+                        final draft = ListingDraft(category: _selectedCategory);
+
                         // Route to appropriate equipment details screen
                         Widget nextScreen;
                         switch (_selectedCategory) {
                           case 'Batteries':
-                            nextScreen = const SellerEquipmentStepBatteries();
+                            nextScreen = SellerEquipmentStepBatteries(draft: draft);
                             break;
                           case 'Inverters':
-                            nextScreen = const SellerEquipmentStepInverters();
+                            nextScreen = SellerEquipmentStepInverters(draft: draft);
                             break;
                           case 'Cables':
-                            nextScreen = const SellerEquipmentStepCables();
+                            nextScreen = SellerEquipmentStepCables(draft: draft);
                             break;
                           case 'Complete Solar System':
-                            nextScreen = const SellerEquipmentStepSolarPanels(
+                            nextScreen = SellerEquipmentStepSolarPanels(
                               isCompleteSolarSystem: true,
+                              draft: draft,
                             );
                             break;
                           case 'Structure':
-                            nextScreen = const SellerEquipmentStepStructure();
+                            nextScreen = SellerEquipmentStepStructure(draft: draft);
                             break;
                           case 'Solar Panels':
-                            nextScreen = const SellerEquipmentStepSolarPanels();
+                            nextScreen = SellerEquipmentStepSolarPanels(draft: draft);
                             break;
                           default:
-                            nextScreen = const SellerEquipmentStepSolarPanels();
+                            nextScreen = SellerEquipmentStepSolarPanels(draft: draft);
                         }
 
                         Navigator.push(
