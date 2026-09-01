@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
+import '../../services/buyer_preferences_service.dart';
+import '../role_selection_screen.dart';
 import 'buyer_privacy_policy_screen.dart';
 import 'buyer_terms_conditions_screen.dart';
 import 'buyer_help_center_screen.dart';
@@ -12,10 +15,101 @@ class BuyerSettingsScreen extends StatefulWidget {
 }
 
 class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
-  bool _newAuctions = true;
-  bool _bidUpdates = true;
-  bool _closingSoonAlerts = false;
-  bool _winningNotifications = true;
+  late bool _newAuctions;
+  late bool _bidUpdates;
+  late bool _closingSoonAlerts;
+  late bool _winningNotifications;
+  late String _language;
+
+  @override
+  void initState() {
+    super.initState();
+    final prefs = BuyerPreferencesService.instance;
+    _newAuctions = prefs.newAuctions;
+    _bidUpdates = prefs.bidUpdates;
+    _closingSoonAlerts = prefs.closingSoonAlerts;
+    _winningNotifications = prefs.winningNotifications;
+    _language = prefs.language;
+  }
+
+  void _showLanguagePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Select Language',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildLanguageOption('English', 'English (Default)'),
+                const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                _buildLanguageOption('Urdu', 'اردو (Urdu)'),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageOption(String langCode, String label) {
+    final isSelected = _language == langCode;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _language = langCode;
+          BuyerPreferencesService.instance.setLanguage(langCode);
+        });
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Language changed to $langCode'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected
+                    ? const Color(0xFF00A63E)
+                    : const Color(0xFF1E293B),
+              ),
+            ),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFF00A63E),
+                size: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   void _showDeleteAccountDialog() {
     showDialog(
@@ -34,7 +128,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
             ),
           ),
           content: const Text(
-            'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.',
+            'Are you sure you want to delete your account? This action cannot be undone and all your bid history will be permanently deleted.',
             style: TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
@@ -43,9 +137,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text(
                 'Cancel',
                 style: TextStyle(
@@ -57,10 +149,18 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                AuthService.instance.logout();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Account deletion request submitted.'),
+                    content: Text('Your account has been deleted.'),
                   ),
+                );
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RoleSelectionScreen(),
+                  ),
+                  (route) => false,
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -93,9 +193,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
 
               // Back Button
               GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
+                onTap: () => Navigator.pop(context),
                 child: Container(
                   width: 40,
                   height: 40,
@@ -153,6 +251,8 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                       onChanged: (val) {
                         setState(() {
                           _newAuctions = val;
+                          BuyerPreferencesService.instance
+                              .updateNotificationSettings(newAuctionsVal: val);
                         });
                       },
                     ),
@@ -163,6 +263,8 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                       onChanged: (val) {
                         setState(() {
                           _bidUpdates = val;
+                          BuyerPreferencesService.instance
+                              .updateNotificationSettings(bidUpdatesVal: val);
                         });
                       },
                     ),
@@ -173,6 +275,8 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                       onChanged: (val) {
                         setState(() {
                           _closingSoonAlerts = val;
+                          BuyerPreferencesService.instance
+                              .updateNotificationSettings(closingSoonAlertsVal: val);
                         });
                       },
                     ),
@@ -183,6 +287,8 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                       onChanged: (val) {
                         setState(() {
                           _winningNotifications = val;
+                          BuyerPreferencesService.instance
+                              .updateNotificationSettings(winningNotificationsVal: val);
                         });
                       },
                     ),
@@ -217,8 +323,8 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                     _buildOptionRow(
                       icon: Icons.language,
                       title: 'Language',
-                      trailingText: 'English',
-                      onTap: () {},
+                      trailingText: _language,
+                      onTap: _showLanguagePicker,
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _buildOptionRow(

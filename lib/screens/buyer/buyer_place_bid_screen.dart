@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../models/listing.dart';
+import '../../services/bid_service.dart';
 import 'buyer_bid_confirmation_screen.dart';
 
 class BuyerPlaceBidScreen extends StatefulWidget {
   final Map<String, dynamic>? auctionData;
+  final Listing? listing;
 
   const BuyerPlaceBidScreen({
     super.key,
     this.auctionData,
+    this.listing,
   });
 
   @override
@@ -21,6 +25,8 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
   late int _currentHighestBid;
   late String _auctionTitle;
   late String _auctionId;
+  late String _rawListingId;
+  bool _isSubmitting = false;
 
   late TextEditingController _bidController;
   final FocusNode _bidFocusNode = FocusNode();
@@ -30,19 +36,28 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
   @override
   void initState() {
     super.initState();
-    final data = widget.auctionData ?? {};
+    if (widget.listing != null) {
+      final l = widget.listing!;
+      _rawListingId = l.id;
+      _auctionTitle = l.title;
+      _auctionId = l.id.length >= 6 ? l.id.substring(0, 6).toUpperCase() : l.id.toUpperCase();
+      _startingPrice = l.priceDemand.toInt();
+      _currentHighestBid = l.priceDemand.toInt();
+    } else {
+      final data = widget.auctionData ?? {};
+      _rawListingId = data['id']?.toString() ?? 'A001';
+      _auctionTitle =
+          data['title']?.toString() ?? 'Monocrystalline Solar Panels';
+      _auctionId = data['id']?.toString() ?? 'A001';
 
-    _auctionTitle =
-        data['title']?.toString() ?? 'Monocrystalline Solar Panels';
-    _auctionId = data['id']?.toString() ?? 'A001';
+      // Parse starting price
+      _startingPrice = _parsePrice(data['startingBid']?.toString()) ?? 85000;
 
-    // Parse starting price
-    _startingPrice = _parsePrice(data['startingBid']?.toString()) ?? 85000;
-
-    // Parse current highest bid
-    _currentHighestBid =
-        _parsePrice(data['currentBid']?.toString() ?? data['priceStr']?.toString()) ??
-            92000;
+      // Parse current highest bid
+      _currentHighestBid =
+          _parsePrice(data['currentBid']?.toString() ?? data['priceStr']?.toString()) ??
+              92000;
+    }
 
     // Minimum bid is current highest + 1000
     _minimumBidAmount = _currentHighestBid + 1000;
@@ -348,17 +363,54 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
     );
   }
 
-  void _finalizeBidSubmission() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BuyerBidConfirmationScreen(
-          referenceNumber: '# BUGZGI',
-          auctionTitle: _auctionTitle,
-          bidAmount: _currentBidAmount,
+  Future<void> _finalizeBidSubmission() async {
+    setState(() => _isSubmitting = true);
+
+    // Show loading modal/snack
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00A63E)),
         ),
       ),
     );
+
+    try {
+      final bidResult = await BidService.instance.submitBid(
+        _rawListingId,
+        _currentBidAmount.toDouble(),
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      setState(() => _isSubmitting = false);
+
+      final refNumber = bidResult?.referenceNumber ?? '# BID-$_auctionId';
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BuyerBidConfirmationScreen(
+            referenceNumber: refNumber,
+            auctionTitle: _auctionTitle,
+            bidAmount: _currentBidAmount,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      setState(() => _isSubmitting = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit bid: $e'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
   }
 
   @override
@@ -667,7 +719,7 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: ElevatedButton(
-                            onPressed: _onSubmitBid,
+                            onPressed: _isSubmitting ? null : _onSubmitBid,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,

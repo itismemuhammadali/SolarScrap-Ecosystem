@@ -331,6 +331,7 @@ class _SellerListingDetailsScreenState
                     MaterialPageRoute(
                       builder: (context) => SellerStatusTrackingScreen(
                         currentStatus: statusLabel,
+                        listing: _listing,
                       ),
                     ),
                   );

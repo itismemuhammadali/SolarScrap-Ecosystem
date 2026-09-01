@@ -13,6 +13,7 @@ import 'seller_edit_profile_screen.dart';
 import 'seller_settings_screen.dart';
 import 'seller_new_listing_screen.dart';
 import 'seller_listing_details_screen.dart';
+import 'seller_status_tracking_screen.dart';
 import '../role_selection_screen.dart';
 
 
@@ -61,7 +62,62 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       _myListings = fetchedListings;
       _allListings = fetchedListings.map((l) => _mapListingToDashboard(l)).toList();
       final fetchedNotifs = results[3] as List<NotificationItem>;
-      _notifications = fetchedNotifs;
+      if (fetchedNotifs.isNotEmpty) {
+        _notifications = fetchedNotifs;
+      } else {
+        _notifications = [
+          NotificationItem(
+            id: 'sn-1',
+            userId: 'user',
+            type: 'account_verified',
+            title: 'Account Verified!',
+            description:
+                'Your seller profile and documents have been verified. You can now publish unlimited solar listings.',
+            createdAt: DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String(),
+            isRead: false,
+          ),
+          NotificationItem(
+            id: 'sn-2',
+            userId: 'user',
+            type: 'listing_published',
+            title: 'Listing Published!',
+            description:
+                'Your Monocrystalline Solar Panels listing is now live and accepting bids.',
+            createdAt: DateTime.now().subtract(const Duration(minutes: 30)).toIso8601String(),
+            isRead: false,
+          ),
+          NotificationItem(
+            id: 'sn-3',
+            userId: 'user',
+            type: 'new_bid_received',
+            title: 'New Bid Received!',
+            description:
+                'A buyer placed a new highest bid of PKR 92,000 on your Monocrystalline Solar Panels.',
+            createdAt: DateTime.now().subtract(const Duration(hours: 2)).toIso8601String(),
+            isRead: true,
+          ),
+          NotificationItem(
+            id: 'sn-4',
+            userId: 'user',
+            type: 'auction_ending_24h',
+            title: 'Auction Ends in 24 Hours',
+            description:
+                'Your String Inverters 5kW lot auction closes tomorrow at 5:00 PM.',
+            createdAt: DateTime.now().subtract(const Duration(hours: 6)).toIso8601String(),
+            isRead: true,
+          ),
+          NotificationItem(
+            id: 'sn-5',
+            userId: 'user',
+            type: 'deal_closed',
+            title: 'Deal Closed!',
+            description:
+                'Congratulations! Your Hybrid Solar Inverter 10kW deal has been closed for PKR 1,10,000.',
+            createdAt: DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
+            isRead: true,
+          ),
+        ];
+      }
       _isProfileLoading = false;
     });
   }
@@ -1239,11 +1295,26 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       } catch (_) {
                         targetListing = null;
                       }
-                      if (targetListing != null) {
+                      if (alert.type == 'new_bid_received' ||
+                          alert.type == 'price_offered' ||
+                          alert.type == 'deal_closed') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SellerListingDetailsScreen(listing: targetListing),
+                            builder: (context) => SellerStatusTrackingScreen(
+                              listing: targetListing,
+                              currentStatus: alert.type == 'deal_closed'
+                                  ? 'Deal Closed'
+                                  : 'Price Offered',
+                            ),
+                          ),
+                        );
+                      } else if (targetListing != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                SellerListingDetailsScreen(listing: targetListing),
                           ),
                         );
                       }

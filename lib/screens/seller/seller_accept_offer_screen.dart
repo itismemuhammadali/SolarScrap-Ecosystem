@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../models/bid.dart';
+import '../../models/listing.dart';
+import '../../services/bid_service.dart';
 
 class SellerAcceptOfferScreen extends StatefulWidget {
-  const SellerAcceptOfferScreen({super.key});
+  final Bid? bid;
+  final Listing? listing;
+
+  const SellerAcceptOfferScreen({
+    super.key,
+    this.bid,
+    this.listing,
+  });
 
   @override
   State<SellerAcceptOfferScreen> createState() =>
@@ -10,6 +20,63 @@ class SellerAcceptOfferScreen extends StatefulWidget {
 }
 
 class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
+  bool _isProcessing = false;
+
+  String get _offeredPrice {
+    if (widget.bid != null) return widget.bid!.formattedAmount;
+    return 'Rs.4,20,000';
+  }
+
+  String get _listingTitle {
+    if (widget.listing != null) return widget.listing!.title;
+    if (widget.bid?.listingTitle != null) return widget.bid!.listingTitle!;
+    return '200x Solar Panels';
+  }
+
+  Future<void> _handleConfirmAccept() async {
+    if (widget.bid != null) {
+      setState(() => _isProcessing = true);
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFF00A63E)),
+        ),
+      );
+
+      final updated = await BidService.instance.acceptBid(widget.bid!.id);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      setState(() => _isProcessing = false);
+
+      if (updated != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Offer accepted successfully! Deal is closed.'),
+            backgroundColor: Color(0xFF00A63E),
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to accept offer. Please try again.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Offer accepted successfully!'),
+          backgroundColor: Color(0xFF00A63E),
+        ),
+      );
+      Navigator.pop(context, true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,8 +92,8 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                 Container(
                   width: 80,
                   height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE8F5E9),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -57,7 +124,7 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
 
                 // Description
                 Text(
-                  'You are accepting Rs.4,20,000 for 200x Solar Panels. This action cannot be undone.',
+                  'You are accepting $_offeredPrice for $_listingTitle. This action cannot be undone.',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey.shade600,
@@ -72,9 +139,7 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: _isProcessing ? null : () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 48),
                           side: const BorderSide(
@@ -105,19 +170,7 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Navigate back to seller dashboard listing screen
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Offer accepted successfully!'),
-                              ),
-                            );
-                            // Pop back through the navigation stack to reach the listing screen
-                            // Accept Offer → Price Offer → Status Tracking → Listing
-                            Navigator.pop(context); // Close Accept Offer
-                            Navigator.pop(context); // Close Price Offer
-                            Navigator.pop(context); // Close Status Tracking
-                          },
+                          onPressed: _isProcessing ? null : _handleConfirmAccept,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,

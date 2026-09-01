@@ -139,6 +139,56 @@ async def get_my_listings(
         )
 
 
+@router.get("/all", response_model=List[ListingResponse])
+async def get_all_active_listings(
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Get all active listings on the marketplace for buyers.
+    """
+    db = get_firestore_db()
+    try:
+        listings_query = (
+            db.collection("listings")
+            .where("status", "==", "active")
+            .stream()
+        )
+
+        results = []
+        for doc in listings_query:
+            data = doc.to_dict() or {}
+            results.append(
+                ListingResponse(
+                    id=doc.id,
+                    seller_id=data.get("seller_id", ""),
+                    category=data.get("category", ""),
+                    status=data.get("status", "active"),
+                    price_demand=float(data.get("price_demand", 0.0)),
+                    specs=data.get("specs", {}),
+                    image_urls=data.get("image_urls", []),
+                    pickup_city=data.get("pickup_city", ""),
+                    pickup_area=data.get("pickup_area"),
+                    pickup_address=data.get("pickup_address", ""),
+                    contact_name=data.get("contact_name", ""),
+                    contact_phone=data.get("contact_phone", ""),
+                    contact_email=data.get("contact_email", ""),
+                    created_at=_format_datetime(data.get("created_at")),
+                    updated_at=_format_datetime(data.get("updated_at")),
+                )
+            )
+        # Sort newest first if created_at is available
+        results.sort(
+            key=lambda x: x.created_at or "",
+            reverse=True
+        )
+        return results
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch active listings: {str(e)}",
+        )
+
+
 @router.get("/{listing_id}", response_model=ListingResponse)
 async def get_listing_by_id(
     listing_id: str,

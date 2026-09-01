@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../models/bid.dart';
+import '../../models/listing.dart';
+import '../../services/bid_service.dart';
 import 'seller_price_offer_screen.dart';
 
 class SellerStatusTrackingScreen extends StatefulWidget {
   final String currentStatus;
+  final Listing? listing;
 
   const SellerStatusTrackingScreen({
     super.key,
     this.currentStatus = 'Price Offered',
+    this.listing,
   });
 
   @override
@@ -26,60 +31,103 @@ class _SellerStatusTrackingScreenState
     ],
   );
 
+  List<Bid> _bids = [];
+  bool _isLoadingBids = false;
+
   @override
   void initState() {
     super.initState();
-    if (widget.currentStatus == 'Price Offered') {
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          _navigateToPriceOffer();
-        }
-      });
+    _loadListingBids();
+  }
+
+  Future<void> _loadListingBids() async {
+    if (widget.listing == null) return;
+    setState(() => _isLoadingBids = true);
+    final fetched = await BidService.instance.fetchBidsForListing(widget.listing!.id);
+    if (!mounted) return;
+    setState(() {
+      _bids = fetched;
+      _isLoadingBids = false;
+    });
+  }
+
+  void _navigateToPriceOffer([Bid? bid]) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SellerPriceOfferScreen(
+          listing: widget.listing,
+          bid: bid ?? (_bids.isNotEmpty ? _bids.first : null),
+        ),
+      ),
+    );
+    if (result == true) {
+      _loadListingBids();
     }
   }
 
-  void _navigateToPriceOffer() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const SellerPriceOfferScreen(),
-      ),
-    );
+  String get _displayTitle {
+    if (widget.listing != null) return widget.listing!.title;
+    return '200x Solar Panels 400W';
   }
 
-  final List<Map<String, dynamic>> _statusFlow = [
-    {
-      'title': 'Submitted',
-      'subtitle': 'Dec 18, 09:30 AM',
-      'isCompleted': true,
-      'isActive': false,
-    },
-    {
-      'title': 'Under Review',
-      'subtitle': 'Admin reviewing your listing',
-      'isCompleted': true,
-      'isActive': false,
-    },
-    {
-      'title': 'Price Offered',
-      'subtitle': 'Awaiting your response',
-      'badge': 'Action Required',
-      'isCompleted': false,
-      'isActive': true,
-    },
-    {
-      'title': 'Negotiation',
-      'subtitle': 'Pending',
-      'isCompleted': false,
-      'isActive': false,
-    },
-    {
-      'title': 'Deal Closed',
-      'subtitle': 'Pending',
-      'isCompleted': false,
-      'isActive': false,
-    },
-  ];
+  String get _displayRef {
+    if (widget.listing != null) {
+      final idStr = widget.listing!.id.length >= 6
+          ? widget.listing!.id.substring(0, 6).toUpperCase()
+          : widget.listing!.id.toUpperCase();
+      return 'SS-$idStr';
+    }
+    return 'SS-2024-001';
+  }
+
+  String get _effectiveStatus {
+    if (_bids.any((b) => b.status == 'accepted')) return 'Deal Closed';
+    if (_bids.isNotEmpty) return 'Price Offered';
+    return widget.currentStatus;
+  }
+
+  List<Map<String, dynamic>> get _statusFlow {
+    final status = _effectiveStatus;
+    final isClosed = status == 'Deal Closed';
+    final hasOffers = _bids.isNotEmpty || status == 'Price Offered';
+
+    return [
+      {
+        'title': 'Submitted',
+        'subtitle': widget.listing?.createdFormatted ?? 'Dec 18, 09:30 AM',
+        'isCompleted': true,
+        'isActive': false,
+      },
+      {
+        'title': 'Active on Market',
+        'subtitle': 'Accepting bids from buyers',
+        'isCompleted': true,
+        'isActive': false,
+      },
+      {
+        'title': 'Price Offered',
+        'subtitle': hasOffers
+            ? '${_bids.length} bid(s) received'
+            : 'Awaiting buyer bids',
+        'badge': hasOffers && !isClosed ? 'Action Required' : null,
+        'isCompleted': isClosed,
+        'isActive': hasOffers && !isClosed,
+      },
+      {
+        'title': 'Negotiation / Review',
+        'subtitle': isClosed ? 'Completed' : 'Reviewing highest offers',
+        'isCompleted': isClosed,
+        'isActive': false,
+      },
+      {
+        'title': 'Deal Closed',
+        'subtitle': isClosed ? 'Offer accepted' : 'Pending agreement',
+        'isCompleted': isClosed,
+        'isActive': isClosed,
+      },
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,17 +158,7 @@ class _SellerStatusTrackingScreenState
             children: [
               // Header Listing Info Card
               GestureDetector(
-                onTap: () {
-                  if (widget.currentStatus == 'Price Offered') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const SellerPriceOfferScreen(),
-                      ),
-                    );
-                  }
-                },
+                onTap: _bids.isNotEmpty ? () => _navigateToPriceOffer(_bids.first) : null,
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
@@ -154,9 +192,9 @@ class _SellerStatusTrackingScreenState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              '200x Solar Panels 400W',
-                              style: TextStyle(
+                            Text(
+                              _displayTitle,
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black,
@@ -170,7 +208,7 @@ class _SellerStatusTrackingScreenState
                                   color: Color(0xFF6B7280),
                                 ),
                                 children: [
-                                  const TextSpan(text: 'SS-2024-001 · Currently: '),
+                                  TextSpan(text: '$_displayRef · Currently: '),
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.middle,
                                     child: ShaderMask(
@@ -178,7 +216,7 @@ class _SellerStatusTrackingScreenState
                                       shaderCallback: (bounds) =>
                                           primaryGreenGradient.createShader(bounds),
                                       child: Text(
-                                        widget.currentStatus,
+                                        _effectiveStatus,
                                         style: const TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
@@ -209,9 +247,235 @@ class _SellerStatusTrackingScreenState
                   isLast: isLast,
                 );
               }),
+
+              const SizedBox(height: 16),
+              const Divider(color: Color(0xFFE5E7EB), thickness: 1),
+              const SizedBox(height: 16),
+
+              // Bids Received Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Bids Received',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  if (_bids.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEAF8EE),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${_bids.length} Total',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF00A63E),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Bids List or Loading
+              if (_isLoadingBids)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: CircularProgressIndicator(color: Color(0xFF00A63E)),
+                  ),
+                )
+              else if (_bids.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFF3F4F6)),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.gavel_outlined, size: 32, color: Colors.grey.shade400),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'No bids placed yet',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF374151),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Bids from buyers will appear here in real-time.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ..._bids.map((bid) => _buildBidCard(bid)),
+
+              const SizedBox(height: 32),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildBidCard(Bid bid) {
+    final isAccepted = bid.status.toLowerCase() == 'accepted';
+    final isRejected = bid.status.toLowerCase() == 'rejected';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isAccepted
+              ? const Color(0xFF86EFAC)
+              : const Color(0xFFE5E7EB),
+          width: isAccepted ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: const Color(0xFFEAF8EE),
+                    child: Text(
+                      bid.buyerName.isNotEmpty ? bid.buyerName[0].toUpperCase() : 'B',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF00A63E),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        bid.buyerName,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      Text(
+                        bid.dateDisplay,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isAccepted
+                      ? const Color(0xFFEAF8EE)
+                      : isRejected
+                          ? const Color(0xFFFEE2E2)
+                          : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isAccepted
+                      ? 'Accepted'
+                      : isRejected
+                          ? 'Declined'
+                          : 'Pending Offer',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isAccepted
+                        ? const Color(0xFF00A63E)
+                        : isRejected
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFF2563EB),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Offered Amount',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                    ),
+                  ),
+                  Text(
+                    bid.formattedAmount,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF00A63E),
+                    ),
+                  ),
+                ],
+              ),
+              if (!isAccepted && !isRejected)
+                ElevatedButton(
+                  onPressed: () => _navigateToPriceOffer(bid),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00A63E),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Review Offer',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -225,7 +489,7 @@ class _SellerStatusTrackingScreenState
 
     return IntrinsicHeight(
       child: GestureDetector(
-        onTap: isActive ? _navigateToPriceOffer : null,
+        onTap: isActive ? () => _navigateToPriceOffer() : null,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -343,7 +607,7 @@ class _SellerStatusTrackingScreenState
                     if (status['badge'] != null) ...[
                       const SizedBox(height: 6),
                       GestureDetector(
-                        onTap: _navigateToPriceOffer,
+                        onTap: () => _navigateToPriceOffer(),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,

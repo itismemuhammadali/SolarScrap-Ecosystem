@@ -1,15 +1,141 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../models/bid.dart';
+import '../../models/listing.dart';
+import '../../services/bid_service.dart';
 
 class SellerPriceOfferScreen extends StatefulWidget {
-  const SellerPriceOfferScreen({super.key});
+  final Listing? listing;
+  final Bid? bid;
+
+  const SellerPriceOfferScreen({
+    super.key,
+    this.listing,
+    this.bid,
+  });
 
   @override
   State<SellerPriceOfferScreen> createState() => _SellerPriceOfferScreenState();
 }
 
 class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
+  bool _isProcessing = false;
+
+  String get _listingTitle {
+    if (widget.listing != null) return widget.listing!.title;
+    if (widget.bid?.listingTitle != null) return widget.bid!.listingTitle!;
+    return '200x Solar Panels 400W';
+  }
+
+  String get _referenceNumber {
+    if (widget.bid != null) return widget.bid!.referenceNumber;
+    if (widget.listing != null) {
+      final idStr = widget.listing!.id.length >= 6
+          ? widget.listing!.id.substring(0, 6).toUpperCase()
+          : widget.listing!.id.toUpperCase();
+      return 'SS-$idStr';
+    }
+    return 'SS-2024-001';
+  }
+
+  String get _offeredPrice {
+    if (widget.bid != null) return widget.bid!.formattedAmount;
+    return 'Rs.4,20,000';
+  }
+
+  String get _askingPrice {
+    if (widget.listing != null) return 'Your asking: ${widget.listing!.formattedPrice}';
+    return 'Your asking: Rs.4,80,000';
+  }
+
+  Future<void> _handleConfirmAccept() async {
+    Navigator.pop(context); // Close bottom sheet
+    if (widget.bid != null) {
+      setState(() => _isProcessing = true);
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFF00A63E)),
+        ),
+      );
+
+      final updated = await BidService.instance.acceptBid(widget.bid!.id);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      setState(() => _isProcessing = false);
+
+      if (updated != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Offer accepted successfully! Deal is closed.'),
+            backgroundColor: Color(0xFF00A63E),
+          ),
+        );
+        Navigator.pop(context, true); // Close price offer screen and trigger refresh
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to accept offer. Please try again.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Offer accepted successfully!'),
+          backgroundColor: Color(0xFF00A63E),
+        ),
+      );
+      Navigator.pop(context, true);
+    }
+  }
+
+  Future<void> _handleConfirmReject() async {
+    Navigator.pop(context); // Close bottom sheet
+    if (widget.bid != null) {
+      setState(() => _isProcessing = true);
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFDC2626)),
+        ),
+      );
+
+      final updated = await BidService.instance.rejectBid(widget.bid!.id);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      setState(() => _isProcessing = false);
+
+      if (updated != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Offer rejected.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to reject offer.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Offer rejected successfully!')),
+      );
+      Navigator.pop(context, true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,18 +218,18 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            '200x Solar Panels 400W',
-                            style: TextStyle(
+                          Text(
+                            _listingTitle,
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: Colors.black,
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'SS-2024-001 · Currently: Price Offered',
-                            style: TextStyle(
+                          Text(
+                            '$_referenceNumber · Price Offered',
+                            style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF00A63E),
                             ),
@@ -132,9 +258,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                       size: 18,
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Ref: SS-2024-001',
-                      style: TextStyle(
+                    Text(
+                      'Ref: $_referenceNumber',
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
                       ),
@@ -167,10 +293,10 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                         ],
                       ).createShader(bounds),
                       child: Text(
-                        'Rs.4,20,000',
+                        _offeredPrice,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
-                          fontSize: 36,
+                          fontSize: 34,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0,
                         ),
@@ -178,7 +304,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Your asking: Rs.4,80,000',
+                      _askingPrice,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -189,7 +315,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Admin Notes Card
+              // Bid Notes Card
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -201,7 +327,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Admin Notes',
+                      'Bid Details',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -210,7 +336,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Based on current scrap market rates and panel age (2019 vintage), we are offering Rs.4,20,000 for the full lot of 200 panels. This is competitive pricing considering logistics.',
+                      widget.bid != null
+                          ? 'Bid placed by ${widget.bid!.buyerName} on ${widget.bid!.dateDisplay}. Confirming accept will close this deal and notify the buyer immediately.'
+                          : 'A buyer has offered $_offeredPrice for this equipment. Review the terms and select your decision below.',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -227,7 +355,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _showRejectOfferBottomSheet,
+                      onPressed: _isProcessing ? null : _showRejectOfferBottomSheet,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 54),
                         side: const BorderSide(
@@ -261,7 +389,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton(
-                        onPressed: _showAcceptOfferBottomSheet,
+                        onPressed: _isProcessing ? null : _showAcceptOfferBottomSheet,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
@@ -346,7 +474,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
 
               // Description
               Text(
-                'You are accepting Rs.4,20,000 for 200x Solar Panels. This action cannot be undone.',
+                'You are accepting $_offeredPrice for $_listingTitle. This action will close the deal.',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade600,
@@ -395,15 +523,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context); // Close bottom sheet
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Offer accepted successfully!'),
-                            ),
-                          );
-                          Navigator.pop(context); // Close Price Offer screen
-                        },
+                        onPressed: _handleConfirmAccept,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
@@ -488,7 +608,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
 
               // Description
               Text(
-                'The listing will return to negotiation. Admin will be notified of your decision.',
+                'The buyer will be notified that their bid of $_offeredPrice was declined.',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade600,
@@ -537,15 +657,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Offer rejected successfully!'),
-                            ),
-                          );
-                          Navigator.pop(context);
-                        },
+                        onPressed: _handleConfirmReject,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,

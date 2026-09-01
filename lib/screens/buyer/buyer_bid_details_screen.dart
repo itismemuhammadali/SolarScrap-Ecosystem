@@ -1,11 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../models/bid.dart';
 
 class BuyerBidDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? bidData;
+  final Bid? bid;
 
   const BuyerBidDetailsScreen({
     super.key,
     this.bidData,
+    this.bid,
   });
 
   @override
@@ -33,7 +37,19 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
     };
 
     _bid = Map<String, dynamic>.from(defaultData);
-    if (widget.bidData != null) {
+
+    if (widget.bid != null) {
+      final b = widget.bid!;
+      _bid['id'] = b.id;
+      _bid['auctionId'] = b.referenceNumber;
+      _bid['title'] = b.titleDisplay;
+      _bid['image'] = b.displayImage;
+      _bid['status'] = b.statusDisplay;
+      _bid['myBidAmount'] = b.formattedAmount;
+      _bid['currentHighest'] = b.formattedAmount;
+      _bid['bidDate'] = b.dateDisplay;
+      _bid['time'] = 'Active';
+    } else if (widget.bidData != null) {
       widget.bidData!.forEach((key, value) {
         if (value != null) {
           _bid[key] = value;
@@ -217,9 +233,40 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset(
-                      image,
-                      fit: BoxFit.cover,
+                    Builder(
+                      builder: (context) {
+                        final imgStr = image.toString();
+                        if (imgStr.startsWith('http://') || imgStr.startsWith('https://')) {
+                          return Image.network(
+                            imgStr,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Image.asset(
+                              'assets/images/buyer-solar.jpg',
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        } else if (imgStr.startsWith('/data/') ||
+                            imgStr.startsWith('/storage/') ||
+                            imgStr.startsWith('/sdcard/') ||
+                            imgStr.startsWith('file://')) {
+                          return Image.file(
+                            File(imgStr.replaceFirst('file://', '')),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Image.asset(
+                              'assets/images/buyer-solar.jpg',
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        }
+                        return Image.asset(
+                          imgStr.isNotEmpty ? imgStr : 'assets/images/buyer-solar.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Image.asset(
+                            'assets/images/buyer-solar.jpg',
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      },
                     ),
 
                     // Top Featured Badge

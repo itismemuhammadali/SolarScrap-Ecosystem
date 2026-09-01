@@ -13,12 +13,18 @@ class ListingService {
 
   String get _baseUrl => ApiConfig.baseUrl;
 
+  List<Listing>? _cachedAllListings;
+
   Map<String, String> get _headers {
     final token = AuthService.instance.accessToken;
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
     };
+  }
+
+  void clearCache() {
+    _cachedAllListings = null;
   }
 
   String? getFullImageUrl(String? pathOrUrl) {
@@ -60,11 +66,8 @@ class ListingService {
         if (response.statusCode >= 200 && response.statusCode < 300) {
           final data = jsonDecode(response.body);
           return data['url'];
-        } else {
-          print('[ListingService] uploadListingImage failed (attempt ${attempt + 1}): ${response.body}');
         }
-      } catch (e) {
-        print('[ListingService] uploadListingImage error (attempt ${attempt + 1}): $e');
+      } catch (_) {
         if (attempt == retries) return null;
         await Future.delayed(const Duration(seconds: 1));
       }
@@ -82,15 +85,35 @@ class ListingService {
       ).timeout(const Duration(seconds: 20));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        clearCache();
         final data = jsonDecode(response.body);
         return Listing.fromJson(data);
-      } else {
-        print('[ListingService] createListing failed (${response.statusCode}): ${response.body}');
       }
-    } catch (e) {
-      print('[ListingService] createListing error: $e');
-    }
+    } catch (_) {}
     return null;
+  }
+
+  /// Fetch all active listings across all sellers for the marketplace (Buyer side)
+  Future<List<Listing>> fetchAllActiveListings({bool forceRefresh = false}) async {
+    if (!forceRefresh && _cachedAllListings != null && _cachedAllListings!.isNotEmpty) {
+      return _cachedAllListings!;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/v1/listings/all'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final list = data.map((json) => Listing.fromJson(json)).toList();
+        _cachedAllListings = list;
+        return list;
+      }
+    } catch (_) {}
+
+    return _cachedAllListings ?? [];
   }
 
   /// Fetch all listings created by the current seller
@@ -104,12 +127,8 @@ class ListingService {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => Listing.fromJson(json)).toList();
-      } else {
-        print('[ListingService] fetchMyListings failed: ${response.body}');
       }
-    } catch (e) {
-      print('[ListingService] fetchMyListings error: $e');
-    }
+    } catch (_) {}
     return [];
   }
 
@@ -125,9 +144,7 @@ class ListingService {
         final data = jsonDecode(response.body);
         return Listing.fromJson(data);
       }
-    } catch (e) {
-      print('[ListingService] fetchListingById error: $e');
-    }
+    } catch (_) {}
     return null;
   }
 }

@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../models/listing.dart';
+import '../../services/listing_service.dart';
+import '../../services/saved_auctions_service.dart';
 import 'buyer_auction_details_screen.dart';
 
 class BuyerSavedAuctionsScreen extends StatefulWidget {
-  const BuyerSavedAuctionsScreen({super.key});
+  final List<Map<String, dynamic>>? allAuctions;
+  final List<Listing>? listings;
+
+  const BuyerSavedAuctionsScreen({
+    super.key,
+    this.allAuctions,
+    this.listings,
+  });
 
   @override
   State<BuyerSavedAuctionsScreen> createState() =>
@@ -12,47 +22,66 @@ class BuyerSavedAuctionsScreen extends StatefulWidget {
 class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
   final TextEditingController _searchController = TextEditingController();
 
-  final List<Map<String, dynamic>> _savedAuctions = [
-    {
-      'id': 'auc-2',
-      'image': 'assets/images/man.jpg',
-      'time': '2h 34m',
-      'title': 'Thin-Film Solar Panels',
-      'category': 'Solar Panels',
-      'units': '100 units',
-      'location': 'Islamabad',
-      'priceStr': 'PKR 75,000',
-      'isFavorite': true,
-      'featured': true,
-      'verified': true,
-    },
-    {
-      'id': 'auc-3',
-      'image': 'assets/images/senary.jpg',
-      'time': '1d 3h',
-      'title': 'String Inverters 5kW',
-      'category': 'Inverters',
-      'units': '8 units',
-      'location': 'Islamabad',
-      'priceStr': 'PKR 75,000',
-      'isFavorite': true,
-      'featured': true,
-      'verified': true,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    SavedAuctionsService.instance.addListener(_onFavoritesChanged);
+  }
 
   @override
   void dispose() {
+    SavedAuctionsService.instance.removeListener(_onFavoritesChanged);
     _searchController.dispose();
     super.dispose();
   }
 
+  void _onFavoritesChanged() {
+    if (mounted) setState(() {});
+  }
+
+  List<Map<String, dynamic>> get _savedList {
+    final favIds = SavedAuctionsService.instance.favoriteIds;
+    final List<Map<String, dynamic>> combined = [];
+
+    if (widget.listings != null && widget.listings!.isNotEmpty) {
+      for (final l in widget.listings!) {
+        if (favIds.contains(l.id)) {
+          combined.add({
+            'id': l.id,
+            'image': l.firstImageUrl ?? 'assets/images/buyer-solar.jpg',
+            'time': 'Active',
+            'title': l.title,
+            'category': l.category,
+            'units': l.quantityDisplay,
+            'location': l.pickupCity,
+            'price': l.priceDemand,
+            'priceStr': l.formattedPrice,
+            'featured': true,
+            'verified': true,
+            '_listing': l,
+          });
+        }
+      }
+    }
+
+    if (widget.allAuctions != null && widget.allAuctions!.isNotEmpty) {
+      for (final auc in widget.allAuctions!) {
+        if (favIds.contains(auc['id']) && !combined.any((c) => c['id'] == auc['id'])) {
+          combined.add(auc);
+        }
+      }
+    }
+
+    return combined;
+  }
+
   List<Map<String, dynamic>> get _filteredAuctions {
     final query = _searchController.text.trim().toLowerCase();
+    final saved = _savedList;
     if (query.isEmpty) {
-      return _savedAuctions;
+      return saved;
     }
-    return _savedAuctions.where((auc) {
+    return saved.where((auc) {
       final title = (auc['title'] ?? '').toString().toLowerCase();
       final category = (auc['category'] ?? '').toString().toLowerCase();
       final location = (auc['location'] ?? '').toString().toLowerCase();
@@ -64,7 +93,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
 
   void _showBidBottomSheet(Map<String, dynamic> auc) {
     final TextEditingController bidAmountController =
-        TextEditingController(text: '76000');
+        TextEditingController(text: '${((auc['price'] ?? 75000) as num).toInt() + 1000}');
 
     showModalBottomSheet(
       context: context,
@@ -197,9 +226,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
 
                   // Back Button
                   GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
+                    onTap: () => Navigator.pop(context),
                     child: Container(
                       width: 40,
                       height: 40,
@@ -237,9 +264,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                     ),
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (_) {
-                        setState(() {});
-                      },
+                      onChanged: (_) => setState(() {}),
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF111827),
@@ -288,11 +313,12 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            'Saved auctions will appear here.',
+                            'Heart items in Home or Auctions tab to save them here.',
                             style: TextStyle(
                               fontSize: 13,
                               color: Color(0xFF9CA3AF),
                             ),
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
@@ -315,14 +341,21 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
   }
 
   Widget _buildSavedAuctionCard(Map<String, dynamic> auc) {
-    final bool isFavorite = auc['isFavorite'] ?? true;
+    final String aucId = auc['id'] ?? '';
+    final bool isFavorite = SavedAuctionsService.instance.isFavorite(aucId);
+    final String imagePath = auc['image']?.toString() ?? 'assets/images/buyer-solar.jpg';
+    final fullImageUrl = ListingService.instance.getFullImageUrl(imagePath);
+    final isNetwork = fullImageUrl != null && (fullImageUrl.startsWith('http://') || fullImageUrl.startsWith('https://'));
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BuyerAuctionDetailsScreen(auctionData: auc),
+            builder: (context) => BuyerAuctionDetailsScreen(
+              listing: auc['_listing'] as Listing?,
+              auctionData: auc,
+            ),
           ),
         );
       },
@@ -339,272 +372,288 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // Large Hero Image with Badges
-          SizedBox(
-            height: 170,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.asset(
-                  auc['image'],
-                  fit: BoxFit.cover,
-                ),
-                // Top Featured Badge
-                if (auc['featured'] == true)
-                  Positioned(
-                    top: 12,
-                    left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
+            // Large Hero Image with Badges
+            SizedBox(
+              height: 170,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (isNetwork)
+                    Image.network(
+                      fullImageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(
+                          child: Icon(Icons.solar_power_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF00A63E),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Featured',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                    )
+                  else
+                    Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(
+                          child: Icon(Icons.solar_power_outlined, size: 48, color: Color(0xFF9CA3AF)),
                         ),
                       ),
                     ),
-                  ),
-                // Favorite Heart Button
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        auc['isFavorite'] = !isFavorite;
-                      });
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isFavorite ? Icons.favorite_border : Icons.favorite_border,
-                        color: isFavorite
-                            ? const Color(0xFF4B5563)
-                            : const Color(0xFF9CA3AF),
-                        size: 18,
-                      ),
-                    ),
-                  ),
-                ),
-                // Time Badge Bottom-Left
-                Positioned(
-                  bottom: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          size: 12,
-                          color: Colors.white,
+                  // Top Featured Badge
+                  if (auc['featured'] == true)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          auc['time'] ?? '',
-                          style: const TextStyle(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00A63E),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Featured',
+                          style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Details Section
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title and Verified badge
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        auc['title'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                  // Favorite Heart Button
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: () {
+                        SavedAuctionsService.instance.toggleFavorite(aucId);
+                      },
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF4B5563),
+                          size: 18,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    if (auc['verified'] == true)
-                      Row(
+                  ),
+                  // Time Badge Bottom-Left
+                  Positioned(
+                    bottom: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(
-                            Icons.check_circle_outline,
-                            size: 13,
-                            color: Color(0xFF00A63E),
+                        children: [
+                          const Icon(
+                            Icons.access_time,
+                            size: 12,
+                            color: Colors.white,
                           ),
-                          SizedBox(width: 3),
+                          const SizedBox(width: 4),
                           Text(
-                            'Verified',
-                            style: TextStyle(
+                            auc['time'] ?? '',
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Details Section
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title and Verified badge
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          auc['title'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (auc['verified'] == true)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.check_circle_outline,
+                              size: 13,
+                              color: Color(0xFF00A63E),
+                            ),
+                            SizedBox(width: 3),
+                            Text(
+                              'Verified',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF00A63E),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Category Tag
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF8EE),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      auc['category'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF00A63E),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Units and Location
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.inventory_2_outlined,
+                        size: 13,
+                        color: Color(0xFF8E8E93),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        auc['units'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF8E8E93),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 13,
+                        color: Color(0xFF8E8E93),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        auc['location'] ?? '',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF8E8E93),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Price Demand and Bid Now Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Price Demand',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF8E8E93),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            auc['priceStr'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
                               color: Color(0xFF00A63E),
                             ),
                           ),
                         ],
                       ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-
-                // Category Tag
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEAF8EE),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    auc['category'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF00A63E),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // Units and Location
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.inventory_2_outlined,
-                      size: 13,
-                      color: Color(0xFF8E8E93),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      auc['units'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF8E8E93),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 13,
-                      color: Color(0xFF8E8E93),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      auc['location'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF8E8E93),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Price Demand and Bid Now Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Price Demand',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF8E8E93),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
                           ),
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          auc['priceStr'] ?? '',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF00A63E),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _showBidBottomSheet(auc);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            minimumSize: const Size(90, 36),
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                        ),
-                      ],
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Color(0xFF00A63E), Color(0xFF007D2E)],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          _showBidBottomSheet(auc);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          minimumSize: const Size(90, 36),
-                          padding: const EdgeInsets.symmetric(horizontal: 18),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: const Text(
-                          'Bid Now',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                          child: const Text(
+                            'Bid Now',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

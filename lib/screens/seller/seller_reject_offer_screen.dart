@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../models/bid.dart';
+import '../../models/listing.dart';
+import '../../services/bid_service.dart';
 
 class SellerRejectOfferScreen extends StatefulWidget {
-  const SellerRejectOfferScreen({super.key});
+  final Bid? bid;
+  final Listing? listing;
+
+  const SellerRejectOfferScreen({
+    super.key,
+    this.bid,
+    this.listing,
+  });
 
   @override
   State<SellerRejectOfferScreen> createState() =>
@@ -10,6 +20,56 @@ class SellerRejectOfferScreen extends StatefulWidget {
 }
 
 class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
+  bool _isProcessing = false;
+
+  String get _offeredPrice {
+    if (widget.bid != null) return widget.bid!.formattedAmount;
+    return 'Rs.4,20,000';
+  }
+
+  Future<void> _handleConfirmReject() async {
+    if (widget.bid != null) {
+      setState(() => _isProcessing = true);
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFDC2626)),
+        ),
+      );
+
+      final updated = await BidService.instance.rejectBid(widget.bid!.id);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      setState(() => _isProcessing = false);
+
+      if (updated != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Offer rejected.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to reject offer.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Offer rejected successfully!'),
+        ),
+      );
+      Navigator.pop(context, true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,8 +85,8 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
                 Container(
                   width: 80,
                   height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEE2E2),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFEE2E2),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -57,7 +117,7 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
 
                 // Description
                 Text(
-                  'The listing will return to negotiation. Admin will be notified of your decision.',
+                  'The buyer will be notified that their bid of $_offeredPrice was declined.',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey.shade600,
@@ -72,9 +132,7 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
+                        onPressed: _isProcessing ? null : () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 48),
                           side: const BorderSide(
@@ -106,14 +164,7 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Offer rejected successfully!'),
-                              ),
-                            );
-                            Navigator.pop(context);
-                          },
+                          onPressed: _isProcessing ? null : _handleConfirmReject,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
                             shadowColor: Colors.transparent,

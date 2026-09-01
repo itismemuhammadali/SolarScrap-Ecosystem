@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../models/listing.dart';
+import '../../services/listing_service.dart';
+import '../../services/saved_auctions_service.dart';
 import 'buyer_place_bid_screen.dart';
 
 class BuyerAuctionDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? auctionData;
+  final Listing? listing;
 
   const BuyerAuctionDetailsScreen({
     super.key,
     this.auctionData,
+    this.listing,
   });
 
   @override
@@ -16,127 +21,164 @@ class BuyerAuctionDetailsScreen extends StatefulWidget {
 
 class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
   int _selectedTabIndex = 0; // 0: Details, 1: Specs, 2: Timeline
-  bool _isFavorite = true;
+  int _currentImageIndex = 0;
+  final PageController _pageController = PageController();
 
   late Map<String, dynamic> _auction;
+  late List<String> _imageUrls;
 
   @override
   void initState() {
     super.initState();
-    final defaultData = {
-      'id': 'A001',
-      'title': 'Monocrystalline Solar Panels',
-      'category': 'Solar Panels',
-      'image': 'assets/images/buyer-solar.jpg',
-      'startingBid': 'PKR 85,000',
-      'currentBid': 'PKR 92,000',
-      'quantity': '150 units',
-      'condition': 'Good',
-      'location': 'Karachi',
-      'locationDetail': 'Karachi, SITE Area',
-      'timeLeft': '2h 34m',
-      'description':
-          'High-efficiency 400W monocrystalline panels from a decommissioned 500kW solar farm. Panels are in good working condition with minor cosmetic wear.',
-      'specs': [
-        '400W rated power',
-        '21.3% efficiency',
-        '25-year warranty remaining (5yr)',
-        'Silver frame',
-      ],
-      'timeline': [
-        {
-          'title': 'Auction Created',
-          'subtitle': 'Jul 20, 2026 · 10:00 AM',
-          'completed': true,
-        },
-        {
-          'title': 'Auction Live',
-          'subtitle': 'Jul 21, 2026 · 08:00 AM',
-          'completed': true,
-        },
-        {
-          'title': 'Auction Ends',
-          'subtitle': 'Jul 23, 2026 · 2h 34m remaining',
-          'completed': false,
-          'current': true,
-        },
-        {
-          'title': 'Winner Notified',
-          'subtitle': 'After auction closes',
-          'completed': false,
-          'current': false,
-        },
-      ],
-    };
+    _imageUrls = [];
 
-    _auction = Map<String, dynamic>.from(defaultData);
-    if (widget.auctionData != null) {
-      widget.auctionData!.forEach((key, value) {
-        if (value != null) {
-          _auction[key] = value;
+    if (widget.listing != null) {
+      final l = widget.listing!;
+      _imageUrls = List<String>.from(l.imageUrls);
+
+      final List<String> computedSpecs = [];
+      l.specs.forEach((k, v) {
+        if (v != null && v.toString().isNotEmpty && k != 'description') {
+          final label = k
+              .split('_')
+              .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+              .join(' ');
+          computedSpecs.add('$label: $v');
         }
       });
-      if (widget.auctionData!['priceStr'] != null) {
-        _auction['currentBid'] = widget.auctionData!['priceStr'];
+      if (computedSpecs.isEmpty) {
+        computedSpecs.add('Category: ${l.category}');
+        computedSpecs.add('Quantity: ${l.quantityDisplay}');
+        computedSpecs.add('Location: ${l.locationDisplay}');
       }
-      if (widget.auctionData!['time'] != null) {
-        _auction['timeLeft'] = widget.auctionData!['time'];
-      }
-      if (widget.auctionData!['units'] != null) {
-        _auction['quantity'] = widget.auctionData!['units'];
-      }
-      if (widget.auctionData!['location'] != null) {
-        _auction['locationDetail'] =
-            '${widget.auctionData!['location']}, Industrial Area';
-      }
-    }
 
-    if (_auction['isFavorite'] != null) {
-      _isFavorite = _auction['isFavorite'] as bool;
+      _auction = {
+        'id': l.id.length >= 6 ? l.id.substring(0, 6).toUpperCase() : l.id.toUpperCase(),
+        'title': l.title,
+        'category': l.category,
+        'image': l.firstImageUrl ?? 'assets/images/buyer-solar.jpg',
+        'startingBid': l.formattedPrice,
+        'currentBid': l.formattedPrice,
+        'quantity': l.quantityDisplay,
+        'condition': l.specs['condition']?.toString() ?? 'Inspected / Working',
+        'location': l.pickupCity.isNotEmpty ? l.pickupCity : 'Pakistan',
+        'locationDetail': l.locationDisplay,
+        'timeLeft': 'Active',
+        'contactName': l.contactName,
+        'contactPhone': l.contactPhone,
+        'contactEmail': l.contactEmail,
+        'pickupAddress': l.pickupAddress,
+        'description': l.specs['description']?.toString().isNotEmpty == true
+            ? l.specs['description'].toString()
+            : 'Solar equipment verified and available for immediate pickup at ${l.pickupAddress.isNotEmpty ? l.pickupAddress : l.locationDisplay}.',
+        'specs': computedSpecs,
+        'timeline': [
+          {
+            'title': 'Auction Created',
+            'subtitle': l.createdAt ?? 'Recently',
+            'completed': true,
+          },
+          {
+            'title': 'Auction Live & Active',
+            'subtitle': 'Bidding is currently open',
+            'completed': true,
+          },
+          {
+            'title': 'Highest Bidder Review',
+            'subtitle': 'Seller will confirm winner',
+            'completed': false,
+            'current': true,
+          },
+        ],
+      };
+    } else {
+      final defaultData = {
+        'id': 'A001',
+        'title': 'Monocrystalline Solar Panels',
+        'category': 'Solar Panels',
+        'image': 'assets/images/buyer-solar.jpg',
+        'startingBid': 'PKR 85,000',
+        'currentBid': 'PKR 92,000',
+        'quantity': '150 units',
+        'condition': 'Good',
+        'location': 'Karachi',
+        'locationDetail': 'Karachi, SITE Area',
+        'timeLeft': 'Active',
+        'description':
+            'High-efficiency 400W monocrystalline panels from a decommissioned 500kW solar farm. Panels are in good working condition with minor cosmetic wear.',
+        'specs': [
+          '400W rated power',
+          '21.3% efficiency',
+          '25-year warranty remaining (5yr)',
+          'Silver frame',
+        ],
+        'timeline': [
+          {
+            'title': 'Auction Created',
+            'subtitle': 'Recently',
+            'completed': true,
+          },
+          {
+            'title': 'Auction Live & Active',
+            'subtitle': 'Bidding is currently open',
+            'completed': true,
+          },
+          {
+            'title': 'Highest Bidder Review',
+            'subtitle': 'Seller will confirm winner',
+            'completed': false,
+            'current': true,
+          },
+        ],
+      };
+
+      _auction = Map<String, dynamic>.from(defaultData);
+      if (widget.auctionData != null) {
+        widget.auctionData!.forEach((key, value) {
+          if (value != null) {
+            _auction[key] = value;
+          }
+        });
+        if (widget.auctionData!['priceStr'] != null) {
+          _auction['currentBid'] = widget.auctionData!['priceStr'];
+        }
+        if (widget.auctionData!['units'] != null) {
+          _auction['quantity'] = widget.auctionData!['units'];
+        }
+        if (widget.auctionData!['location'] != null) {
+          _auction['locationDetail'] =
+              '${widget.auctionData!['location']}, Industrial Area';
+        }
+      }
     }
   }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  String get _auctionId => widget.listing?.id ?? _auction['id']?.toString() ?? 'A001';
+
+  bool get _isFavorite => SavedAuctionsService.instance.isFavorite(_auctionId);
 
   String get _descriptionText {
     if (_auction['description'] != null &&
         (_auction['description'] as String).isNotEmpty) {
       return _auction['description'];
     }
-    return 'High-efficiency 400W monocrystalline panels from a decommissioned 500kW solar farm. Panels are in good working condition with minor cosmetic wear.';
+    return 'Quality solar scrap equipment inspected and listed on the SolarScrap marketplace.';
   }
 
   List<String> get _specsList {
-    if (_auction['specs'] != null &&
-        (_auction['specs'] as List).isNotEmpty) {
+    if (_auction['specs'] != null && (_auction['specs'] as List).isNotEmpty) {
       return List<String>.from(_auction['specs']);
     }
-    final title = (_auction['title'] ?? '').toString().toLowerCase();
-    if (title.contains('inverter')) {
-      return [
-        '5kW continuous output power',
-        '97.8% maximum efficiency',
-        '10-year manufacturer warranty',
-        'IP65 weatherproof enclosure',
-      ];
-    } else if (title.contains('battery')) {
-      return [
-        '48V 100Ah capacity (4.8kWh)',
-        '6,000+ cycle life at 80% DoD',
-        'Built-in smart BMS protection',
-        'Wall mountable design',
-      ];
-    } else if (title.contains('transformer')) {
-      return [
-        '100kVA rated capacity',
-        'Oil-immersed cooling system',
-        'Copper winding standard',
-        'High overload capacity',
-      ];
-    }
     return [
-      '400W rated power',
-      '21.3% efficiency',
-      '25-year warranty remaining (5yr)',
-      'Silver frame',
+      'Category: ${_auction['category'] ?? 'Solar Scrap'}',
+      'Verified equipment lot',
+      'Available for pickup inspection',
     ];
   }
 
@@ -145,48 +187,79 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
         (_auction['timeline'] as List).isNotEmpty) {
       return List<Map<String, dynamic>>.from(_auction['timeline']);
     }
-    final remainingTime = _auction['timeLeft'] ?? _auction['time'] ?? '2h 34m';
     return [
       {
         'title': 'Auction Created',
-        'subtitle': 'Jul 20, 2026 · 10:00 AM',
+        'subtitle': 'Recently',
         'completed': true,
       },
       {
-        'title': 'Auction Live',
-        'subtitle': 'Jul 21, 2026 · 08:00 AM',
+        'title': 'Auction Live & Active',
+        'subtitle': 'Bidding is currently open',
         'completed': true,
-      },
-      {
-        'title': 'Auction Ends',
-        'subtitle': 'Jul 23, 2026 · $remainingTime remaining',
-        'completed': false,
-        'current': true,
-      },
-      {
-        'title': 'Winner Notified',
-        'subtitle': 'After auction closes',
-        'completed': false,
-        'current': false,
       },
     ];
   }
 
+  Widget _buildImageWidget(String pathOrUrl) {
+    final fullUrl = ListingService.instance.getFullImageUrl(pathOrUrl);
+    if (fullUrl != null &&
+        (fullUrl.startsWith('http://') || fullUrl.startsWith('https://'))) {
+      return Image.network(
+        fullUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) => _buildFallbackImage(),
+      );
+    }
+
+    if (pathOrUrl.startsWith('assets/')) {
+      return Image.asset(
+        pathOrUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) => _buildFallbackImage(),
+      );
+    }
+
+    return _buildFallbackImage();
+  }
+
+  Widget _buildFallbackImage() {
+    return Container(
+      color: const Color(0xFFE5E7EB),
+      child: const Center(
+        child: Icon(
+          Icons.solar_power_outlined,
+          size: 64,
+          color: Color(0xFF9CA3AF),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final imagePath = _auction['image'] ?? 'assets/images/buyer-solar.jpg';
-    final title = _auction['title'] ?? 'Monocrystalline Solar Panels';
+    final title = _auction['title'] ?? 'Solar Equipment';
     final category = _auction['category'] ?? 'Solar Panels';
-    final startingBid = _auction['startingBid'] ?? 'PKR 85,000';
-    final currentBid = _auction['currentBid'] ?? 'PKR 92,000';
-    final quantity = _auction['quantity'] ?? '150 units';
-    final condition = _auction['condition'] ?? 'Good';
-    final location = _auction['location'] ?? 'Karachi';
-    final locationDetail =
-        _auction['locationDetail'] ?? 'Karachi, SITE Area';
-    final timeLeft = _auction['timeLeft'] ?? '2h 34m';
+    final startingBid = _auction['startingBid'] ?? 'PKR 0';
+    final currentBid = _auction['currentBid'] ?? 'PKR 0';
+    final quantity = _auction['quantity'] ?? '1 lot';
+    final condition = _auction['condition'] ?? 'Inspected';
+    final location = _auction['location'] ?? 'Pakistan';
+    final locationDetail = _auction['locationDetail'] ?? location;
+    final timeLeft = _auction['timeLeft'] ?? 'Active';
     final auctionId = _auction['id'] ?? 'A001';
+
+    final contactName = _auction['contactName']?.toString();
+    final contactPhone = _auction['contactPhone']?.toString();
+    final contactEmail = _auction['contactEmail']?.toString();
+
+    final imagesToDisplay = _imageUrls.isNotEmpty
+        ? _imageUrls
+        : [(_auction['image']?.toString() ?? 'assets/images/buyer-solar.jpg')];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -201,14 +274,22 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                   // Hero Image Header
                   Stack(
                     children: [
-                      // Image
+                      // Image / PageView
                       SizedBox(
-                        height: 270,
+                        height: 280,
                         width: double.infinity,
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                        ),
+                        child: imagesToDisplay.length > 1
+                            ? PageView.builder(
+                                controller: _pageController,
+                                itemCount: imagesToDisplay.length,
+                                onPageChanged: (index) {
+                                  setState(() => _currentImageIndex = index);
+                                },
+                                itemBuilder: (context, index) {
+                                  return _buildImageWidget(imagesToDisplay[index]);
+                                },
+                              )
+                            : _buildImageWidget(imagesToDisplay.first),
                       ),
 
                       // Top Gradient for button visibility
@@ -223,7 +304,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withValues(alpha: 0.5),
+                                Colors.black.withValues(alpha: 0.55),
                                 Colors.transparent,
                               ],
                             ),
@@ -241,9 +322,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                           children: [
                             // Back Button
                             GestureDetector(
-                              onTap: () {
-                                Navigator.pop(context);
-                              },
+                              onTap: () => Navigator.pop(context),
                               child: Container(
                                 width: 38,
                                 height: 38,
@@ -265,16 +344,14 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                                 // Heart Button
                                 GestureDetector(
                                   onTap: () {
-                                    setState(() {
-                                      _isFavorite = !_isFavorite;
-                                    });
+                                    SavedAuctionsService.instance.toggleFavorite(_auctionId);
+                                    setState(() {});
                                   },
                                   child: Container(
                                     width: 38,
                                     height: 38,
                                     decoration: BoxDecoration(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.4),
+                                      color: Colors.black.withValues(alpha: 0.4),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -288,96 +365,104 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-
-                                // Share Button
-                                Container(
-                                  width: 38,
-                                  height: 38,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.4),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.share_outlined,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
                               ],
                             ),
                           ],
                         ),
                       ),
 
-                      // Bottom Overlay Badges
+                      // Bottom Overlay Badges & Dots
                       Positioned(
                         bottom: 16,
                         left: 16,
+                        right: 16,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Verified Seller Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF00A63E),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(
-                                    Icons.check_circle_outline,
-                                    color: Colors.white,
-                                    size: 14,
+                            Row(
+                              children: [
+                                // Verified Seller Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
                                   ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Verified Seller',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00A63E),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(
+                                        Icons.check_circle_outline,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Verified Seller',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
 
-                            // Ends In Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.access_time,
-                                    color: Colors.white,
-                                    size: 13,
+                                // Status Badge
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Ends in $timeLeft',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                                ],
-                              ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.access_time,
+                                        color: Colors.white,
+                                        size: 13,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        timeLeft,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
+
+                            // Multi-image dots indicator
+                            if (imagesToDisplay.length > 1)
+                              Row(
+                                children: List.generate(imagesToDisplay.length, (idx) {
+                                  return Container(
+                                    width: _currentImageIndex == idx ? 16 : 6,
+                                    height: 6,
+                                    margin: const EdgeInsets.only(left: 4),
+                                    decoration: BoxDecoration(
+                                      color: _currentImageIndex == idx
+                                          ? const Color(0xFF00A63E)
+                                          : Colors.white70,
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  );
+                                }),
+                              ),
                           ],
                         ),
                       ),
@@ -434,7 +519,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 const Text(
-                                  'Starting Bid',
+                                  'Price Demand',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF9CA3AF),
@@ -469,7 +554,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: _buildMetricCard(
-                                icon: Icons.star_border_rounded,
+                                icon: Icons.verified_outlined,
                                 label: 'Condition',
                                 value: condition,
                               ),
@@ -485,6 +570,85 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                           ],
                         ),
                         const SizedBox(height: 20),
+
+                        // Seller Contact Card (if available)
+                        if (contactName != null && contactName.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFE5E7EB),
+                                width: 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'SELLER / CONTACT DETAILS',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF8E8E93),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFEAF8EE),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.person_outline,
+                                        size: 18,
+                                        color: Color(0xFF00A63E),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            contactName,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF111827),
+                                            ),
+                                          ),
+                                          if (contactPhone != null && contactPhone.isNotEmpty)
+                                            Text(
+                                              contactPhone,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Color(0xFF6B7280),
+                                              ),
+                                            ),
+                                          if (contactEmail != null && contactEmail.isNotEmpty)
+                                            Text(
+                                              contactEmail,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Color(0xFF6B7280),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
 
                         // Segmented Tab Selector (Details | Specs | Timeline)
                         Container(
@@ -552,7 +716,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Current Highest Bid',
+                            'Price Demand',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF9CA3AF),
@@ -573,7 +737,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           const Text(
-                            'Auction ID',
+                            'Listing ID',
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF9CA3AF),
@@ -613,8 +777,10 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                           final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  BuyerPlaceBidScreen(auctionData: _auction),
+                              builder: (context) => BuyerPlaceBidScreen(
+                                auctionData: _auction,
+                                listing: widget.listing,
+                              ),
                             ),
                           );
                           if (result != null && mounted) {
@@ -657,28 +823,37 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
     required String value,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFFF3F4F6),
+          width: 1.0,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: const Color(0xFF00A63E),
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: const Color(0xFF9CA3AF),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF9CA3AF),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF9CA3AF),
-            ),
-          ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 6),
           Text(
             value,
             style: const TextStyle(
@@ -686,6 +861,8 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
               fontWeight: FontWeight.bold,
               color: Color(0xFF0F172A),
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -759,12 +936,14 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
               color: Color(0xFF00A63E),
             ),
             const SizedBox(width: 6),
-            Text(
-              locationDetail,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6B7280),
-                fontWeight: FontWeight.w500,
+            Expanded(
+              child: Text(
+                locationDetail,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
