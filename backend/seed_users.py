@@ -26,6 +26,32 @@ db = firestore.client()
 
 TEST_USERS = [
     {
+        "email": "admin@solarscrap.com",
+        "password": "Password123!",
+        "display_name": "Admin User",
+        "phone_number": "+92 300 0000000",
+        "role": "admin",
+        "company_name": "Solar Scrap Admin HQ",
+        "city": "Karachi",
+        "area": "Clifton",
+        "address": "Solar Scrap HQ, Suite 100",
+        "company_type": "Headquarters",
+        "gst_number": "22AAAAA0000A1Z5",
+    },
+    {
+        "email": "solarscrap.info@gmail.com",
+        "password": "Password123!",
+        "display_name": "Solar Scrap Admin",
+        "phone_number": "+92 300 9876543",
+        "role": "admin",
+        "company_name": "Solar Scrap Portal",
+        "city": "Karachi",
+        "area": "Main Boulevard",
+        "address": "Solar Scrap Office 12",
+        "company_type": "Headquarters",
+        "gst_number": "22AAAAA0000A1Z5",
+    },
+    {
         "email": "buyer@solarscrap.com",
         "password": "Password123!",
         "display_name": "Demo Buyer",

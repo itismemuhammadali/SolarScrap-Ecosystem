@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 
 
 class UserRole(str, Enum):
@@ -12,7 +12,7 @@ class UserRole(str, Enum):
 class LoginRequest(BaseModel):
     email: str = Field(..., description="User email or phone")
     password: str = Field(..., min_length=6, description="User password")
-    role: UserRole = Field(..., description="Expected role: buyer or seller")
+    role: Optional[UserRole] = Field(None, description="Expected role: buyer, seller, or admin (optional)")
 
 
 class UserProfile(BaseModel):
@@ -49,6 +49,12 @@ class SellerStatsResponse(BaseModel):
     total_earnings: str = "Rs. 0"
 
 
+class BuyerStatsResponse(BaseModel):
+    total_bids: int = 0
+    won_auctions: int = 0
+    active_bids: int = 0
+
+
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -76,4 +82,33 @@ class RegisterRequest(BaseModel):
 
 class RegisterResponse(LoginResponse):
     masked_phone: str = Field(..., description="Masked phone number for OTP UI")
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str = Field(..., description="User email for password reset")
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str = "Password reset code sent successfully."
+    masked_email: str = Field(..., description="Masked email for display, e.g. j***e@example.com")
+
+
+class VerifyOtpRequest(BaseModel):
+    email: str = Field(..., description="User email")
+    otp: str = Field(..., min_length=6, max_length=6, description="6-digit OTP code")
+
+
+class VerifyOtpResponse(BaseModel):
+    reset_token: str = Field(..., description="Short-lived token required to reset password")
+    message: str = "OTP verified successfully."
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str = Field(..., description="User email")
+    reset_token: str = Field(..., description="Token obtained from verifying OTP")
+    new_password: str = Field(..., min_length=6, description="New password (min 6 characters)")
+
+
+class ResetPasswordResponse(BaseModel):
+    message: str = "Password has been reset successfully."
 

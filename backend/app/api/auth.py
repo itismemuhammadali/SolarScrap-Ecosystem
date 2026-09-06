@@ -1,3 +1,6 @@
+import random
+import uuid
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Depends, status, Header
 from firebase_admin import auth, firestore
 from app.schemas.auth import (
@@ -9,6 +12,13 @@ from app.schemas.auth import (
     RegisterResponse,
     UpdateProfileRequest,
     SellerStatsResponse,
+    BuyerStatsResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    VerifyOtpRequest,
+    VerifyOtpResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse,
 )
 from app.core.firebase import verify_password_with_firebase, get_firestore_db
 
@@ -125,15 +135,15 @@ async def login(payload: LoginRequest):
         gst_number = user_data.get("gst_number")
         profile_photo_url = user_data.get("profile_photo_url")
 
-        # Validate Role matching
-        if registered_role.lower() != payload.role.value.lower():
+        # Validate Role matching if specified
+        if payload.role is not None and registered_role.lower() != payload.role.value.lower():
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. This account is registered as a '{registered_role}', not a '{payload.role.value}'. Please use the correct portal.",
             )
     else:
         # Create Firestore user record if not yet created (e.g. initial emulator sign-in)
-        registered_role = payload.role.value
+        registered_role = payload.role.value if payload.role else "admin"
         display_name = auth_result.get("display_name") or email.split("@")[0].capitalize()
         phone = None
         company_name = None
@@ -277,6 +287,33 @@ async def get_seller_stats(current_user: UserProfile = Depends(get_current_user)
     )
 
 
+@router.get("/buyer-stats", response_model=BuyerStatsResponse)
+async def get_buyer_stats(current_user: UserProfile = Depends(get_current_user)):
+    """
+    Get dashboard stats (total bids, active bids, won auctions) for buyer from Firestore.
+    """
+    db = get_firestore_db()
+    bids_ref = db.collection("bids").where("buyer_id", "==", current_user.user_id)
+    bids = list(bids_ref.stream())
+    total_bids = len(bids)
+
+    won_auctions = 0
+    active_bids = 0
+    for doc in bids:
+        data = doc.to_dict() or {}
+        st = str(data.get("status", "")).lower()
+        if st in ["accepted", "won"]:
+            won_auctions += 1
+        elif st in ["pending", "active", "winning", "outbid"]:
+            active_bids += 1
+
+    return BuyerStatsResponse(
+        total_bids=total_bids,
+        won_auctions=won_auctions,
+        active_bids=active_bids,
+    )
+
+
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 async def register(payload: RegisterRequest):
     """
@@ -357,5 +394,211 @@ async def register(payload: RegisterRequest):
         message=f"Registration successful for {payload.full_name}",
         masked_phone=masked
     )
+
+
+def mask_email(email: str) -> str:
+    """Mask email for display, e.g. john.doe@example.com -> j***e@example.com"""
+    try:
+        user_part, domain = email.split("@", 1)
+        if len(user_part) <= 2:
+            masked_user = user_part[0] + "*"
+        else:
+            masked_user = user_part[0] + ("*" * min(len(user_part) - 2, 4)) + user_part[-1]
+        return f"{masked_user}@{domain}"
+    except Exception:
+        return email
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+async def forgot_password(payload: ForgotPasswordRequest):
+    """
+    Request password reset OTP.
+    Generates a 6-digit OTP code, saves it to Firestore with a 10-minute TTL,
+    and logs the code for emulator visibility.
+    """
+    email = payload.email.lower().strip()
+
+    # 1. Verify user exists in Firebase Auth
+    try:
+        auth.get_user_by_email(email)
+    except auth.UserNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with this email address.",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unable to process password reset: {str(e)}",
+        )
+
+    # 2. Generate 6-digit OTP and 10-min expiration
+    otp_code = f"{random.randint(100000, 999999)}"
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(minutes=10)
+
+    # 3. Store in Firestore collection `password_resets`
+    db = get_firestore_db()
+    reset_ref = db.collection("password_resets").document(email)
+    reset_ref.set({
+        "email": email,
+        "otp": otp_code,
+        "created_at": firestore.SERVER_TIMESTAMP,
+        "expires_at": expires_at,
+        "used": False,
+        "otp_verified": False,
+    })
+
+    masked = mask_email(email)
+
+    # Print clearly to terminal for emulator inspection
+    print("\n" + "=" * 55, flush=True)
+    print(f"🔑 [PASSWORD RESET OTP] For user: {email}", flush=True)
+    print(f"👉 6-DIGIT OTP CODE: {otp_code}", flush=True)
+    print("⏳ Valid for 10 minutes", flush=True)
+    print("=" * 55 + "\n", flush=True)
+
+    return ForgotPasswordResponse(
+        message="Password reset code sent successfully.",
+        masked_email=masked,
+    )
+
+
+@router.post("/verify-otp", response_model=VerifyOtpResponse)
+async def verify_otp(payload: VerifyOtpRequest):
+    """
+    Verify 6-digit OTP code.
+    Returns a reset_token valid for 15 minutes to reset the password.
+    """
+    email = payload.email.lower().strip()
+    otp_code = payload.otp.strip()
+
+    db = get_firestore_db()
+    reset_ref = db.collection("password_resets").document(email)
+    doc = reset_ref.get()
+
+    if not doc.exists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No password reset request found for this email. Please request a new code.",
+        )
+
+    data = doc.to_dict() or {}
+    if data.get("used", False):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This reset code has already been used. Please request a new one.",
+        )
+
+    stored_otp = str(data.get("otp", "")).strip()
+    if stored_otp != otp_code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid OTP code. Please check and try again.",
+        )
+
+    expires_at = data.get("expires_at")
+    if expires_at:
+        now = datetime.now(timezone.utc)
+        if hasattr(expires_at, "tzinfo") and expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if now > expires_at:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="OTP code has expired. Please request a new code.",
+            )
+
+    # Generate short-lived reset token
+    reset_token = str(uuid.uuid4())
+    token_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    reset_ref.update({
+        "otp_verified": True,
+        "reset_token": reset_token,
+        "token_expires_at": token_expires_at,
+    })
+
+    return VerifyOtpResponse(
+        reset_token=reset_token,
+        message="OTP verified successfully.",
+    )
+
+
+@router.post("/reset-password", response_model=ResetPasswordResponse)
+async def reset_password(payload: ResetPasswordRequest):
+    """
+    Reset password using reset_token obtained after OTP verification.
+    Updates the password in Firebase Auth.
+    """
+    email = payload.email.lower().strip()
+    reset_token = payload.reset_token.strip()
+    new_password = payload.new_password
+
+    if len(new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 6 characters long.",
+        )
+
+    db = get_firestore_db()
+    reset_ref = db.collection("password_resets").document(email)
+    doc = reset_ref.get()
+
+    if not doc.exists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset session. Please request a new OTP.",
+        )
+
+    data = doc.to_dict() or {}
+    if not data.get("otp_verified") or data.get("used"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="OTP was not verified or reset code has already been used.",
+        )
+
+    if data.get("reset_token") != reset_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid reset token. Please request a new OTP.",
+        )
+
+    token_expires_at = data.get("token_expires_at")
+    if token_expires_at:
+        now = datetime.now(timezone.utc)
+        if hasattr(token_expires_at, "tzinfo") and token_expires_at.tzinfo is None:
+            token_expires_at = token_expires_at.replace(tzinfo=timezone.utc)
+        if now > token_expires_at:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Reset token has expired. Please restart the password reset process.",
+            )
+
+    # Update password in Firebase Auth
+    try:
+        user_record = auth.get_user_by_email(email)
+        auth.update_user(user_record.uid, password=new_password)
+    except auth.UserNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in authentication system.",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to update password: {str(e)}",
+        )
+
+    # Invalidate reset document
+    reset_ref.update({
+        "used": True,
+        "reset_token": None,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    })
+
+    return ResetPasswordResponse(
+        message="Password has been reset successfully. You can now sign in with your new password.",
+    )
+
 
 

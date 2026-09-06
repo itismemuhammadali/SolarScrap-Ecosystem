@@ -91,8 +91,7 @@ Copy-paste this single line in your terminal to completely wipe and free everyth
 ```bash
 lsof -ti :8000,9099,8080,4000,4400,4500 | xargs kill -9 2>/dev/null; pkill -9 -f "firebase" 2>/dev/null; pkill -9 -f "uvicorn" 2>/dev/null; echo "✅ All Backend & Firebase Emulator services stopped."
 ```
-
----
+lsof -ti :8000,9099,8080,4000,4400,4500 | xargs kill -9 2>/dev/null; pkill -9 -f "firebase" 2>/dev/null; pkill -9 -f "uvicorn" 2>/dev/null; echo "✅ All Backend & Firebase Emulator services stopped."
 
 ## ☁️ Switching to Live Production Firebase
 
