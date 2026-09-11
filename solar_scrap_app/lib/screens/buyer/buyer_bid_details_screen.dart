@@ -1,15 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../models/bid.dart';
+import '../../models/listing.dart';
+import '../../services/listing_service.dart';
+import 'buyer_auction_details_screen.dart';
 
 class BuyerBidDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? bidData;
   final Bid? bid;
+  final Listing? listing;
 
   const BuyerBidDetailsScreen({
     super.key,
     this.bidData,
     this.bid,
+    this.listing,
   });
 
   @override
@@ -19,21 +24,27 @@ class BuyerBidDetailsScreen extends StatefulWidget {
 class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
   bool _isFavorite = true;
   late Map<String, dynamic> _bid;
+  Listing? _listing;
+  bool _isLoadingListing = false;
+  List<String> _imageUrls = [];
+  int _currentImageIndex = 0;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
     super.initState();
     final defaultData = {
-      'id': 'bid-1',
-      'auctionId': 'A005',
-      'title': 'DC Cable Bundle 6mm²',
-      'image': 'assets/images/cables.jpg',
-      'time': '2h 34m',
-      'status': 'Closed', // 'Winning', 'Outbid', 'Closed'
-      'myBidAmount': 'PKR 29,000',
-      'bidDate': 'Jul 20, 2026',
-      'currentHighest': 'PKR 31,000',
+      'id': '',
+      'auctionId': 'A001',
+      'title': 'Solar Equipment',
+      'image': 'assets/images/buyer-solar.jpg',
+      'time': 'Active',
+      'status': 'Active',
+      'myBidAmount': 'PKR 0',
+      'bidDate': 'Recent',
+      'currentHighest': 'PKR 0',
       'isFavorite': true,
+      'category': 'Solar Equipment',
     };
 
     _bid = Map<String, dynamic>.from(defaultData);
@@ -43,19 +54,19 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
       _bid['id'] = b.id;
       _bid['auctionId'] = b.referenceNumber;
       _bid['title'] = b.titleDisplay;
-      _bid['image'] = b.displayImage;
+      _bid['image'] = b.listingImage ?? b.fallbackAsset;
       _bid['status'] = b.statusDisplay;
       _bid['myBidAmount'] = b.formattedAmount;
       _bid['currentHighest'] = b.formattedAmount;
       _bid['bidDate'] = b.dateDisplay;
-      _bid['time'] = 'Active';
+      _bid['time'] = b.statusDisplay;
+      _bid['category'] = b.listingCategory ?? 'Solar Equipment';
     } else if (widget.bidData != null) {
       widget.bidData!.forEach((key, value) {
         if (value != null) {
           _bid[key] = value;
         }
       });
-      // Clean up multi-line title if present
       if (_bid['title'] != null) {
         _bid['title'] = _bid['title'].toString().replaceAll('\n', ' ');
       }
@@ -71,19 +82,91 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
     if (_bid['isFavorite'] != null) {
       _isFavorite = _bid['isFavorite'] as bool;
     }
+
+    // Apply passed listing or fetch dynamically
+    if (widget.listing != null) {
+      _applyListingData(widget.listing!);
+    } else if (widget.bid != null && widget.bid!.listingId.isNotEmpty) {
+      _fetchListingDetails(widget.bid!.listingId);
+    }
+  }
+
+  Future<void> _fetchListingDetails(String listingId) async {
+    setState(() {
+      _isLoadingListing = true;
+    });
+    try {
+      final l = await ListingService.instance.fetchListingById(listingId);
+      if (l != null && mounted) {
+        setState(() {
+          _applyListingData(l);
+          _isLoadingListing = false;
+        });
+      } else if (mounted) {
+        setState(() {
+          _isLoadingListing = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingListing = false;
+        });
+      }
+    }
+  }
+
+  void _applyListingData(Listing l) {
+    _listing = l;
+    if (l.title.isNotEmpty) {
+      _bid['title'] = l.title;
+    }
+    if (l.category.isNotEmpty) {
+      _bid['category'] = l.category;
+    }
+    if (l.imageUrls.isNotEmpty) {
+      _imageUrls = List<String>.from(l.imageUrls);
+      _bid['image'] = l.imageUrls.first;
+    }
+    if (l.priceDemand > 0) {
+      _bid['currentHighest'] = l.formattedPrice;
+    }
+    _bid['city'] = l.pickupCity;
+    _bid['area'] = l.pickupArea;
+    _bid['address'] = l.pickupAddress;
+    _bid['contactName'] = l.contactName;
+    _bid['contactPhone'] = l.contactPhone;
+    _bid['contactEmail'] = l.contactEmail;
+  }
+
+  String get _fallbackAsset {
+    if (widget.bid != null) return widget.bid!.fallbackAsset;
+    final cat = (_bid['category'] ?? '').toString().toLowerCase();
+    final title = (_bid['title'] ?? '').toString().toLowerCase();
+    if (cat.contains('battery') || title.contains('batter')) return 'assets/images/battery.jpg';
+    if (cat.contains('inverter') || title.contains('inverter')) return 'assets/images/inverter.png';
+    if (cat.contains('cable') || title.contains('cable')) return 'assets/images/cables.jpg';
+    if (cat.contains('complete') || title.contains('complete')) return 'assets/images/complete-solar-system.jpg';
+    if (cat.contains('structure') || title.contains('structure')) return 'assets/images/structure.jpg';
+    return 'assets/images/buyer-solar.jpg';
   }
 
   String get _normalizedStatus {
-    final s = (_bid['status'] ?? 'Closed').toString().toLowerCase();
+    final s = (_bid['status'] ?? 'Active').toString().toLowerCase();
+    if (s.contains('accept') || s == 'won') return 'Won';
     if (s.contains('win')) return 'Winning';
-    if (s.contains('outbid') || s.contains('active')) return 'Outbid';
-    return 'Closed';
+    if (s.contains('reject') || s.contains('lost') || s.contains('closed')) return 'Closed';
+    if (s.contains('outbid')) return 'Outbid';
+    return 'Active';
   }
 
   Color get _statusBadgeBg {
     switch (_normalizedStatus) {
+      case 'Won':
       case 'Winning':
         return const Color(0xFFEAF8EE);
+      case 'Active':
+        return const Color(0xFFEFF6FF);
       case 'Outbid':
         return const Color(0xFFFEF3C7);
       case 'Closed':
@@ -94,8 +177,11 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
 
   Color get _statusBadgeText {
     switch (_normalizedStatus) {
+      case 'Won':
       case 'Winning':
         return const Color(0xFF00A63E);
+      case 'Active':
+        return const Color(0xFF2563EB);
       case 'Outbid':
         return const Color(0xFFD97706);
       case 'Closed':
@@ -107,77 +193,160 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
   List<Map<String, dynamic>> get _timelineSteps {
     final status = _normalizedStatus;
 
-    if (status == 'Closed') {
+    if (status == 'Won') {
       return [
-        {
-          'title': 'Bid Submitted',
-          'completed': true,
-        },
-        {
-          'title': 'Auction Running',
-          'completed': true,
-        },
-        {
-          'title': 'Winner Selected',
-          'completed': true,
-        },
-        {
-          'title': 'Auction Closed',
-          'completed': true,
-        },
+        {'title': 'Bid Submitted', 'completed': true},
+        {'title': 'Under Seller Review', 'completed': true},
+        {'title': 'Bid Accepted by Seller', 'completed': true},
+        {'title': 'Deal Finalized', 'completed': true},
+      ];
+    } else if (status == 'Closed') {
+      return [
+        {'title': 'Bid Submitted', 'completed': true},
+        {'title': 'Auction Running', 'completed': true},
+        {'title': 'Offer Declined / Closed', 'completed': true},
+        {'title': 'Auction Closed', 'completed': true},
       ];
     } else if (status == 'Winning') {
       return [
-        {
-          'title': 'Bid Submitted',
-          'completed': true,
-        },
-        {
-          'title': 'Auction Running',
-          'completed': true,
-        },
-        {
-          'title': 'Winner Selected',
-          'completed': true,
-        },
-        {
-          'title': 'Auction Closed',
-          'completed': false,
-        },
+        {'title': 'Bid Submitted', 'completed': true},
+        {'title': 'Highest Bidder', 'completed': true},
+        {'title': 'Seller Decision', 'completed': false},
+        {'title': 'Deal Finalized', 'completed': false},
       ];
     } else {
-      // Outbid / Active
       return [
-        {
-          'title': 'Bid Submitted',
-          'completed': true,
-        },
-        {
-          'title': 'Auction Running',
-          'completed': true,
-        },
-        {
-          'title': 'Winner Selected',
-          'completed': false,
-        },
-        {
-          'title': 'Auction Closed',
-          'completed': false,
-        },
+        {'title': 'Bid Submitted', 'completed': true},
+        {'title': 'Under Seller Review', 'completed': true},
+        {'title': 'Seller Decision', 'completed': false},
+        {'title': 'Deal Finalized', 'completed': false},
       ];
     }
   }
 
+  Widget _buildImageItem(String pathOrUrl) {
+    final fullUrl = ListingService.instance.getFullImageUrl(pathOrUrl);
+    if (fullUrl != null && (fullUrl.startsWith('http://') || fullUrl.startsWith('https://'))) {
+      return Image.network(
+        fullUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          _fallbackAsset,
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (pathOrUrl.startsWith('/data/') ||
+        pathOrUrl.startsWith('/storage/') ||
+        pathOrUrl.startsWith('file://')) {
+      return Image.file(
+        File(pathOrUrl.replaceFirst('file://', '')),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Image.asset(
+          _fallbackAsset,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+    return Image.asset(
+      pathOrUrl.isNotEmpty && pathOrUrl.startsWith('assets/') ? pathOrUrl : _fallbackAsset,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Image.asset(
+        _fallbackAsset,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  List<Widget> _buildDynamicSpecsRows() {
+    final List<Widget> rows = [];
+    final specs = _listing?.specs ?? {};
+    final category = _bid['category']?.toString() ?? _listing?.category ?? '';
+
+    void addRow(String label, String value) {
+      if (value.trim().isEmpty) return;
+      if (rows.isNotEmpty) {
+        rows.add(const Divider(height: 16, color: Color(0xFFF3F4F6)));
+      }
+      rows.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    addRow('Category', category);
+
+    if (category == 'Solar Panels') {
+      if (specs['panels_count'] != null) addRow('Number of Panels', '${specs['panels_count']}');
+      if (specs['watts_per_panel'] != null) addRow('Watts per Panel', '${specs['watts_per_panel']} W');
+      if (specs['panel_condition'] != null) addRow('Condition', '${specs['panel_condition']}');
+    } else if (category == 'Batteries') {
+      if (specs['battery_type'] != null) addRow('Battery Type', '${specs['battery_type']}');
+      if (specs['battery_count'] != null) addRow('Quantity', '${specs['battery_count']}');
+      if (specs['battery_capacity'] != null) addRow('Capacity', '${specs['battery_capacity']}');
+      if (specs['battery_brand'] != null) addRow('Brand', '${specs['battery_brand']}');
+      if (specs['battery_condition'] != null) addRow('Condition', '${specs['battery_condition']}');
+    } else if (category == 'Inverters') {
+      if (specs['inverter_brand'] != null) addRow('Brand', '${specs['inverter_brand']}');
+      if (specs['inverter_type'] != null) addRow('Type', '${specs['inverter_type']}');
+      if (specs['rated_power'] != null) addRow('Rated Power', '${specs['rated_power']}');
+      if (specs['inverter_condition'] != null) addRow('Condition', '${specs['inverter_condition']}');
+    } else if (category == 'Cables') {
+      if (specs['cable_type'] != null) addRow('Cable Type', '${specs['cable_type']}');
+      if (specs['cable_size'] != null) addRow('Cable Size', '${specs['cable_size']}');
+      if (specs['cable_conductor'] != null) addRow('Conductor', '${specs['cable_conductor']}');
+      if (specs['cable_condition'] != null) addRow('Condition', '${specs['cable_condition']}');
+    } else if (category == 'Structure') {
+      if (specs['structure_type'] != null) addRow('Structure Type', '${specs['structure_type']}');
+      if (specs['structure_metal'] != null) addRow('Metal Material', '${specs['structure_metal']}');
+    } else if (category == 'Complete Solar System') {
+      if (specs['panels_count'] != null) addRow('Panels', '${specs['panels_count']}x (${specs['watts_per_panel'] ?? ''}W)');
+      if (specs['inverter_brand'] != null) addRow('Inverter', '${specs['inverter_brand']} (${specs['inverter_type'] ?? ''})');
+      if (specs['battery_count'] != null) addRow('Batteries', '${specs['battery_count']}x ${specs['battery_type'] ?? ''}');
+      if (specs['structure_type'] != null) addRow('Structure', '${specs['structure_type']}');
+    }
+
+    if (specs['condition'] != null && rows.length <= 2) {
+      addRow('Condition', '${specs['condition']}');
+    }
+
+    return rows;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final image = _bid['image'] ?? 'assets/images/cables.jpg';
-    final title = _bid['title'] ?? 'DC Cable Bundle 6mm²';
+    final title = _bid['title'] ?? 'Solar Equipment';
     final auctionId = _bid['auctionId'] ?? 'A005';
-    final time = _bid['time'] ?? '2h 34m';
-    final myBidAmount = _bid['myBidAmount'] ?? 'PKR 29,000';
-    final bidDate = _bid['bidDate'] ?? 'Jul 20, 2026';
-    final currentHighest = _bid['currentHighest'] ?? 'PKR 31,000';
+    final time = _bid['time'] ?? 'Active';
+    final myBidAmount = _bid['myBidAmount'] ?? 'PKR 0';
+    final bidDate = _bid['bidDate'] ?? 'Recent';
+    final currentHighest = _bid['currentHighest'] ?? 'PKR 0';
     final status = _normalizedStatus;
+
+    final city = _bid['city']?.toString() ?? '';
+    final address = _bid['address']?.toString() ?? '';
+    final locationDisplay = city.isNotEmpty
+        ? (address.isNotEmpty ? '$city, $address' : city)
+        : address;
+
+    final contactName = _bid['contactName']?.toString() ?? '';
+    final contactPhone = _bid['contactPhone']?.toString() ?? '';
+    final contactEmail = _bid['contactEmail']?.toString() ?? '';
+    final hasContactInfo = contactName.isNotEmpty || contactPhone.isNotEmpty || contactEmail.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -189,87 +358,68 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
             children: [
               const SizedBox(height: 12),
 
-              // Back Button
-              GestureDetector(
-                onTap: () {
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF3F4F6),
-                    shape: BoxShape.circle,
+              // Top Bar: Back Button & Screen Title
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF3F4F6),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.black87,
+                        size: 20,
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.black87,
-                    size: 20,
+                  const Text(
+                    'Bid Details',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 40),
+                ],
               ),
               const SizedBox(height: 16),
 
-              // Title
-              const Text(
-                'Bid Details',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Hero Image Card
+              // Hero Image Card (Dynamic PageView Carousel)
               Container(
-                height: 180,
+                height: 200,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
+                  color: const Color(0xFFF3F4F6),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Builder(
-                      builder: (context) {
-                        final imgStr = image.toString();
-                        if (imgStr.startsWith('http://') || imgStr.startsWith('https://')) {
-                          return Image.network(
-                            imgStr,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Image.asset(
-                              'assets/images/buyer-solar.jpg',
-                              fit: BoxFit.cover,
-                            ),
-                          );
-                        } else if (imgStr.startsWith('/data/') ||
-                            imgStr.startsWith('/storage/') ||
-                            imgStr.startsWith('/sdcard/') ||
-                            imgStr.startsWith('file://')) {
-                          return Image.file(
-                            File(imgStr.replaceFirst('file://', '')),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Image.asset(
-                              'assets/images/buyer-solar.jpg',
-                              fit: BoxFit.cover,
-                            ),
-                          );
-                        }
-                        return Image.asset(
-                          imgStr.isNotEmpty ? imgStr : 'assets/images/buyer-solar.jpg',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Image.asset(
-                            'assets/images/buyer-solar.jpg',
-                            fit: BoxFit.cover,
-                          ),
-                        );
-                      },
-                    ),
+                    if (_imageUrls.isNotEmpty)
+                      PageView.builder(
+                        controller: _pageController,
+                        itemCount: _imageUrls.length,
+                        onPageChanged: (idx) {
+                          setState(() {
+                            _currentImageIndex = idx;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          return _buildImageItem(_imageUrls[index]);
+                        },
+                      )
+                    else
+                      _buildImageItem(_bid['image']?.toString() ?? ''),
 
-                    // Top Featured Badge
+                    // Top Featured / Category Badge
                     Positioned(
                       top: 12,
                       left: 12,
@@ -282,9 +432,9 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                           color: const Color(0xFF00A63E),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          'Featured',
-                          style: TextStyle(
+                        child: Text(
+                          _bid['category']?.toString() ?? 'Solar Equipment',
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -321,7 +471,32 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                       ),
                     ),
 
-                    // Time Badge Bottom-Left
+                    // Multi-image counter badge
+                    if (_imageUrls.length > 1)
+                      Positioned(
+                        bottom: 12,
+                        right: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${_currentImageIndex + 1}/${_imageUrls.length}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Time / Status Badge Bottom-Left
                     Positioned(
                       bottom: 12,
                       left: 12,
@@ -374,6 +549,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
+                            height: 1.3,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -437,7 +613,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                         Text(
                           myBidAmount,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF00A63E),
                           ),
@@ -460,7 +636,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                         Text(
                           bidDate,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
@@ -483,7 +659,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                         Text(
                           currentHighest,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
                           ),
@@ -493,6 +669,225 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                   ],
                 ),
               ),
+
+              // Dynamic Equipment Specifications Card
+              if (_isLoadingListing) ...[
+                const SizedBox(height: 20),
+                const Center(
+                  child: SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00A63E)),
+                  ),
+                ),
+              ] else if (_buildDynamicSpecsRows().isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  'Equipment Specifications',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    children: _buildDynamicSpecsRows(),
+                  ),
+                ),
+              ],
+
+              // Dynamic Pickup Location Card
+              if (locationDisplay.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  'Pickup Location',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEAF8EE),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Color(0xFF00A63E),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              city.isNotEmpty ? city : 'Pickup Location',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              locationDisplay,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Seller Contact Information (Visible especially if Won/Accepted)
+              if (hasContactInfo && (status == 'Won' || status == 'Winning')) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  'Seller Contact Information',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFBBF7D0)),
+                  ),
+                  child: Column(
+                    children: [
+                      if (contactName.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.person, size: 18, color: Color(0xFF00A63E)),
+                            const SizedBox(width: 10),
+                            Text(
+                              contactName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (contactPhone.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(Icons.phone, size: 18, color: Color(0xFF00A63E)),
+                            const SizedBox(width: 10),
+                            Text(
+                              contactPhone,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (contactEmail.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(Icons.email, size: 18, color: Color(0xFF00A63E)),
+                            const SizedBox(width: 10),
+                            Text(
+                              contactEmail,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+
+              // View Full Auction Page Button
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF00A63E), width: 1.5),
+                ),
+                child: TextButton.icon(
+                  onPressed: () async {
+                    if (_listing != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BuyerAuctionDetailsScreen(listing: _listing),
+                        ),
+                      );
+                    } else if (widget.bid != null && widget.bid!.listingId.isNotEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Loading full auction details...')),
+                      );
+                      final l = await ListingService.instance.fetchListingById(widget.bid!.listingId);
+                      if (!mounted) return;
+                      if (l != null) {
+                        Navigator.push(
+                          this.context,
+                          MaterialPageRoute(
+                            builder: (ctx) => BuyerAuctionDetailsScreen(listing: l),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.open_in_new, color: Color(0xFF00A63E), size: 18),
+                  label: const Text(
+                    'View Full Auction Listing',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF00A63E),
+                    ),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 24),
 
               // Timeline Section
@@ -509,8 +904,59 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
               // Stepper List
               _buildTimelineStepper(),
 
-              // Winning Banner (only if status is Winning)
-              if (status == 'Winning') ...[
+              // Contextual Status Banners
+              if (status == 'Won') ...[
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAF8EE),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF86EFAC)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check_circle_outline,
+                          color: Color(0xFF00A63E),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Your Bid Was Accepted!',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF00A63E),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'The seller accepted your offer. They will coordinate payment and equipment pickup.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF4B5563),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (status == 'Winning') ...[
                 const SizedBox(height: 24),
                 Container(
                   width: double.infinity,
@@ -548,7 +994,109 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Admin will contact you if you win.',
+                              'Your bid is currently the highest. You will be notified when the auction closes.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF4B5563),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (status == 'Active') ...[
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.schedule_outlined,
+                          color: Color(0xFF2563EB),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Bid Submitted & Active',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E40AF),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Your offer has been sent to the seller. You will be notified when they review or accept.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF4B5563),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (status == 'Outbid') ...[
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.trending_up,
+                          color: Color(0xFFD97706),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'You Have Been Outbid',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF92400E),
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Another buyer submitted a higher offer. Return to the auction to increase your bid.',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF4B5563),
@@ -583,12 +1131,10 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Indicator & Vertical Line
               SizedBox(
                 width: 24,
                 child: Column(
                   children: [
-                    // Circle Icon
                     if (isCompleted)
                       Container(
                         width: 22,
@@ -624,8 +1170,6 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                           ),
                         ),
                       ),
-
-                    // Vertical Line
                     if (!isLast)
                       Expanded(
                         child: Container(
@@ -640,8 +1184,6 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                 ),
               ),
               const SizedBox(width: 14),
-
-              // Title
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(bottom: isLast ? 0 : 28),

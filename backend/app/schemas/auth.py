@@ -28,6 +28,7 @@ class UserProfile(BaseModel):
     company_type: Optional[str] = None
     gst_number: Optional[str] = None
     profile_photo_url: Optional[str] = None
+    status: Optional[str] = "approved"
     created_at: Optional[str] = None
 
 

@@ -136,8 +136,8 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
               // Progress indicator
               Builder(
                 builder: (context) {
-                  final bool isHybrid = (widget.draft?.specs['inverter_type'] as String?)?.trim().toLowerCase() == 'hybrid';
-                  final int totalSteps = isHybrid ? 5 : 4;
+                  final bool isHybrid = (widget.draft?.specs['inverter_type'] as String?)?.trim().toLowerCase() != 'on-grid';
+                  final int totalSteps = isHybrid ? 7 : 6;
                   final String stepText = 'Step $totalSteps of $totalSteps (Final Details)';
 
                   return Column(

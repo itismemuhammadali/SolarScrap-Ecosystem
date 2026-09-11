@@ -52,6 +52,37 @@ def create_user_notification(
         return None
 
 
+def create_admin_notification(
+    db,
+    notif_type: str,
+    title: str,
+    description: str,
+    entity_id: Optional[str] = None,
+    entity_type: Optional[str] = None,
+):
+    """
+    Helper function to insert an admin notification document into Firestore
+    collection: admin_notifications/{notif_id}
+    """
+    try:
+        notif_ref = db.collection("admin_notifications").document()
+        notif_data = {
+            "type": notif_type,
+            "title": title,
+            "description": description,
+            "entity_id": entity_id,
+            "entity_type": entity_type,
+            "is_read": False,
+            "created_at": firestore.SERVER_TIMESTAMP,
+        }
+        notif_ref.set(notif_data)
+        return notif_ref.id
+    except Exception as e:
+        print(f"[Admin Notifications] Error creating notification: {e}")
+        return None
+
+
+
 @router.get("", response_model=List[NotificationResponse])
 async def get_my_notifications(
     current_user: UserProfile = Depends(get_current_user),

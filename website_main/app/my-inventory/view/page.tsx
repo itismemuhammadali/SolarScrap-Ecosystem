@@ -16,6 +16,10 @@ function InventoryViewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id") || "1";
+  const clientName = searchParams.get("client") || "Registered Buyer";
+  const clientPhone = searchParams.get("phone") || "+92 300 0000000";
+  const clientCity = searchParams.get("city") || "Islamabad, Pakistan";
+  const sellerCompany = searchParams.get("company") || "Solar Scrap Verified";
 
   const [toast, setToast] = useState<string | null>(null);
 
@@ -25,7 +29,7 @@ function InventoryViewContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#F5F6FA] py-8 px-4 sm:px-6 lg:px-8">
       {toast && (
         <div className="fixed top-6 right-6 z-50 bg-[#009845] text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-semibold">
           <CheckCircle className="w-5 h-5" />
@@ -82,10 +86,10 @@ function InventoryViewContent() {
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
                 To,
               </p>
-              <h2 className="text-lg font-bold text-gray-900">Bilal Hussain</h2>
-              <p className="text-xs text-gray-600 mt-1">+92 300 1234567</p>
+              <h2 className="text-lg font-bold text-gray-900">{clientName}</h2>
+              <p className="text-xs text-gray-600 mt-1">{clientPhone}</p>
               <p className="text-xs text-gray-500 mt-0.5">
-                Rawalpindi, Bahria Town
+                {clientCity}
               </p>
             </div>
 
@@ -102,7 +106,7 @@ function InventoryViewContent() {
               </p>
               <p className="text-gray-500">
                 <span className="font-semibold text-gray-700 mr-2">From:</span>
-                SolarTec Pvt Ltd
+                {sellerCompany}
               </p>
             </div>
           </div>

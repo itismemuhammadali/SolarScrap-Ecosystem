@@ -188,50 +188,60 @@ class _SellerEquipmentStepBatteriesState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
               // Progress indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.isCompleteSolarSystem
-                        ? 'Step 3 of 5 (Batteries)'
-                        : 'Step 2 of 7',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF71717A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    widget.isCompleteSolarSystem ? '60%' : '29%',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF00A63E),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+              Builder(
+                builder: (context) {
+                  final int totalSteps = widget.isCompleteSolarSystem ? 7 : 6;
+                  final int currentStep = widget.isCompleteSolarSystem ? 4 : 2;
+                  final String stepText = widget.isCompleteSolarSystem
+                      ? 'Step 4 of $totalSteps (Batteries)'
+                      : 'Step 2 of 6';
+                  final String percentText =
+                      '${((currentStep / totalSteps) * 100).round()}%';
 
-              // Progress bar
-              Row(
-                children: List.generate(widget.isCompleteSolarSystem ? 5 : 7, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(
-                          right: index < (widget.isCompleteSolarSystem ? 4 : 6)
-                              ? 6
-                              : 0),
-                      decoration: BoxDecoration(
-                        color: index <= (widget.isCompleteSolarSystem ? 2 : 1)
-                            ? const Color(0xFF00A63E)
-                            : const Color(0xFFE5E7EB),
-                        borderRadius: BorderRadius.circular(2),
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            stepText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF71717A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            percentText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF00A63E),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: List.generate(totalSteps, (index) {
+                          return Expanded(
+                            child: Container(
+                              height: 4,
+                              margin: EdgeInsets.only(
+                                  right: index < totalSteps - 1 ? 6 : 0),
+                              decoration: BoxDecoration(
+                                color: index < currentStep
+                                    ? const Color(0xFF00A63E)
+                                    : const Color(0xFFE5E7EB),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   );
-                }),
+                },
               ),
               const SizedBox(height: 16),
 

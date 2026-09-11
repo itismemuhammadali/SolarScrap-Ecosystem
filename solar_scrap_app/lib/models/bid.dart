@@ -101,11 +101,13 @@ class Bid {
         return 'Lost';
       case 'outbid':
         return 'Outbid';
-      case 'pending':
       case 'winning':
+        return 'Winning';
+      case 'pending':
+        return 'Pending';
       case 'active':
       default:
-        return 'Winning';
+        return 'Active';
     }
   }
 
@@ -114,10 +116,10 @@ class Bid {
     if (s == 'accepted' || s == 'won' || s == 'rejected' || s == 'lost' || s == 'closed') {
       return 'Closed';
     }
-    if (s == 'outbid') {
-      return 'Active';
+    if (s == 'winning') {
+      return 'Winning';
     }
-    return 'Winning';
+    return 'Active';
   }
 
   Color get statusColor {
@@ -125,6 +127,9 @@ class Bid {
       case 'Won':
       case 'Winning':
         return const Color(0xFF00A63E);
+      case 'Pending':
+      case 'Active':
+        return const Color(0xFF2563EB);
       case 'Outbid':
         return const Color(0xFFD97706);
       case 'Lost':
@@ -139,6 +144,9 @@ class Bid {
       case 'Won':
       case 'Winning':
         return const Color(0xFFEAF8EE);
+      case 'Pending':
+      case 'Active':
+        return const Color(0xFFEFF6FF);
       case 'Outbid':
         return const Color(0xFFFEF3C7);
       case 'Lost':
@@ -148,15 +156,22 @@ class Bid {
     }
   }
 
+  String get fallbackAsset {
+    final cat = (listingCategory ?? '').toLowerCase();
+    final title = titleDisplay.toLowerCase();
+    if (cat.contains('battery') || title.contains('batter')) return 'assets/images/battery.jpg';
+    if (cat.contains('inverter') || title.contains('inverter')) return 'assets/images/inverter.png';
+    if (cat.contains('cable') || title.contains('cable')) return 'assets/images/cables.jpg';
+    if (cat.contains('complete') || title.contains('complete')) return 'assets/images/complete-solar-system.jpg';
+    if (cat.contains('structure') || title.contains('structure')) return 'assets/images/structure.jpg';
+    return 'assets/images/buyer-solar.jpg';
+  }
+
   String get displayImage {
     if (listingImage != null && listingImage!.isNotEmpty) {
       return listingImage!;
     }
-    if (listingCategory == 'Batteries') return 'assets/images/battery.jpg';
-    if (listingCategory == 'Inverters') return 'assets/images/inverter.png';
-    if (listingCategory == 'Cables') return 'assets/images/cables.jpg';
-    if (listingCategory == 'Complete Solar System') return 'assets/images/complete-solar-system.jpg';
-    return 'assets/images/buyer-solar.jpg';
+    return fallbackAsset;
   }
 
   String get dateDisplay {

@@ -77,29 +77,32 @@ class Listing {
 
   /// Computed display title
   String get title {
+    if (specs['title'] != null && specs['title'].toString().isNotEmpty) {
+      return specs['title'].toString();
+    }
     if (category == 'Solar Panels') {
-      final type = specs['panel_type'] ?? 'Solar Panels';
+      final brand = specs['brand'] ?? specs['panel_type'] ?? 'Solar Panels';
       final count = specs['panels_count'] ?? specs['quantity'];
       final watts = specs['watts_per_panel'];
       if (count != null && watts != null) {
-        return '$count× $type (${watts}W)';
+        return '$count× $brand (${watts}W)';
       } else if (watts != null) {
-        return '$type (${watts}W)';
+        return '$brand (${watts}W)';
       }
-      return type.toString();
+      return brand.toString();
     } else if (category == 'Batteries') {
-      final type = specs['battery_type'] ?? 'Batteries';
-      final count = specs['battery_count'] ?? specs['quantity'];
-      final ah = specs['battery_ah'] ?? specs['capacity'];
+      final brand = specs['brand'] ?? specs['battery_type'] ?? 'Batteries';
+      final count = specs['count'] ?? specs['battery_count'] ?? specs['quantity'];
+      final ah = specs['ah_rating'] ?? specs['battery_ah'] ?? specs['capacity'];
       if (count != null && ah != null) {
-        return '$count× $type Battery ($ah)';
+        return '$count× $brand Battery ($ah)';
       }
-      return type.toString();
+      return brand.toString();
     } else if (category == 'Inverters') {
-      final brand = specs['inverter_brand'] ?? 'Solar Inverter';
-      final cap = specs['inverter_capacity_kw'] ?? specs['capacity'];
+      final brand = specs['brand'] ?? specs['inverter_brand'] ?? 'Solar Inverter';
+      final cap = specs['rated_power'] ?? specs['inverter_capacity_kw'] ?? specs['capacity'];
       if (cap != null) {
-        return '$brand ${cap}kW Inverter';
+        return '$brand $cap Inverter';
       }
       return brand.toString();
     } else if (category == 'Transformers') {
@@ -114,6 +117,10 @@ class Listing {
         return 'Solar Copper Cables (${length}m)';
       }
       return 'Solar Copper Cables';
+    } else if (category == 'Complete Solar System') {
+      final cap = specs['capacity'] ?? 'Complete';
+      final brand = specs['brand'] ?? 'System';
+      return '$brand $cap Solar System';
     }
     return category.isNotEmpty ? category : 'Solar Scrap Equipment';
   }

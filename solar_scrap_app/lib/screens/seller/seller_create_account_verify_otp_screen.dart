@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'seller_account_created_screen.dart';
+import '../../services/auth_service.dart';
 
 class SellerCreateAccountVerifyOtpScreen extends StatefulWidget {
   final String phoneNumber;
@@ -236,6 +237,8 @@ class _SellerCreateAccountVerifyOtpScreenState
                               SellerAccountCreatedScreen(
                             companyName: widget.companyName,
                             location: widget.location,
+                            email: AuthService.instance.currentUser?.email,
+                            userId: AuthService.instance.currentUser?.userId,
                           ),
                         ),
                       );

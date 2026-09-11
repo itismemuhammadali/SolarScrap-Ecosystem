@@ -9,6 +9,7 @@ class BuyerProfile {
   final String address;
   final String? profilePhotoUrl;
   final bool isVerified;
+  final String status;
 
   BuyerProfile({
     required this.userId,
@@ -20,10 +21,15 @@ class BuyerProfile {
     this.area = '',
     this.address = '',
     this.profilePhotoUrl,
-    this.isVerified = true,
+    this.isVerified = false,
+    this.status = 'approved',
   });
 
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isPending => status.toLowerCase() == 'pending';
+
   factory BuyerProfile.fromJson(Map<String, dynamic> json) {
+    final rawStatus = json['status']?.toString() ?? 'approved';
     return BuyerProfile(
       userId: json['user_id']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
@@ -34,7 +40,8 @@ class BuyerProfile {
       area: json['area']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
       profilePhotoUrl: json['profile_photo_url']?.toString(),
-      isVerified: json['is_verified'] == true || true,
+      isVerified: rawStatus.toLowerCase() == 'approved' || json['is_verified'] == true,
+      status: rawStatus,
     );
   }
 

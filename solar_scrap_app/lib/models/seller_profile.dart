@@ -11,6 +11,7 @@ class SellerProfile {
   final String companyType;
   final String gstNumber;
   final String? profilePhotoUrl;
+  final String status;
 
   SellerProfile({
     required this.userId,
@@ -25,7 +26,11 @@ class SellerProfile {
     this.companyType = 'Private Limited',
     this.gstNumber = '',
     this.profilePhotoUrl,
+    this.status = 'approved',
   });
+
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isPending => status.toLowerCase() == 'pending';
 
   factory SellerProfile.fromJson(Map<String, dynamic> json) {
     return SellerProfile(
@@ -41,6 +46,7 @@ class SellerProfile {
       companyType: json['company_type'] ?? 'Private Limited',
       gstNumber: json['gst_number'] ?? '',
       profilePhotoUrl: json['profile_photo_url'],
+      status: json['status'] ?? 'approved',
     );
   }
 

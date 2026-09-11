@@ -39,8 +39,14 @@ class BidService {
         clearCache();
         final data = jsonDecode(response.body);
         return Bid.fromJson(data);
+      } else {
+        // ignore: avoid_print
+        print('submitBid error: ${response.statusCode} - ${response.body}');
       }
-    } catch (_) {}
+    } catch (e) {
+      // ignore: avoid_print
+      print('submitBid exception: $e');
+    }
     return null;
   }
 
@@ -61,8 +67,14 @@ class BidService {
         final list = data.map((json) => Bid.fromJson(json)).toList();
         _cachedMyBids = list;
         return list;
+      } else {
+        // ignore: avoid_print
+        print('fetchMyBids error: ${response.statusCode} - ${response.body}');
       }
-    } catch (_) {}
+    } catch (e) {
+      // ignore: avoid_print
+      print('fetchMyBids exception: $e');
+    }
 
     return _cachedMyBids ?? [];
   }

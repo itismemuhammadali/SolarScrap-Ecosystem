@@ -387,7 +387,17 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
       Navigator.pop(context); // Close loading dialog
       setState(() => _isSubmitting = false);
 
-      final refNumber = bidResult?.referenceNumber ?? '# BID-$_auctionId';
+      if (bidResult == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to place bid. Please try again.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+        return;
+      }
+
+      final refNumber = bidResult.referenceNumber;
 
       Navigator.pushReplacement(
         context,

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/bid.dart';
@@ -103,6 +104,13 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
       }
       _listings = results[3] as List<Listing>;
       _myBids = results[4] as List<Bid>;
+      final activeBidsCount = _myBids.where((b) => b.statusGroup != 'Closed').length;
+      final wonAuctionsCount = _myBids.where((b) => b.status.toLowerCase() == 'accepted' || b.status.toLowerCase() == 'won').length;
+      _stats = BuyerStats(
+        totalBids: _myBids.length,
+        activeBids: activeBidsCount,
+        wonAuctions: wonAuctionsCount,
+      );
       _isProfileLoading = false;
       _isListingsLoading = false;
     });
@@ -492,7 +500,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   Widget _buildFeaturedHeroCard(Listing? featured) {
     if (featured == null) {
       return Container(
-        height: 180,
+        height: 195,
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -502,7 +510,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
             colors: [Color(0xFF00A63E), Color(0xFF005A20)],
           ),
         ),
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -574,6 +582,8 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
     final fullImageUrl = ListingService.instance.getFullImageUrl(featured.firstImageUrl);
     final hasNetworkImage = fullImageUrl != null &&
         (fullImageUrl.startsWith('http://') || fullImageUrl.startsWith('https://'));
+    final isAssetImage = featured.firstImageUrl != null &&
+        featured.firstImageUrl!.startsWith('assets/');
 
     return Container(
       height: 190,
@@ -593,8 +603,16 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
               errorBuilder: (context, error, stackTrace) =>
                   _buildAuctionImageFallback(featured.category),
             )
+          else if (isAssetImage)
+            Image.asset(
+              featured.firstImageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildAuctionImageFallback(featured.category),
+            )
           else
             _buildAuctionImageFallback(featured.category),
+
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -1735,6 +1753,8 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
     final fullImageUrl = ListingService.instance.getFullImageUrl(auc.firstImageUrl);
     final isNetwork = fullImageUrl != null &&
         (fullImageUrl.startsWith('http://') || fullImageUrl.startsWith('https://'));
+    final isAsset = auc.firstImageUrl != null &&
+        auc.firstImageUrl!.startsWith('assets/');
 
     return GestureDetector(
       onTap: () {
@@ -1772,8 +1792,16 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
                       errorBuilder: (context, error, stackTrace) =>
                           _buildAuctionImageFallback(auc.category),
                     )
+                  else if (isAsset)
+                    Image.asset(
+                      auc.firstImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildAuctionImageFallback(auc.category),
+                    )
                   else
                     _buildAuctionImageFallback(auc.category),
+
 
                   // Top Verified Badge
                   Positioned(
@@ -2047,10 +2075,17 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   Widget _buildBidCard(Bid bid) {
     return GestureDetector(
       onTap: () {
+        final matchedListing = _listings.cast<Listing?>().firstWhere(
+          (l) => l?.id == bid.listingId,
+          orElse: () => null,
+        );
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BuyerBidDetailsScreen(bid: bid),
+            builder: (context) => BuyerBidDetailsScreen(
+              bid: bid,
+              listing: matchedListing,
+            ),
           ),
         );
       },
@@ -2069,36 +2104,53 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Builder(
-                builder: (context) {
-                  final img = bid.displayImage;
-                  if (img.startsWith('http://') || img.startsWith('https://')) {
-                    return Image.network(
-                      img,
-                      width: 76,
-                      height: 76,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Image.asset(
-                        'assets/images/buyer-solar.jpg',
+              child: SizedBox(
+                width: 76,
+                height: 76,
+                child: Builder(
+                  builder: (context) {
+                    final raw = bid.listingImage;
+                    final fullUrl = ListingService.instance.getFullImageUrl(raw);
+                    if (fullUrl != null &&
+                        (fullUrl.startsWith('http://') ||
+                            fullUrl.startsWith('https://'))) {
+                      return Image.network(
+                        fullUrl,
                         width: 76,
                         height: 76,
                         fit: BoxFit.cover,
-                      ),
-                    );
-                  }
-                  return Image.asset(
-                    img,
-                    width: 76,
-                    height: 76,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'assets/images/buyer-solar.jpg',
+                        errorBuilder: (context, error, stackTrace) => Image.asset(
+                          bid.fallbackAsset,
+                          width: 76,
+                          height: 76,
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    } else if (raw != null &&
+                        (raw.startsWith('/data/') ||
+                            raw.startsWith('/storage/') ||
+                            raw.startsWith('file://'))) {
+                      return Image.file(
+                        File(raw.replaceFirst('file://', '')),
+                        width: 76,
+                        height: 76,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Image.asset(
+                          bid.fallbackAsset,
+                          width: 76,
+                          height: 76,
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    }
+                    return Image.asset(
+                      bid.fallbackAsset,
                       width: 76,
                       height: 76,
                       fit: BoxFit.cover,
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(width: 12),

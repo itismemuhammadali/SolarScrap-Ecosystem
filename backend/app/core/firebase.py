@@ -39,15 +39,23 @@ def init_firebase():
             "projectId": settings.FIREBASE_PROJECT_ID,
             "storageBucket": settings.FIREBASE_STORAGE_BUCKET,
         }
-        if settings.FIREBASE_CREDENTIALS_PATH and os.path.exists(settings.FIREBASE_CREDENTIALS_PATH):
-            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
-            _firebase_app = firebase_admin.initialize_app(cred, options=options)
-        else:
-            # Uses Google Application Default Credentials (ADC)
-            _firebase_app = firebase_admin.initialize_app(options=options)
-        print(f"[Firebase] Initialized in PRODUCTION mode for project '{settings.FIREBASE_PROJECT_ID}'")
+        try:
+            if settings.FIREBASE_CREDENTIALS_PATH and os.path.exists(settings.FIREBASE_CREDENTIALS_PATH):
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath(settings.FIREBASE_CREDENTIALS_PATH)
+                cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
+                _firebase_app = firebase_admin.initialize_app(cred, options=options)
+            else:
+                _firebase_app = firebase_admin.initialize_app(options=options)
+            print(f"[Firebase] Initialized in PRODUCTION mode for project '{settings.FIREBASE_PROJECT_ID}'")
+        except Exception as e:
+            print(f"[Firebase] Warning: Could not initialize production Firebase ({e}). Waiting for serviceAccountKey.json.")
+            return None
 
-    _firestore_client = firestore.client()
+    try:
+        _firestore_client = firestore.client(app=_firebase_app)
+        print("[Firebase] Firestore client connected successfully!")
+    except Exception as e:
+        print(f"[Firebase] Firestore client init error: {e}")
     return _firebase_app
 
 

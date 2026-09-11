@@ -143,7 +143,7 @@ export default function ResetPasswordPage() {
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••••••••••"
                     required
-                    className="w-full pl-4 pr-11 py-3 sm:py-3.5 text-xs sm:text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#00873D] focus:ring-2 focus:ring-[#00873D]/15 transition-all duration-200"
+                    className="w-full pl-4 pr-11 py-3 sm:py-3.5 text-xs sm:text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-2 focus:ring-[#009845]/15 transition-all duration-200"
                   />
                   <button
                     type="button"
@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••••••••••"
                     required
-                    className="w-full pl-4 pr-11 py-3 sm:py-3.5 text-xs sm:text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#00873D] focus:ring-2 focus:ring-[#00873D]/15 transition-all duration-200"
+                    className="w-full pl-4 pr-11 py-3 sm:py-3.5 text-xs sm:text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-2 focus:ring-[#009845]/15 transition-all duration-200"
                   />
                   <button
                     type="button"
@@ -201,7 +201,7 @@ export default function ResetPasswordPage() {
               {/* Success Feedback */}
               {isSuccess && (
                 <div className="p-3.5 bg-green-50 border border-green-200 text-green-700 text-xs sm:text-sm rounded-xl flex items-center gap-2">
-                  <CheckCircle2 className="w-4.5 h-4.5 text-[#00873D] shrink-0" />
+                  <CheckCircle2 className="w-4.5 h-4.5 text-[#009845] shrink-0" />
                   <span>Password reset successfully! Redirecting to login...</span>
                 </div>
               )}
@@ -211,7 +211,7 @@ export default function ResetPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading || isSuccess}
-                  className="w-full py-3.5 sm:py-4 px-4 bg-[#00873D] hover:bg-[#007534] active:bg-[#00652d] text-white text-sm sm:text-base font-bold rounded-xl shadow-lg shadow-[#00873D]/25 hover:shadow-xl transition-all duration-200 flex items-center justify-center disabled:opacity-75 cursor-pointer"
+                  className="w-full py-3.5 sm:py-4 px-4 bg-[#009845] hover:bg-[#008230] active:bg-[#006d28] text-white text-sm sm:text-base font-bold rounded-xl shadow-lg shadow-[#009845]/25 hover:shadow-xl transition-all duration-200 flex items-center justify-center disabled:opacity-75 cursor-pointer"
                 >
                   {isLoading ? (
                     <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

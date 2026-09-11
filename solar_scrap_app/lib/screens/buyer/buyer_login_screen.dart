@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'buyer_forgot_password_screen.dart';
 import 'buyer_create_account_screen.dart';
 import 'buyer_dashboard_screen.dart';
+import 'buyer_account_created_screen.dart';
 import '../../services/auth_service.dart';
 
 class BuyerLoginScreen extends StatefulWidget {
@@ -34,7 +35,7 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (result.isSuccess) {
+    if (result.isSuccess && !result.isPending) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.message ?? 'Signed in successfully!'),
@@ -46,6 +47,26 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => const BuyerDashboardScreen(),
+        ),
+      );
+    } else if (result.isPending || (result.message != null && result.message!.toLowerCase().contains('pending'))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account pending admin approval. Directing to verification screen...'),
+          backgroundColor: Color(0xFFD97706),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BuyerAccountCreatedScreen(
+            companyName: result.user?.companyName ?? 'Scrap Buyer Account',
+            location: result.user?.city ?? 'Registered Office',
+            email: _emailController.text.trim(),
+            userId: result.user?.userId,
+          ),
         ),
       );
     } else {
@@ -76,53 +97,14 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Icon and Title
-              Row(
-                children: [
-                  // Green circular background with icon
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00A63E),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: SvgPicture.asset(
-                        'assets/icons/solar_scrap_icon.svg',
-                        width: 28,
-                        height: 28,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.white,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'Solar Scrap',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Text(
-                        'Buyer Portal',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              // Logo (Matching Figma: 117x70)
+              Image.asset(
+                'assets/images/solar-scrap-logo-full.png',
+                width: 117,
+                height: 70,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
 
               // Welcome Back Text
               const Text(

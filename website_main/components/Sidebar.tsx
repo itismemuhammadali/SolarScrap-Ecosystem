@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { X } from "lucide-react";
+import { clearSession } from "@/lib/auth";
 
 export interface SidebarProps {
   activeItem:
@@ -39,10 +40,14 @@ export default function Sidebar({
   mobileMenuOpen,
   setMobileMenuOpen,
 }: SidebarProps) {
-  // Normalize active match for "Quotation history" / "Quotation History"
   const isMatch = (name: string) => {
     if (activeItem.toLowerCase() === name.toLowerCase()) return true;
     return false;
+  };
+
+  const handleLogout = () => {
+    clearSession();
+    window.location.href = "/";
   };
 
   return (
@@ -57,7 +62,7 @@ export default function Sidebar({
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed lg:static top-0 bottom-0 left-0 z-50 w-64 bg-[#0F172A] text-white flex flex-col shrink-0 h-screen sticky top-0 overflow-y-auto transition-transform duration-300 ease-in-out ${
+        className={`fixed lg:sticky top-0 left-0 z-40 w-64 bg-[#0F172A] text-white flex flex-col shrink-0 h-screen self-start overflow-y-auto transition-transform duration-300 ease-in-out ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -117,9 +122,10 @@ export default function Sidebar({
 
         {/* Logout Button */}
         <div className="p-4 border-t border-slate-800 shrink-0 mt-auto">
-          <Link
-            href="/"
-            className="flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors group"
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors group cursor-pointer text-left"
           >
             <div className="w-5 h-5 flex items-center justify-center shrink-0">
               <Image
@@ -131,7 +137,7 @@ export default function Sidebar({
               />
             </div>
             <span>Logout</span>
-          </Link>
+          </button>
         </div>
       </aside>
     </>

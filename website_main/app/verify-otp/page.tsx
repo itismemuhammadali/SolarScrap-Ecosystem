@@ -197,7 +197,7 @@ export default function VerifyOtpPage() {
               {/* White Bordered Inner Card Container */}
               <div className="bg-white border border-gray-200/90 rounded-2xl p-5 sm:p-6 flex flex-col items-center justify-center text-center shadow-xs">
                 {/* Green Circle with Envelope Icon */}
-                <div className="w-13 h-13 rounded-full bg-[#00873D] flex items-center justify-center text-white mb-3 shadow-md shadow-[#00873D]/20">
+                <div className="w-13 h-13 rounded-full bg-[#009845] flex items-center justify-center text-white mb-3 shadow-md shadow-[#009845]/20">
                   <Mail className="w-6 h-6 text-white" />
                 </div>
 
@@ -226,7 +226,7 @@ export default function VerifyOtpPage() {
                       value={digit}
                       onChange={(e) => handleChange(idx, e.target.value)}
                       onKeyDown={(e) => handleKeyDown(idx, e)}
-                      className="w-full h-12 sm:h-13 text-center text-lg sm:text-xl font-bold text-gray-900 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#00873D] focus:ring-2 focus:ring-[#00873D]/15 transition-all duration-200"
+                      className="w-full h-12 sm:h-13 text-center text-lg sm:text-xl font-bold text-gray-900 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-2 focus:ring-[#009845]/15 transition-all duration-200"
                       autoFocus={idx === 0}
                     />
                   ))}
@@ -245,7 +245,7 @@ export default function VerifyOtpPage() {
                 <button
                   type="submit"
                   disabled={isLoading || otp.join("").length < 6}
-                  className="w-full py-3.5 sm:py-4 px-4 bg-[#00873D] hover:bg-[#007534] text-white text-sm sm:text-base font-bold rounded-xl shadow-lg shadow-[#00873D]/25 hover:shadow-xl transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full py-3.5 sm:py-4 px-4 bg-[#009845] hover:bg-[#008230] text-white text-sm sm:text-base font-bold rounded-xl shadow-lg shadow-[#009845]/25 hover:shadow-xl transition-all duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {isLoading ? (
                     <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -264,7 +264,7 @@ export default function VerifyOtpPage() {
                   <button
                     type="button"
                     onClick={handleResend}
-                    className="font-semibold text-[#00873D] hover:underline cursor-pointer"
+                    className="font-semibold text-[#009845] hover:underline cursor-pointer"
                   >
                     Resend OTP
                   </button>

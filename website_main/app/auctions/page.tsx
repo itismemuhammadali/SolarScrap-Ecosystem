@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Bell,
@@ -26,15 +27,37 @@ import {
   StopCircle,
   Trophy,
   TrendingUp,
+  Zap,
+  Battery,
+  RefreshCw,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { getSession, getAvatarUrl } from "@/lib/auth";
+import {
+  getAdminAuctions,
+  closeAdminAuction,
+  acceptAdminBid,
+} from "@/lib/admin-api";
+
+export interface BidRecord {
+  id: string;
+  bidderName: string;
+  bidderCompany: string;
+  bidderCity: string;
+  bidderPhone?: string;
+  bidderEmail?: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+  referenceNumber?: string;
+}
 
 interface AuctionItem {
   id: string;
   auctionId: string;
   title: string;
   icon: string;
-  category: "Solar Panels" | "Inverters" | "Transformers" | "Batteries" | "Complete System";
+  category: "Solar Panels" | "Inverters" | "Transformers" | "Batteries" | "Complete System" | string;
   categoryColor: string;
   qty: string;
   sellerName: string;
@@ -47,6 +70,8 @@ interface AuctionItem {
   highestBidderName: string;
   highestBidderCompany: string;
   highestBidderCity: string;
+  highestBidderPhone?: string;
+  highestBidderEmail?: string;
   totalBids: number;
   status: "Draft" | "Active" | "Closed";
   createdAt: string;
@@ -54,131 +79,233 @@ interface AuctionItem {
   endDate: string;
   reservePrice: number;
   images: string[];
+  bids?: BidRecord[];
+  specs?: Record<string, any>;
 }
 
-const initialAuctions: AuctionItem[] = [
+
+const INITIAL_AUCTIONS: AuctionItem[] = [
   {
-    id: "1",
+    id: "auc-001",
     auctionId: "AUC001",
     title: "200x Solar Panels 400W",
     icon: "☀️",
     category: "Solar Panels",
-    categoryColor: "bg-amber-400",
+    categoryColor: "bg-blue-50 text-blue-700 border-blue-200",
     qty: "200 units",
     sellerName: "Sana Malik",
-    sellerCompany: "Sana Solar Tech",
+    sellerCompany: "Sana Solar Enterprise",
     sellerCity: "Karachi",
     startingPrice: 3800000,
     priceDemand: 4500000,
     startingBid: 3800000,
-    currentHighBid: 4200000,
-    highestBidderName: "Bilal Hussain",
-    highestBidderCompany: "Scrap King",
-    highestBidderCity: "Lahore",
+    currentHighBid: 4100000,
+    highestBidderName: "Al-Rehman Scrap Traders",
+    highestBidderCompany: "Al-Rehman Scrap",
+    highestBidderCity: "Karachi",
     totalBids: 7,
     status: "Active",
     createdAt: "2024-12-04",
-    endsIn: "2d 14h left",
-    endDate: "2024-12-10",
-    reservePrice: 4000000,
-    images: [
-      "/images/sign-in-img.jpg",
-      "/images/otp-screen-img.jpg",
-      "/images/reset-password-img.jpg",
-    ],
+    endsIn: "2d 04h",
+    endDate: "08 Dec 2024",
+    reservePrice: 3900000,
+    images: ["/images/solar-panel.png"],
   },
   {
-    id: "2",
+    id: "auc-002",
     auctionId: "AUC002",
     title: "Complete Solar System",
-    icon: "🟡",
+    icon: "⚡",
     category: "Complete System",
-    categoryColor: "bg-amber-500",
+    categoryColor: "bg-purple-50 text-purple-700 border-purple-200",
     qty: "1 units",
     sellerName: "Sana Malik",
-    sellerCompany: "Sana Solar Tech",
+    sellerCompany: "Sana Solar Enterprise",
     sellerCity: "Karachi",
     startingPrice: 7000000,
     priceDemand: 8500000,
     startingBid: 7000000,
-    currentHighBid: 7800000,
-    highestBidderName: "Tariq Mehmood",
-    highestBidderCompany: "Green Recyclers",
-    highestBidderCity: "Karachi",
+    currentHighBid: 7600000,
+    highestBidderName: "Lahore Solar Recyclers",
+    highestBidderCompany: "LSR Metals",
+    highestBidderCity: "Lahore",
     totalBids: 3,
     status: "Active",
     createdAt: "2024-12-05",
-    endsIn: "1d 8h left",
-    endDate: "2024-12-09",
-    reservePrice: 7500000,
-    images: [
-      "/images/verify-email-screen.jpg",
-      "/images/sign-in-img.jpg",
-      "/images/otp-screen-img.jpg",
-    ],
+    endsIn: "3d 10h",
+    endDate: "10 Dec 2024",
+    reservePrice: 7200000,
+    images: ["/images/complete-solar-system.jpg"],
   },
   {
-    id: "3",
+    id: "auc-003",
     auctionId: "AUC003",
-    title: "500x Solar Panels 450W",
-    icon: "☀️",
-    category: "Solar Panels",
-    categoryColor: "bg-amber-400",
-    qty: "500 units",
-    sellerName: "Hamza Farooq",
-    sellerCompany: "EcoPower Ltd",
+    title: "16x Narada 48V Lithium Battery",
+    icon: "🔋",
+    category: "Batteries",
+    categoryColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    qty: "16 units",
+    sellerName: "Farhan Akhtar",
+    sellerCompany: "SolarTech EPC",
     sellerCity: "Lahore",
-    startingPrice: 5500000,
-    priceDemand: 6200000,
-    startingBid: 5500000,
+    startingPrice: 1400000,
+    priceDemand: 1680000,
+    startingBid: 1400000,
     currentHighBid: 0,
-    highestBidderName: "-",
+    highestBidderName: "No Bids Yet",
     highestBidderCompany: "-",
     highestBidderCity: "-",
     totalBids: 0,
     status: "Draft",
-    createdAt: "2024-12-06",
-    endsIn: "Draft",
-    endDate: "2024-12-15",
-    reservePrice: 5800000,
-    images: [
-      "/images/sign-in-img.jpg",
-      "/images/otp-screen-img.jpg",
-    ],
+    createdAt: "2024-12-01",
+    endsIn: "Not Started",
+    endDate: "15 Dec 2024",
+    reservePrice: 1500000,
+    images: ["/images/battery.png"],
   },
   {
-    id: "4",
+    id: "auc-004",
     auctionId: "AUC004",
-    title: "100x Solar Inverters 10kW",
+    title: "GoodWe 10kW On-Grid Inverter",
     icon: "⚡",
     category: "Inverters",
-    categoryColor: "bg-blue-500",
-    qty: "100 units",
-    sellerName: "Tariq Mehmood",
-    sellerCompany: "Green Power EPC",
+    categoryColor: "bg-amber-50 text-amber-700 border-amber-200",
+    qty: "2 units",
+    sellerName: "Bilal Tariq",
+    sellerCompany: "Green Energy",
     sellerCity: "Islamabad",
-    startingPrice: 2800000,
-    priceDemand: 3400000,
-    startingBid: 2800000,
-    currentHighBid: 3200000,
-    highestBidderName: "Rashid Ali",
-    highestBidderCompany: "National Scrap",
-    highestBidderCity: "Karachi",
-    totalBids: 11,
+    startingPrice: 1200000,
+    priceDemand: 1500000,
+    startingBid: 1200000,
+    currentHighBid: 1450000,
+    highestBidderName: "Punjab Metal Recycling",
+    highestBidderCompany: "PMR Metals",
+    highestBidderCity: "Rawalpindi",
+    totalBids: 12,
     status: "Closed",
-    createdAt: "2024-12-01",
-    endsIn: "Closed",
-    endDate: "2024-12-03",
-    reservePrice: 3000000,
-    images: [
-      "/images/verify-email-screen.jpg",
-      "/images/reset-password-img.jpg",
-    ],
+    createdAt: "2024-11-28",
+    endsIn: "Auction Ended",
+    endDate: "02 Dec 2024",
+    reservePrice: 1300000,
+    images: ["/images/inverter.png"],
   },
 ];
 
 export default function AuctionsPage() {
-  const [auctions, setAuctions] = useState<AuctionItem[]>(initialAuctions);
+  const router = useRouter();
+  const [auctions, setAuctions] = useState<AuctionItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [adminName, setAdminName] = useState("Admin Platform");
+  const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | null>(null);
+
+  const fetchAuctionsData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    else setIsRefreshing(true);
+
+    try {
+      const liveAuctions = await getAdminAuctions();
+      if (Array.isArray(liveAuctions) && liveAuctions.length > 0) {
+        setAuctions(liveAuctions);
+        try {
+          localStorage.setItem("solar_scrap_auctions", JSON.stringify(liveAuctions));
+        } catch (_) {}
+      } else {
+        const stored = localStorage.getItem("solar_scrap_auctions");
+        if (stored) setAuctions(JSON.parse(stored));
+        else setAuctions(INITIAL_AUCTIONS);
+      }
+    } catch (err) {
+      console.error("Failed to load live auctions from backend:", err);
+      const stored = localStorage.getItem("solar_scrap_auctions");
+      if (stored) {
+        try {
+          setAuctions(JSON.parse(stored));
+        } catch {
+          setAuctions(INITIAL_AUCTIONS);
+        }
+      } else {
+        setAuctions(INITIAL_AUCTIONS);
+      }
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    const session = getSession();
+    if (session?.user) {
+      if (session.user.display_name) setAdminName(session.user.display_name);
+      else if (session.user.email) setAdminName(session.user.email.split("@")[0]);
+      if (session.user.profile_photo_url) setAdminPhotoUrl(session.user.profile_photo_url);
+    }
+
+    fetchAuctionsData(false);
+
+    // Live polling every 8 seconds so incoming bids from mobile app appear in real-time
+    const pollTimer = setInterval(() => {
+      fetchAuctionsData(true);
+    }, 8000);
+
+    return () => clearInterval(pollTimer);
+  }, []);
+
+
+  const renderEquipmentIcon = (item: AuctionItem) => {
+    // If it's a file path to an image, render the actual image element in a clean rounded box
+    if (
+      typeof item.icon === "string" &&
+      (item.icon.startsWith("/") ||
+        item.icon.startsWith("http") ||
+        item.icon.includes(".png") ||
+        item.icon.includes(".jpg"))
+    ) {
+      return (
+        <div className="w-8 h-8 rounded-lg bg-amber-50/80 border border-amber-200/60 flex items-center justify-center p-1 shrink-0 overflow-hidden shadow-2xs">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.icon}
+            alt={item.title}
+            className="w-full h-full object-contain"
+          />
+        </div>
+      );
+    }
+
+    // If it's an emoji or symbol like ☀️, ⚡, 🔋
+    if (typeof item.icon === "string" && item.icon.length <= 4) {
+      return (
+        <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200/60 flex items-center justify-center text-base select-none shrink-0 shadow-2xs">
+          {item.icon}
+        </div>
+      );
+    }
+
+    // Fallback category-based vector icon
+    if (item.category === "Solar Panels" || item.title?.toLowerCase().includes("solar")) {
+      return (
+        <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-500 shrink-0 shadow-2xs">
+          <Sun className="w-4 h-4" />
+        </div>
+      );
+    }
+
+    if (item.category === "Batteries" || item.title?.toLowerCase().includes("battery")) {
+      return (
+        <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-500 shrink-0 shadow-2xs">
+          <Battery className="w-4 h-4" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200/60 flex items-center justify-center text-orange-500 shrink-0 shadow-2xs">
+        <Zap className="w-4 h-4" />
+      </div>
+    );
+  };
+
   const [activeFilter, setActiveFilter] = useState("Active");
   const [searchQuery, setSearchQuery] = useState("");
   const [topSearch, setTopSearch] = useState("");
@@ -295,9 +422,15 @@ export default function AuctionsPage() {
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAuction) return;
-    setAuctions((prev) =>
-      prev.map((a) => (a.id === selectedAuction.id ? ({ ...a, ...editFormData } as AuctionItem) : a))
+    const updated = auctions.map((a) =>
+      a.id === selectedAuction.id ? ({ ...a, ...editFormData } as AuctionItem) : a
     );
+    setAuctions(updated);
+    try {
+      localStorage.setItem("solar_scrap_auctions", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
     setIsEditOpen(false);
     showToast("Auction updated successfully!");
   };
@@ -308,16 +441,39 @@ export default function AuctionsPage() {
     setActionMenuOpenId(null);
   };
 
-  const handleConfirmCloseAuction = () => {
+  const handleConfirmCloseAuction = async () => {
     if (!selectedAuction) return;
-    setAuctions((prev) =>
-      prev.map((a) =>
-        a.id === selectedAuction.id ? { ...a, status: "Closed", endsIn: "Auction Ended" } : a
-      )
+    try {
+      await closeAdminAuction(selectedAuction.id);
+    } catch (err) {
+      console.error("Failed to close auction on backend:", err);
+    }
+    const updated = auctions.map((a) =>
+      a.id === selectedAuction.id ? { ...a, status: "Closed" as const, endsIn: "Auction Ended" } : a
     );
+    setAuctions(updated);
+    try {
+      localStorage.setItem("solar_scrap_auctions", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
     setIsCloseAuctionOpen(false);
     showToast(`Auction ${selectedAuction.auctionId} closed. Winner: ${selectedAuction.highestBidderName}!`);
+    fetchAuctionsData(true);
   };
+
+  const handleAcceptWinningBid = async (bidId: string, listingId: string) => {
+    try {
+      await acceptAdminBid(bidId);
+      showToast("Bid accepted as winner! Auction marked as closed.");
+      setIsDetailsOpen(false);
+      fetchAuctionsData(true);
+    } catch (err: any) {
+      console.error("Failed to accept bid:", err);
+      showToast(err.message || "Failed to accept bid");
+    }
+  };
+
 
   const handleOpenDelete = (auction: AuctionItem) => {
     setSelectedAuction(auction);
@@ -327,13 +483,19 @@ export default function AuctionsPage() {
 
   const handleConfirmDelete = () => {
     if (!selectedAuction) return;
-    setAuctions((prev) => prev.filter((a) => a.id !== selectedAuction.id));
+    const updated = auctions.filter((a) => a.id !== selectedAuction.id);
+    setAuctions(updated);
+    try {
+      localStorage.setItem("solar_scrap_auctions", JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
     setIsDeleteOpen(false);
     showToast("Auction deleted permanently.");
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] flex flex-col lg:flex-row">
+    <div className="flex h-screen w-full bg-[#F5F6FA] overflow-hidden">
       {/* ===================== UNIFIED SIDEBAR ===================== */}
       <Sidebar
         activeItem="Auctions"
@@ -342,7 +504,7 @@ export default function AuctionsPage() {
       />
 
       {/* ===================== MAIN CONTENT AREA ===================== */}
-      <div className="flex-1 bg-[#f8fafc] flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 bg-[#F5F6FA] flex flex-col min-w-0 h-screen overflow-hidden">
         
         {/* Top Navbar */}
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200/80 px-5 sm:px-8 py-3.5 flex items-center justify-between gap-4">
@@ -353,31 +515,35 @@ export default function AuctionsPage() {
                 value={topSearch}
                 onChange={(e) => setTopSearch(e.target.value)}
                 placeholder="Search users, posts, auctions, bids..."
-                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-gray-50/70 border border-gray-200/80 rounded-xl outline-none focus:bg-white focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15 transition-all text-gray-800 placeholder:text-gray-400"
+                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-gray-50/70 border border-gray-200/80 rounded-xl outline-none focus:bg-white focus:border-[#009845] focus:ring-2 focus:ring-[#009845]/15 transition-all text-gray-800 placeholder:text-gray-400"
               />
             </div>
 
             <div className="flex items-center gap-4 sm:gap-6">
-              <button
-                type="button"
+              <Link
+                href="/notifications"
                 className="relative p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
                 aria-label="Notifications"
               >
                 <Bell className="w-4.5 h-4.5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
-              </button>
+              </Link>
 
               <div className="flex items-center gap-3 pl-2 sm:border-l border-gray-200">
                 <span className="hidden sm:inline-block text-xs font-semibold text-gray-800">
                   Admin Platform
                 </span>
-                <div className="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full overflow-hidden ring-2 ring-gray-100 shadow-sm">
-                  <Image
-                    src="/images/admin.png"
-                    alt="Admin Avatar"
-                    fill
-                    className="object-cover"
-                  />
+                <div className="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full overflow-hidden ring-2 ring-gray-100 shadow-sm bg-emerald-700 flex items-center justify-center text-white font-bold text-sm select-none">
+                  {adminPhotoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={getAvatarUrl(adminPhotoUrl)!}
+                      alt={adminName || "Admin Platform"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{adminName ? adminName.charAt(0).toUpperCase() : "A"}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -393,155 +559,165 @@ export default function AuctionsPage() {
                   Auctions
                 </h1>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Manage ongoing, live, and closed scrap auctions on the platform.
+                  Manage scrap auctions — publish, monitor, and close.
                 </p>
               </div>
-              <Link
-                href="/auctions/create"
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#009639] hover:bg-[#008232] text-white rounded-xl text-xs font-bold shadow-xs transition-colors shrink-0"
-              >
-                <span>+ Create Auction</span>
-              </Link>
+              <div className="flex items-center gap-2.5">
+                <Link
+                  href="/auctions/create"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#009845] hover:bg-[#008230] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors shrink-0"
+                >
+                  <span>Create Auction</span>
+                </Link>
+              </div>
             </div>
 
-            {/* Filter Tabs & Search Bar (Exact as media_1787852094444.png) */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200/80 pb-0">
+            {/* Unified White Card: Filter Tabs + Search Bar + Data Table + Pagination */}
+            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
               
-              {/* Filter Tabs */}
-              <div className="flex items-center gap-6 overflow-x-auto scrollbar-none">
-                {filterTabs.map((tab) => {
-                  const isActive = activeFilter === tab.name;
-                  return (
-                    <button
-                      key={tab.name}
-                      type="button"
-                      onClick={() => setActiveFilter(tab.name)}
-                      className={`pb-3 text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap flex items-center gap-2 border-b-2 -mb-[1px] ${
-                        isActive
-                          ? "border-[#009639] text-[#009639]"
-                          : "border-transparent text-gray-500 hover:text-gray-900"
-                      }`}
-                    >
-                      <span>{tab.name}</span>
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              {/* Card Controls Header: Filter Tabs & Search Bar */}
+              <div className="p-4 sm:p-6 pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100">
+                
+                {/* Filter Tabs (Draft, Active, Closed) */}
+                <div className="flex items-center gap-6 sm:gap-8 overflow-x-auto pb-0 scrollbar-none">
+                  {filterTabs.map((tab) => {
+                    const isActive = activeFilter === tab.name;
+                    return (
+                      <button
+                        key={tab.name}
+                        type="button"
+                        onClick={() => setActiveFilter(tab.name)}
+                        className={`pb-3 text-xs transition-all duration-150 cursor-pointer whitespace-nowrap flex items-center gap-2 border-b-2 -mb-[1px] ${
                           isActive
-                            ? "bg-emerald-50 text-[#009639]"
-                            : "bg-gray-100 text-gray-500"
+                            ? "border-[#009845] text-[#009845] font-semibold"
+                            : "border-transparent text-gray-500 hover:text-gray-900 font-medium"
                         }`}
                       >
-                        {tab.count}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span>{tab.name}</span>
+                        <span
+                          className={`text-[10px] font-medium px-1.5 py-0.2 rounded-full ${
+                            isActive
+                              ? "bg-emerald-50 text-[#009845] border border-emerald-200 font-bold"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Table Search Input */}
+                <div className="relative w-full sm:w-[260px] pb-3 sm:pb-3">
+                  <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search auctions..."
+                    className="w-full pl-9 pr-3.5 py-1.5 text-xs bg-white border border-gray-200/90 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-800 placeholder:text-gray-400 shadow-2xs"
+                  />
+                </div>
+
               </div>
 
-              {/* Table Search Input */}
-              <div className="relative w-full sm:w-[260px] pb-2 sm:pb-3">
-                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search auctions..."
-                  className="w-full pl-9 pr-3.5 py-2 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009639] focus:ring-1 focus:ring-[#009639]/20 text-gray-800 placeholder:text-gray-400 shadow-2xs"
-                />
-              </div>
-
-            </div>
-
-            {/* Auctions Data Table (Exact as media_1787852094444.png) */}
-            <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
+              {/* Auctions Data Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                      <th className="py-3.5 px-4 sm:px-5">ID</th>
-                      <th className="py-3.5 px-4">EQUIPMENT</th>
-                      <th className="py-3.5 px-4">SELLER</th>
-                      <th className="py-3.5 px-4">LOCATION</th>
-                      <th className="py-3.5 px-4">STARTING PRICE</th>
-                      <th className="py-3.5 px-4">PRICE DEMAND</th>
-                      <th className="py-3.5 px-4">BIDS</th>
-                      <th className="py-3.5 px-4">STATUS</th>
-                      <th className="py-3.5 px-4">CREATED</th>
-                      <th className="py-3.5 px-4 text-right"></th>
+                    <tr className="border-b border-gray-100 bg-transparent text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                      <th className="py-3.5 px-4 sm:px-6 whitespace-nowrap">ID</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">EQUIPMENT</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">SELLER</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">LOCATION</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">STARTING PRICE</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">PRICE DEMAND</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">BIDS</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">STATUS</th>
+                      <th className="py-3.5 px-4 whitespace-nowrap">CREATED</th>
+                      <th className="py-3.5 px-4 sm:pr-6 text-right w-10"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-xs">
-                    {filteredAuctions.map((auction) => (
-                      <tr key={auction.id} className="hover:bg-gray-50/60 transition-colors">
-                        {/* ID */}
-                        <td className="py-4 px-4 sm:px-5 font-semibold text-xs text-gray-500 whitespace-nowrap">
-                          {auction.auctionId}
-                        </td>
+                    {filteredAuctions.map((auction, idx) => {
+                      const displayId = auction.auctionId && !auction.auctionId.includes("LISTIN")
+                        ? auction.auctionId.replace("AUC-", "AUC")
+                        : `AUC${String(idx + 1).padStart(3, "0")}`;
 
-                        {/* Equipment */}
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-base leading-none select-none">{auction.icon}</span>
-                            <div>
-                              <p
-                                className="font-bold text-gray-900 hover:text-[#009639] cursor-pointer"
-                                onClick={() => handleOpenDetails(auction)}
-                              >
-                                {auction.title}
-                              </p>
-                              <p className="text-[11px] text-gray-400 font-normal">{auction.qty}</p>
+                      return (
+                        <tr
+                          key={auction.id}
+                          onClick={() => router.push(`/bids?auctionId=${displayId}`)}
+                          className="hover:bg-gray-50/60 transition-colors cursor-pointer"
+                        >
+                          {/* ID */}
+                          <td className="py-4 px-4 sm:px-6 font-semibold text-xs text-gray-500 whitespace-nowrap">
+                            {displayId}
+                          </td>
+
+                          {/* Equipment */}
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2.5">
+                              {renderEquipmentIcon(auction)}
+                              <div>
+                                <p className="font-bold text-gray-900 hover:text-[#009845] transition-colors">
+                                  {auction.title}
+                                </p>
+                                <p className="text-[11px] text-gray-400 font-normal">{auction.qty}</p>
+                              </div>
                             </div>
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Seller */}
-                        <td className="py-4 px-4 whitespace-nowrap font-semibold text-gray-800 text-xs">
-                          {auction.sellerName}
-                        </td>
+                          {/* Seller */}
+                          <td className="py-4 px-4 whitespace-nowrap font-semibold text-gray-800 text-xs">
+                            {auction.sellerName}
+                          </td>
 
-                        {/* Location */}
-                        <td className="py-4 px-4 whitespace-nowrap text-gray-600 text-xs font-medium">
-                          {auction.sellerCity}
-                        </td>
+                          {/* Location */}
+                          <td className="py-4 px-4 whitespace-nowrap text-gray-600 text-xs font-medium">
+                            {auction.sellerCity}
+                          </td>
 
-                        {/* Starting Price */}
-                        <td className="py-4 px-4 whitespace-nowrap font-black text-gray-900 text-xs">
-                          PKR {auction.startingPrice.toLocaleString()}
-                        </td>
+                          {/* Starting Price */}
+                          <td className="py-4 px-4 whitespace-nowrap font-bold text-gray-900 text-xs">
+                            PKR {auction.startingPrice.toLocaleString()}
+                          </td>
 
-                        {/* Price Demand */}
-                        <td className="py-4 px-4 whitespace-nowrap text-gray-500 text-xs">
-                          PKR {auction.priceDemand.toLocaleString()}
-                        </td>
+                          {/* Price Demand */}
+                          <td className="py-4 px-4 whitespace-nowrap text-gray-500 text-xs">
+                            PKR {auction.priceDemand.toLocaleString()}
+                          </td>
 
-                        {/* Bids */}
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-50 text-[#009639] font-bold text-xs">
-                            {auction.totalBids}
-                          </span>
-                        </td>
+                          {/* Bids */}
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-emerald-50 text-[#009845] font-bold text-[11px]">
+                              {auction.totalBids}
+                            </span>
+                          </td>
 
-                        {/* Status */}
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                              auction.status === "Active"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : auction.status === "Draft"
-                                ? "bg-gray-100 text-gray-600"
-                                : "bg-red-50 text-red-600 border border-red-200"
-                            }`}
-                          >
-                            {auction.status}
-                          </span>
-                        </td>
+                          {/* Status */}
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
+                                auction.status === "Active"
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : auction.status === "Draft"
+                                  ? "bg-gray-100 text-gray-600"
+                                  : "bg-red-50 text-red-600 border border-red-200"
+                              }`}
+                            >
+                              {auction.status}
+                            </span>
+                          </td>
 
-                        {/* Created */}
-                        <td className="py-4 px-4 whitespace-nowrap text-gray-500 text-xs">
-                          {auction.createdAt}
-                        </td>
+                          {/* Created */}
+                          <td className="py-4 px-4 whitespace-nowrap text-gray-500 text-xs font-mono">
+                            {auction.createdAt}
+                          </td>
 
-                        {/* Actions 3-dots */}
-                        <td className="py-4 px-4 text-right relative whitespace-nowrap">
+                          {/* Actions 3-dots */}
+                          <td className="py-4 px-4 sm:pr-6 text-right relative whitespace-nowrap">
                           <button
                             type="button"
                             onClick={(e) => toggleActionMenu(e, auction.id)}
@@ -572,11 +748,15 @@ export default function AuctionsPage() {
                               >
                                 <button
                                   type="button"
-                                  onClick={() => handleOpenDetails(auction)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActionMenuOpenId(null);
+                                    router.push(`/bids?auctionId=${displayId}`);
+                                  }}
                                   className="w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors cursor-pointer"
                                 >
                                   <Eye className="w-3.5 h-3.5 text-gray-500" />
-                                  <span>View Details</span>
+                                  <span>View Bids</span>
                                 </button>
                                 <button
                                   type="button"
@@ -608,7 +788,8 @@ export default function AuctionsPage() {
                           )}
                         </td>
                       </tr>
-                    ))}
+                    );
+                  })}
 
                     {filteredAuctions.length === 0 && (
                       <tr>
@@ -627,7 +808,7 @@ export default function AuctionsPage() {
                   Showing {filteredAuctions.length} of {auctions.length} auctions
                 </span>
                 <div className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded-md bg-[#009639] text-white flex items-center justify-center font-bold text-[11px]">
+                  <span className="w-6 h-6 rounded-md bg-[#009845] text-white flex items-center justify-center font-bold text-[11px]">
                     1
                   </span>
                 </div>
@@ -646,7 +827,7 @@ export default function AuctionsPage() {
             {/* Header */}
             <div className="flex items-start justify-between pb-3 border-b border-gray-100">
               <div>
-                <span className="text-[11px] font-bold text-[#009639] uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-[#009845] uppercase tracking-wider">
                   {selectedAuction.category}
                 </span>
                 <h2 className="text-lg font-bold text-gray-900 leading-tight">
@@ -675,7 +856,7 @@ export default function AuctionsPage() {
                 <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
                   STARTING BID
                 </p>
-                <p className="text-xl font-black text-[#009639] mt-0.5 leading-tight">
+                <p className="text-xl font-black text-[#009845] mt-0.5 leading-tight">
                   PKR {selectedAuction.startingBid.toLocaleString()}
                 </p>
               </div>
@@ -749,9 +930,98 @@ export default function AuctionsPage() {
                 </div>
                 <p className="font-bold text-gray-900">{selectedAuction.highestBidderName}</p>
                 <p className="text-[11px] text-gray-500">{selectedAuction.highestBidderCompany}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">{selectedAuction.highestBidderCity}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  {selectedAuction.highestBidderCity}
+                  {selectedAuction.highestBidderPhone ? ` • ${selectedAuction.highestBidderPhone}` : ""}
+                </p>
+                {selectedAuction.currentHighBid > 0 && (
+                  <p className="text-xs font-black text-emerald-700 mt-1">
+                    Top Offer: PKR {selectedAuction.currentHighBid.toLocaleString()}
+                  </p>
+                )}
               </div>
             </div>
+
+            {/* Live Bids History Table */}
+            <div className="mt-4 text-xs">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  ALL SUBMITTED BIDS ({selectedAuction.bids?.length || selectedAuction.totalBids || 0})
+                </p>
+                <span className="text-[10px] text-[#009845] font-semibold flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#009845] animate-pulse" />
+                  Live Marketplace
+                </span>
+              </div>
+
+              {selectedAuction.bids && selectedAuction.bids.length > 0 ? (
+                <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100 bg-white max-h-56 overflow-y-auto">
+                  {selectedAuction.bids.map((bid, bIdx) => (
+                    <div
+                      key={bid.id || bIdx}
+                      className={`p-3 flex items-center justify-between gap-3 transition-colors ${
+                        bIdx === 0 ? "bg-emerald-50/40" : "hover:bg-gray-50/70"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                            bIdx === 0
+                              ? "bg-amber-100 text-amber-800 border border-amber-300"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {bIdx === 0 ? "🥇" : `#${bIdx + 1}`}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-bold text-gray-900 truncate">
+                              {bid.bidderName}
+                            </p>
+                            {bIdx === 0 && (
+                              <span className="text-[9px] font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full">
+                                Highest Bid
+                              </span>
+                            )}
+                            {bid.status === "Winner" && (
+                              <span className="text-[9px] font-bold bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded-full">
+                                Accepted Winner
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-gray-500 truncate">
+                            {bid.bidderCompany} • {bid.bidderCity}
+                            {bid.bidderPhone ? ` • ${bid.bidderPhone}` : ""}
+                          </p>
+                          <p className="text-[10px] text-gray-400">
+                            {bid.createdAt} • Ref: {bid.referenceNumber || bid.id?.substring(0, 6)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                        <p className="font-black text-sm text-gray-900">
+                          PKR {bid.amount.toLocaleString()}
+                        </p>
+                        {bid.status !== "Winner" && selectedAuction.status === "Active" && (
+                          <button
+                            type="button"
+                            onClick={() => handleAcceptWinningBid(bid.id, selectedAuction.id)}
+                            className="text-[10px] font-bold bg-[#009845] hover:bg-[#008230] text-white px-2.5 py-1 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                          >
+                            Accept Bid
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 text-center text-gray-400 text-xs">
+                  No bids submitted yet for this auction. Bids from buyers on the mobile app will automatically appear here live.
+                </div>
+              )}
+            </div>
+
 
             {/* Modal Actions */}
             <div className="grid grid-cols-2 gap-2.5 mt-5 pt-3 border-t border-gray-100">
@@ -761,7 +1031,7 @@ export default function AuctionsPage() {
                   setIsDetailsOpen(false);
                   handleOpenEdit(selectedAuction);
                 }}
-                className="py-2.5 px-4 bg-[#009639] hover:bg-[#008230] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="py-2.5 px-4 bg-[#009845] hover:bg-[#008230] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span>Edit Auction</span>
@@ -808,7 +1078,7 @@ export default function AuctionsPage() {
                   value={editFormData.title || ""}
                   onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009639]"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845]"
                 />
               </div>
 
@@ -821,7 +1091,7 @@ export default function AuctionsPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, startingBid: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009639]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845]"
                   />
                 </div>
                 <div>
@@ -832,7 +1102,7 @@ export default function AuctionsPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, reservePrice: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009639]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845]"
                   />
                 </div>
               </div>
@@ -843,7 +1113,7 @@ export default function AuctionsPage() {
                   type="date"
                   value={editFormData.endDate || ""}
                   onChange={(e) => setEditFormData({ ...editFormData, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009639]"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845]"
                 />
               </div>
 
@@ -857,7 +1127,7 @@ export default function AuctionsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#009639] hover:bg-[#008230] text-white font-semibold rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-[#009845] hover:bg-[#008230] text-white font-semibold rounded-xl shadow-xs cursor-pointer"
                 >
                   Save Auction
                 </button>
@@ -888,7 +1158,7 @@ export default function AuctionsPage() {
             </div>
 
             <p className="text-xs text-gray-500 mt-3 leading-relaxed">
-              Are you sure you want to end <span className="font-semibold text-gray-800">{selectedAuction.auctionId}</span>? The highest bidder (<span className="font-semibold text-gray-800">{selectedAuction.highestBidderName}</span> with <span className="text-[#009639] font-bold">PKR {selectedAuction.currentHighBid.toLocaleString()}</span>) will be declared winner.
+              Are you sure you want to end <span className="font-semibold text-gray-800">{selectedAuction.auctionId}</span>? The highest bidder (<span className="font-semibold text-gray-800">{selectedAuction.highestBidderName}</span> with <span className="text-[#009845] font-bold">PKR {selectedAuction.currentHighBid.toLocaleString()}</span>) will be declared winner.
             </p>
 
             <div className="flex items-center justify-end gap-2 mt-5">
@@ -959,7 +1229,7 @@ export default function AuctionsPage() {
       {/* ===================== TOAST NOTIFICATION ===================== */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 bg-gray-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 z-50 animate-slideUp">
-          <Check className="w-4 h-4 text-[#009639]" />
+          <Check className="w-4 h-4 text-[#009845]" />
           <span>{toastMessage}</span>
         </div>
       )}

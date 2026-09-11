@@ -245,15 +245,14 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
               // Progress indicator
               Builder(
                 builder: (context) {
-                  final bool isHybrid = (widget.draft?.specs['inverter_type'] as String?)?.trim().toLowerCase() == 'hybrid';
-                  final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 5 : 4) : 7;
-                  final int currentStep = widget.isCompleteSolarSystem ? (isHybrid ? 4 : 3) : 2;
+                  final bool isHybrid = (widget.draft?.specs['inverter_type'] as String?)?.trim().toLowerCase() != 'on-grid';
+                  final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 7 : 6) : 6;
+                  final int currentStep = widget.isCompleteSolarSystem ? (isHybrid ? 5 : 4) : 2;
                   final String stepText = widget.isCompleteSolarSystem
                       ? 'Step $currentStep of $totalSteps (Cables)'
-                      : 'Step 2 of 7';
-                  final String percentText = widget.isCompleteSolarSystem
-                      ? '${((currentStep / totalSteps) * 100).round()}%'
-                      : '29%';
+                      : 'Step 2 of 6';
+                  final String percentText =
+                      '${((currentStep / totalSteps) * 100).round()}%';
 
                   return Column(
                     children: [

@@ -1,10 +1,10 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, status
 from firebase_admin import firestore
-from app.schemas.auth import UserProfile
+from app.schemas.auth import UserProfile, UserRole
 from app.schemas.listings import CreateListingRequest, ListingResponse
 from app.api.auth import get_current_user
-from app.api.notifications import create_user_notification
+from app.api.notifications import create_user_notification, create_admin_notification
 from app.core.firebase import get_firestore_db
 
 router = APIRouter(prefix="/listings", tags=["Listings"])
@@ -30,10 +30,15 @@ async def create_listing(
     db = get_firestore_db()
     listing_ref = db.collection("listings").document()
 
+    is_admin = current_user.role == UserRole.ADMIN
+    initial_status = "active" if is_admin else "pending"
+    initial_post_status = "Approved" if is_admin else "New"
+
     listing_data = {
         "seller_id": current_user.user_id,
         "category": payload.category,
-        "status": "active",  # Auto-approved
+        "status": initial_status,
+        "post_status": initial_post_status,
         "price_demand": payload.price_demand,
         "specs": payload.specs,
         "image_urls": payload.image_urls,
@@ -64,17 +69,31 @@ async def create_listing(
         create_user_notification(
             db=db,
             user_id=current_user.user_id,
-            notif_type="listing_created",
-            title="Listing Created & Live!",
-            description=f"Your {display_title} listing has been created and is active on the marketplace.",
+            notif_type="auction_created" if is_admin else "listing_created",
+            title="Listing Published Live!" if is_admin else "Listing Submitted for Review",
+            description=(
+                f"Your {display_title} listing is now active on the Solar Scrap marketplace."
+                if is_admin
+                else f"Your {display_title} listing has been submitted for admin approval. It will go live once accepted."
+            ),
             listing_id=listing_ref.id,
         )
+
+        if not is_admin:
+            create_admin_notification(
+                db=db,
+                notif_type="new_pending_post",
+                title="New Post Awaiting Approval",
+                description=f"{display_title} submitted by {current_user.display_name or current_user.email or 'Seller'} — requires review.",
+                entity_id=listing_ref.id,
+                entity_type="listing",
+            )
         
         return ListingResponse(
             id=listing_ref.id,
             seller_id=current_user.user_id,
             category=data.get("category", payload.category),
-            status=data.get("status", "active"),
+            status=data.get("status", "pending"),
             price_demand=data.get("price_demand", payload.price_demand),
             specs=data.get("specs", payload.specs),
             image_urls=data.get("image_urls", payload.image_urls),
@@ -148,34 +167,35 @@ async def get_all_active_listings(
     """
     db = get_firestore_db()
     try:
-        listings_query = (
-            db.collection("listings")
-            .where("status", "==", "active")
-            .stream()
-        )
+        listings_stream = db.collection("listings").stream()
 
         results = []
-        for doc in listings_query:
+        for doc in listings_stream:
             data = doc.to_dict() or {}
-            results.append(
-                ListingResponse(
-                    id=doc.id,
-                    seller_id=data.get("seller_id", ""),
-                    category=data.get("category", ""),
-                    status=data.get("status", "active"),
-                    price_demand=float(data.get("price_demand", 0.0)),
-                    specs=data.get("specs", {}),
-                    image_urls=data.get("image_urls", []),
-                    pickup_city=data.get("pickup_city", ""),
-                    pickup_area=data.get("pickup_area"),
-                    pickup_address=data.get("pickup_address", ""),
-                    contact_name=data.get("contact_name", ""),
-                    contact_phone=data.get("contact_phone", ""),
-                    contact_email=data.get("contact_email", ""),
-                    created_at=_format_datetime(data.get("created_at")),
-                    updated_at=_format_datetime(data.get("updated_at")),
+            st = str(data.get("status", "")).lower()
+            pst = str(data.get("post_status", "")).lower()
+
+            # Include if active, approved, or price offered (live on marketplace)
+            if st in ("active", "approved") or pst in ("approved", "active", "price offered"):
+                results.append(
+                    ListingResponse(
+                        id=doc.id,
+                        seller_id=data.get("seller_id", ""),
+                        category=data.get("category", ""),
+                        status="active",
+                        price_demand=float(data.get("price_demand", 0.0)),
+                        specs=data.get("specs", {}),
+                        image_urls=data.get("image_urls", []),
+                        pickup_city=data.get("pickup_city", ""),
+                        pickup_area=data.get("pickup_area"),
+                        pickup_address=data.get("pickup_address", ""),
+                        contact_name=data.get("contact_name", ""),
+                        contact_phone=data.get("contact_phone", ""),
+                        contact_email=data.get("contact_email", ""),
+                        created_at=_format_datetime(data.get("created_at")),
+                        updated_at=_format_datetime(data.get("updated_at")),
+                    )
                 )
-            )
         # Sort newest first if created_at is available
         results.sort(
             key=lambda x: x.created_at or "",

@@ -11,11 +11,16 @@ from app.core.firebase import get_firestore_db
 router = APIRouter(prefix="/bids", tags=["Bids"])
 
 
+from datetime import datetime, timezone
+
+
 def _format_datetime(dt):
     if dt is None:
         return None
     if hasattr(dt, "isoformat"):
         return dt.isoformat()
+    if "Sentinel" in str(dt):
+        return datetime.now(timezone.utc).isoformat()
     return str(dt)
 
 
@@ -72,11 +77,22 @@ async def place_bid(
 
     ref_id = f"BID-{str(uuid.uuid4())[:6].upper()}"
 
+    buyer_name_val = current_user.display_name or current_user.company_name or "Verified Buyer"
+    buyer_company_val = current_user.company_name or "Scrap Trading Co."
+    buyer_city_val = current_user.city or "Karachi"
+    buyer_phone_val = current_user.phone_number or ""
+    buyer_email_val = current_user.email or ""
+
     if existing_bid_doc:
         bid_ref = db.collection("bids").document(existing_bid_doc.id)
         bid_data = {
             "amount": float(payload.amount),
             "status": "pending",
+            "buyer_name": buyer_name_val,
+            "buyer_company": buyer_company_val,
+            "buyer_city": buyer_city_val,
+            "buyer_phone": buyer_phone_val,
+            "buyer_email": buyer_email_val,
             "updated_at": firestore.SERVER_TIMESTAMP,
         }
         bid_ref.update(bid_data)
@@ -90,7 +106,11 @@ async def place_bid(
             "listing_id": payload.listing_id,
             "seller_id": seller_id,
             "buyer_id": current_user.user_id,
-            "buyer_name": current_user.full_name or "Verified Buyer",
+            "buyer_name": buyer_name_val,
+            "buyer_company": buyer_company_val,
+            "buyer_city": buyer_city_val,
+            "buyer_phone": buyer_phone_val,
+            "buyer_email": buyer_email_val,
             "amount": float(payload.amount),
             "status": "pending",
             "reference_number": ref_id,
@@ -101,6 +121,36 @@ async def place_bid(
             "updated_at": firestore.SERVER_TIMESTAMP,
         }
         bid_ref.set(bid_data)
+
+    # 2.5 Update listing document with highest bid & total bids count
+    try:
+        all_bids_docs = list(db.collection("bids").where("listing_id", "==", payload.listing_id).stream())
+        all_bids = []
+        for b in all_bids_docs:
+            bd = b.to_dict() or {}
+            bd["id"] = b.id
+            all_bids.append(bd)
+
+        total_bids_count = len(all_bids)
+        highest_bid = max(all_bids, key=lambda b: float(b.get("amount", 0.0)), default=None)
+
+        listing_updates = {
+            "total_bids": total_bids_count,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }
+        if highest_bid:
+            listing_updates["current_high_bid"] = float(highest_bid.get("amount", payload.amount))
+            listing_updates["highest_bidder_id"] = highest_bid.get("buyer_id", current_user.user_id)
+            listing_updates["highest_bidder_name"] = highest_bid.get("buyer_name", buyer_name_val)
+            listing_updates["highest_bidder_company"] = highest_bid.get("buyer_company", buyer_company_val)
+            listing_updates["highest_bidder_city"] = highest_bid.get("buyer_city", buyer_city_val)
+            listing_updates["highest_bidder_phone"] = highest_bid.get("buyer_phone", buyer_phone_val)
+            listing_updates["highest_bidder_email"] = highest_bid.get("buyer_email", buyer_email_val)
+            listing_updates["highest_bid_id"] = highest_bid.get("id", bid_id)
+
+        listing_ref.update(listing_updates)
+    except Exception as e:
+        print(f"[Bids Warning] Failed to update listing high bid stats: {e}")
 
     # 3. Create notification for seller
     if seller_id:
@@ -123,12 +173,15 @@ async def place_bid(
         listing_id=payload.listing_id,
     )
 
+
+    buyer_name_res = current_user.display_name or current_user.company_name or "Verified Buyer"
+
     return BidResponse(
         id=bid_id,
         listing_id=payload.listing_id,
         seller_id=seller_id,
         buyer_id=current_user.user_id,
-        buyer_name=current_user.full_name or "Verified Buyer",
+        buyer_name=buyer_name_res,
         amount=float(payload.amount),
         status="pending",
         reference_number=ref_id,
@@ -158,19 +211,40 @@ async def get_my_bids(
         results = []
         for doc in bids_query:
             data = doc.to_dict() or {}
+            listing_id = data.get("listing_id", "")
+            listing_image = data.get("listing_image")
+            listing_title = data.get("listing_title")
+            listing_category = data.get("listing_category")
+
+            # Dynamically pull fresh listing details if missing or default on the bid record
+            if listing_id and (not listing_image or not listing_category or listing_title in ("Solar Equipment", None, "")):
+                try:
+                    listing_doc = db.collection("listings").document(listing_id).get()
+                    if listing_doc.exists:
+                        l_data = listing_doc.to_dict() or {}
+                        l_images = l_data.get("image_urls", [])
+                        if l_images and not listing_image:
+                            listing_image = l_images[0]
+                        if not listing_category:
+                            listing_category = l_data.get("category", "")
+                        if not listing_title or listing_title == "Solar Equipment":
+                            listing_title = _get_listing_title(listing_category, l_data.get("specs", {}))
+                except Exception:
+                    pass
+
             results.append(
                 BidResponse(
                     id=doc.id,
-                    listing_id=data.get("listing_id", ""),
+                    listing_id=listing_id,
                     seller_id=data.get("seller_id", ""),
                     buyer_id=data.get("buyer_id", current_user.user_id),
                     buyer_name=data.get("buyer_name", "Buyer"),
                     amount=float(data.get("amount", 0.0)),
                     status=data.get("status", "pending"),
                     reference_number=data.get("reference_number", f"BID-{doc.id[:6].upper()}"),
-                    listing_title=data.get("listing_title", "Solar Equipment"),
-                    listing_category=data.get("listing_category", ""),
-                    listing_image=data.get("listing_image"),
+                    listing_title=listing_title or "Solar Equipment",
+                    listing_category=listing_category or "",
+                    listing_image=listing_image,
                     created_at=_format_datetime(data.get("created_at")),
                     updated_at=_format_datetime(data.get("updated_at")),
                 )

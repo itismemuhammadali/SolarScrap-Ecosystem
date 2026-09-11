@@ -42,7 +42,7 @@ const allScreensList: ScreenCard[] = [
     description: "Main authentication entry with Solar Scrap brand logo, email & password fields, password reveal toggle, and forgot password link.",
     path: "/",
     badge: "Auth Entry",
-    badgeColor: "bg-emerald-50 text-[#009639] border-emerald-200",
+    badgeColor: "bg-emerald-50 text-[#009845] border-emerald-200",
     icon: Lock,
     features: ["Hero Factory Image", "Enlarged Solar Scrap Logo", "Password Eye Toggle", "Forgot Password Link"],
   },
@@ -84,7 +84,7 @@ const allScreensList: ScreenCard[] = [
     description: "Complete analytical dashboard with 7 quick metric stat cards, User Growth dual-line SVG chart, User Status donut SVG chart, Bid Activity weekly bar chart, City Leads progress bars, and live activity feed.",
     path: "/dashboard",
     badge: "Analytics & KPI",
-    badgeColor: "bg-emerald-50 text-[#009639] border-emerald-200",
+    badgeColor: "bg-emerald-50 text-[#009845] border-emerald-200",
     icon: LayoutDashboard,
     features: ["7 Stat KPI Cards", "Dual-line SVG Growth Chart", "Donut Chart Status", "City Progress Bars", "Recent Activity Feed"],
   },
@@ -170,7 +170,7 @@ const allScreensList: ScreenCard[] = [
     description: "2-Column settings layout featuring all 7 tabs: Edit Profile, 2-Column Change Password, Notification Preferences (6 toggles), Session Management (3 device cards + revoke), Login Security (3 toggles), Privacy & Data, and Terms of Service.",
     path: "/settings",
     badge: "All 7 Tabs Live",
-    badgeColor: "bg-emerald-50 text-[#009639] border-emerald-200",
+    badgeColor: "bg-emerald-50 text-[#009845] border-emerald-200",
     icon: Settings,
     features: ["Edit Profile Avatar & Form", "Change Password 2-Column Grid", "6 Notification Toggle Switches", "3 Session Device Cards + Revoke", "3 Login Security Toggles", "Privacy & Terms of Service"],
   },
@@ -236,7 +236,7 @@ export default function AllScreensHub() {
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border border-white/10 rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-3 z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#009639]/20 border border-[#009639]/40 text-[#009639] text-xs font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#009845]/20 border border-[#009845]/40 text-[#009845] text-xs font-bold uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Solar Scrap Admin &amp; Seller Portal Complete Suite</span>
             </div>
@@ -253,7 +253,7 @@ export default function AllScreensHub() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 z-10 shrink-0 w-full md:w-auto">
             <Link
               href="/dashboard"
-              className="px-6 py-3 bg-[#009639] hover:bg-[#008230] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#009639]/30 transition-all flex items-center justify-center gap-2 text-center"
+              className="px-6 py-3 bg-[#009845] hover:bg-[#008230] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#009845]/30 transition-all flex items-center justify-center gap-2 text-center"
             >
               <span>Launch Dashboard</span>
               <ArrowRight className="w-4 h-4" />
@@ -269,7 +269,7 @@ export default function AllScreensHub() {
           </div>
 
           {/* Background Decorative Glow */}
-          <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-[#009639]/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-[#009845]/15 rounded-full blur-3xl pointer-events-none" />
         </div>
 
         {/* Categories Grid */}
@@ -279,7 +279,7 @@ export default function AllScreensHub() {
             return (
               <div
                 key={idx}
-                className="bg-gray-900/90 border border-gray-800 rounded-2xl p-5 sm:p-6 hover:border-[#009639]/50 hover:bg-gray-850 transition-all duration-200 shadow-xl flex flex-col justify-between group"
+                className="bg-gray-900/90 border border-gray-800 rounded-2xl p-5 sm:p-6 hover:border-[#009845]/50 hover:bg-gray-850 transition-all duration-200 shadow-xl flex flex-col justify-between group"
               >
                 <div>
                   {/* Top Badge & Category */}
@@ -296,10 +296,10 @@ export default function AllScreensHub() {
 
                   {/* Title & Icon */}
                   <div className="flex items-center gap-3 mt-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#009639]/20 text-[#009639] border border-[#009639]/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 rounded-xl bg-[#009845]/20 text-[#009845] border border-[#009845]/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <h3 className="text-base font-bold text-white group-hover:text-[#009639] transition-colors leading-snug">
+                    <h3 className="text-base font-bold text-white group-hover:text-[#009845] transition-colors leading-snug">
                       {screen.title}
                     </h3>
                   </div>
@@ -326,7 +326,7 @@ export default function AllScreensHub() {
                 <div className="pt-5 mt-5 border-t border-gray-800/80">
                   <Link
                     href={screen.path}
-                    className="w-full py-2.5 px-4 bg-gray-800 hover:bg-[#009639] text-gray-200 hover:text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 group-hover:shadow-md cursor-pointer"
+                    className="w-full py-2.5 px-4 bg-gray-800 hover:bg-[#009845] text-gray-200 hover:text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 group-hover:shadow-md cursor-pointer"
                   >
                     <span>Open Screen</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -341,7 +341,7 @@ export default function AllScreensHub() {
         {/* Footer */}
         <div className="text-center py-6 border-t border-gray-800 text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-gray-400">
-            <Sun className="w-4 h-4 text-[#009639]" />
+            <Sun className="w-4 h-4 text-[#009845]" />
             <span className="font-bold text-white">Solar Scrap</span>
             <span>— Admin &amp; Seller Portal</span>
           </div>

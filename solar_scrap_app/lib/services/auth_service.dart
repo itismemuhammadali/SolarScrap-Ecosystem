@@ -9,6 +9,9 @@ class AuthUser {
   final String role;
   final String? displayName;
   final String? phoneNumber;
+  final String status;
+  final String? companyName;
+  final String? city;
 
   AuthUser({
     required this.userId,
@@ -16,7 +19,35 @@ class AuthUser {
     required this.role,
     this.displayName,
     this.phoneNumber,
+    this.status = 'approved',
+    this.companyName,
+    this.city,
   });
+
+  bool get isApproved => status.toLowerCase() == 'approved';
+  bool get isPending => status.toLowerCase() == 'pending';
+
+  AuthUser copyWith({
+    String? userId,
+    String? email,
+    String? role,
+    String? displayName,
+    String? phoneNumber,
+    String? status,
+    String? companyName,
+    String? city,
+  }) {
+    return AuthUser(
+      userId: userId ?? this.userId,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      displayName: displayName ?? this.displayName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      status: status ?? this.status,
+      companyName: companyName ?? this.companyName,
+      city: city ?? this.city,
+    );
+  }
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
@@ -25,6 +56,9 @@ class AuthUser {
       role: json['role'] ?? '',
       displayName: json['display_name'],
       phoneNumber: json['phone_number'],
+      status: json['status'] ?? 'pending',
+      companyName: json['company_name'],
+      city: json['city'],
     );
   }
 }
@@ -34,7 +68,9 @@ class AuthResult {
   final String? message;
   final String? token;
   final AuthUser? user;
-  final String? maskedPhone; // Added for register response
+  final String? maskedPhone;
+  final String? status;
+  final bool isPending;
 
   AuthResult({
     required this.isSuccess,
@@ -42,6 +78,8 @@ class AuthResult {
     this.token,
     this.user,
     this.maskedPhone,
+    this.status,
+    this.isPending = false,
   });
 }
 
@@ -94,18 +132,36 @@ class AuthService {
           token: _accessToken,
           user: _currentUser,
           message: data['message'] ?? 'Successfully signed in.',
+          status: _currentUser?.status ?? 'approved',
+          isPending: _currentUser?.isPending ?? false,
         );
       } else {
-        final errorDetail = data['detail'] ?? 'Sign in failed. Please try again.';
+        final errorDetail = data['detail'];
+        String msg = 'Sign in failed. Please try again.';
+        String? stat;
+        bool pending = false;
+        if (errorDetail is Map) {
+          msg = errorDetail['message'] ?? msg;
+          stat = errorDetail['status'];
+          pending = stat?.toLowerCase() == 'pending';
+        } else if (errorDetail is String) {
+          msg = errorDetail;
+          if (msg.toLowerCase().contains('pending')) {
+            stat = 'pending';
+            pending = true;
+          }
+        }
         return AuthResult(
           isSuccess: false,
-          message: errorDetail,
+          message: msg,
+          status: stat,
+          isPending: pending,
         );
       }
     } catch (e) {
       return AuthResult(
         isSuccess: false,
-        message: 'Could not connect to backend server. Ensure FastAPI and Firebase Emulator are running at ${ApiConfig.baseUrl}.',
+        message: 'Could not connect to server at ${ApiConfig.baseUrl}. Please check your internet connection.',
       );
     }
   }
@@ -131,6 +187,8 @@ class AuthService {
           user: _currentUser,
           message: responseData['message'] ?? 'Successfully registered.',
           maskedPhone: responseData['masked_phone'],
+          status: _currentUser?.status ?? 'pending',
+          isPending: _currentUser?.isPending ?? true,
         );
       } else {
         final errorDetail = responseData['detail'] ?? 'Registration failed. Please try again.';
@@ -142,9 +200,44 @@ class AuthService {
     } catch (e) {
       return AuthResult(
         isSuccess: false,
-        message: 'Could not connect to backend server. Ensure FastAPI and Firebase Emulator are running at ${ApiConfig.baseUrl}.',
+        message: 'Could not connect to server at ${ApiConfig.baseUrl}. Please check your internet connection.',
       );
     }
+  }
+
+  Future<Map<String, dynamic>> checkUserStatus({
+    String? userId,
+    String? email,
+  }) async {
+    try {
+      final queryParams = <String, String>{};
+      final uid = userId ?? _currentUser?.userId;
+      final em = email ?? _currentUser?.email;
+      if (uid != null && uid.isNotEmpty) queryParams['user_id'] = uid;
+      if (em != null && em.isNotEmpty) queryParams['email'] = em;
+
+      if (queryParams.isEmpty) return {'status': 'unknown'};
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/v1/auth/user-status')
+          .replace(queryParameters: queryParams);
+
+      final response = await http.get(uri).timeout(const Duration(seconds: 5));
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final newStatus = (data['status'] as String? ?? '').toLowerCase();
+        if (_currentUser != null && newStatus.isNotEmpty) {
+          _currentUser = _currentUser!.copyWith(
+            status: newStatus,
+            companyName: data['company_name'],
+            city: data['city'],
+          );
+        }
+        return data;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return {'status': 'unknown'};
   }
 
   void logout() {

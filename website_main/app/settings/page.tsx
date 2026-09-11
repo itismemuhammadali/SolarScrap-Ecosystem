@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -26,6 +26,7 @@ import {
   Mail,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { getSession, getAvatarUrl } from "@/lib/auth";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<
@@ -46,6 +47,18 @@ export default function SettingsPage() {
   const [email, setEmail] = useState("admin@solarscrap.pk");
   const [phone, setPhone] = useState("+92 300 0000000");
   const [role, setRole] = useState("Super Admin");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const session = getSession();
+    if (session?.user) {
+      if (session.user.display_name) setFullName(session.user.display_name);
+      if (session.user.email) setEmail(session.user.email);
+      if (session.user.phone_number) setPhone(session.user.phone_number);
+      if (session.user.role) setRole(session.user.role.toUpperCase());
+      if (session.user.profile_photo_url) setProfilePhotoUrl(session.user.profile_photo_url);
+    }
+  }, []);
 
   // Password Form state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -147,7 +160,7 @@ export default function SettingsPage() {
   ] as const;
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] flex flex-col lg:flex-row">
+    <div className="flex h-screen w-full bg-[#F5F6FA] overflow-hidden">
       {/* ===================== UNIFIED SIDEBAR ===================== */}
       <Sidebar
         activeItem="Settings"
@@ -156,7 +169,7 @@ export default function SettingsPage() {
       />
 
       {/* ===================== MAIN CONTENT AREA ===================== */}
-      <div className="flex-1 bg-[#f8fafc] flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 bg-[#F5F6FA] flex flex-col min-w-0 h-screen overflow-hidden">
         
         {/* Top Navbar */}
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200/80 px-5 sm:px-8 py-3.5 flex items-center justify-between gap-4">
@@ -167,7 +180,7 @@ export default function SettingsPage() {
                 value={topSearch}
                 onChange={(e) => setTopSearch(e.target.value)}
                 placeholder="Search users, posts, auctions, bids..."
-                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-gray-50/70 border border-gray-200/80 rounded-xl outline-none focus:bg-white focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15 transition-all text-gray-800 placeholder:text-gray-400"
+                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-gray-50/70 border border-gray-200/80 rounded-xl outline-none focus:bg-white focus:border-[#009845] focus:ring-2 focus:ring-[#009845]/15 transition-all text-gray-800 placeholder:text-gray-400"
               />
             </div>
 
@@ -183,15 +196,19 @@ export default function SettingsPage() {
 
               <div className="flex items-center gap-3 pl-2 sm:border-l border-gray-200">
                 <span className="hidden sm:inline-block text-xs font-semibold text-gray-800">
-                  Admin Platform
+                  {fullName}
                 </span>
-                <div className="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full overflow-hidden ring-2 ring-gray-100 shadow-sm">
-                  <Image
-                    src="/images/admin.png"
-                    alt="Admin Avatar"
-                    fill
-                    className="object-cover"
-                  />
+                <div className="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full overflow-hidden ring-2 ring-gray-100 shadow-sm bg-emerald-700 flex items-center justify-center text-white font-bold text-sm select-none">
+                  {profilePhotoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={getAvatarUrl(profilePhotoUrl)!}
+                      alt={fullName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{fullName ? fullName.charAt(0).toUpperCase() : "A"}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -225,13 +242,13 @@ export default function SettingsPage() {
                       onClick={() => setActiveTab(item.id)}
                       className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 text-left cursor-pointer ${
                         isActive
-                          ? "bg-emerald-50 text-[#009639]"
+                          ? "bg-emerald-50 text-[#009845]"
                           : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                       }`}
                     >
                       <Icon
                         className={`w-4 h-4 shrink-0 ${
-                          isActive ? "text-[#009639]" : "text-gray-400"
+                          isActive ? "text-[#009845]" : "text-gray-400"
                         }`}
                       />
                       <span className="truncate">{item.label}</span>
@@ -252,8 +269,17 @@ export default function SettingsPage() {
 
                     {/* Avatar Block */}
                     <div className="flex items-center gap-4 py-5">
-                      <div className="w-14 h-14 rounded-2xl bg-[#009639] text-white flex items-center justify-center font-black text-xl shadow-xs shrink-0">
-                        A
+                      <div className="w-14 h-14 rounded-2xl bg-[#009845] text-white flex items-center justify-center font-black text-xl shadow-xs shrink-0 overflow-hidden ring-1 ring-gray-200">
+                        {profilePhotoUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={getAvatarUrl(profilePhotoUrl)!}
+                            alt={fullName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          fullName.charAt(0).toUpperCase() || "A"
+                        )}
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-gray-900">{fullName}</h3>
@@ -261,7 +287,7 @@ export default function SettingsPage() {
                         <button
                           type="button"
                           onClick={() => showToast("Photo upload feature ready.")}
-                          className="text-[11px] font-bold text-[#009639] hover:underline mt-1 cursor-pointer"
+                          className="text-[11px] font-bold text-[#009845] hover:underline mt-1 cursor-pointer"
                         >
                           Change photo
                         </button>
@@ -280,7 +306,7 @@ export default function SettingsPage() {
                             value={fullName}
                             onChange={(e) => setFullName(e.target.value)}
                             required
-                            className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009639] focus:ring-1 focus:ring-[#009639]/20 text-gray-900 font-medium"
+                            className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-900 font-medium"
                           />
                         </div>
 
@@ -293,7 +319,7 @@ export default function SettingsPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009639] focus:ring-1 focus:ring-[#009639]/20 text-gray-900 font-medium font-mono"
+                            className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-900 font-medium font-mono"
                           />
                         </div>
 
@@ -305,7 +331,7 @@ export default function SettingsPage() {
                             type="text"
                             value={phone}
                             onChange={(e) => setPhone(e.target.value)}
-                            className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009639] focus:ring-1 focus:ring-[#009639]/20 text-gray-900 font-medium font-mono"
+                            className="w-full px-3.5 py-2.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-900 font-medium font-mono"
                           />
                         </div>
 
@@ -325,7 +351,7 @@ export default function SettingsPage() {
                       <div className="pt-3">
                         <button
                           type="submit"
-                          className="px-6 py-2.5 bg-[#009639] hover:bg-[#008230] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                          className="px-6 py-2.5 bg-[#009845] hover:bg-[#008230] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                         >
                           Save Changes
                         </button>
@@ -354,7 +380,7 @@ export default function SettingsPage() {
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
                               placeholder="••••••••"
-                              className="w-full px-3.5 py-2.5 pr-10 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009639] focus:ring-1 focus:ring-[#009639]/20 text-gray-900"
+                              className="w-full px-3.5 py-2.5 pr-10 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-900"
                             />
                             <button
                               type="button"
@@ -376,7 +402,7 @@ export default function SettingsPage() {
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
                               placeholder="••••••••"
-                              className="w-full px-3.5 py-2.5 pr-10 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009639] focus:ring-1 focus:ring-[#009639]/20 text-gray-900"
+                              className="w-full px-3.5 py-2.5 pr-10 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-900"
                             />
                             <button
                               type="button"
@@ -401,7 +427,7 @@ export default function SettingsPage() {
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               placeholder="••••••••"
-                              className="w-full px-3.5 py-2.5 pr-10 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009639] focus:ring-1 focus:ring-[#009639]/20 text-gray-900"
+                              className="w-full px-3.5 py-2.5 pr-10 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-900"
                             />
                             <button
                               type="button"
@@ -418,7 +444,7 @@ export default function SettingsPage() {
                       <div className="pt-2">
                         <button
                           type="submit"
-                          className="px-6 py-2.5 bg-[#009639] hover:bg-[#008230] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
+                          className="px-6 py-2.5 bg-[#009845] hover:bg-[#008230] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
                         >
                           Update Password
                         </button>
@@ -457,7 +483,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            emailUserApprovals ? "bg-[#009639]" : "bg-gray-200"
+                            emailUserApprovals ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -490,7 +516,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            emailNewBids ? "bg-[#009639]" : "bg-gray-200"
+                            emailNewBids ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -523,7 +549,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            emailFacebookLeads ? "bg-[#009639]" : "bg-gray-200"
+                            emailFacebookLeads ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -556,7 +582,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            pushNotifications ? "bg-[#009639]" : "bg-gray-200"
+                            pushNotifications ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -589,7 +615,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            pushDealUpdates ? "bg-[#009639]" : "bg-gray-200"
+                            pushDealUpdates ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -622,7 +648,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            smsFacebookLeads ? "bg-[#009639]" : "bg-gray-200"
+                            smsFacebookLeads ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -729,7 +755,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            twoFactorAuth ? "bg-[#009639]" : "bg-gray-200"
+                            twoFactorAuth ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -759,7 +785,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            loginAlerts ? "bg-[#009639]" : "bg-gray-200"
+                            loginAlerts ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -789,7 +815,7 @@ export default function SettingsPage() {
                             );
                           }}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                            trustedDevicesOnly ? "bg-[#009639]" : "bg-gray-200"
+                            trustedDevicesOnly ? "bg-[#009845]" : "bg-gray-200"
                           }`}
                         >
                           <span
@@ -815,7 +841,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={() => showToast("Opening Privacy & Data document...")}
-                      className="text-xs font-semibold text-[#009639] hover:underline mt-4 cursor-pointer inline-block"
+                      className="text-xs font-semibold text-[#009845] hover:underline mt-4 cursor-pointer inline-block"
                     >
                       View full document &rarr;
                     </button>
@@ -834,7 +860,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={() => showToast("Opening Terms of Service document...")}
-                      className="text-xs font-semibold text-[#009639] hover:underline mt-4 cursor-pointer inline-block"
+                      className="text-xs font-semibold text-[#009845] hover:underline mt-4 cursor-pointer inline-block"
                     >
                       View full document &rarr;
                     </button>
@@ -852,7 +878,7 @@ export default function SettingsPage() {
       {/* ===================== TOAST NOTIFICATION ===================== */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 bg-gray-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 z-50 animate-slideUp">
-          <Check className="w-4 h-4 text-[#009639]" />
+          <Check className="w-4 h-4 text-[#009845]" />
           <span>{toastMessage}</span>
         </div>
       )}

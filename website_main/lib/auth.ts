@@ -181,3 +181,15 @@ export function clearSession(): void {
 export function isAuthenticated(): boolean {
   return getSession() !== null;
 }
+
+/**
+ * Resolves avatar URL to an absolute URL if needed.
+ */
+export function getAvatarUrl(url?: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  return `${baseUrl}${url.startsWith("/") ? "" : "/"}${url}`;
+}

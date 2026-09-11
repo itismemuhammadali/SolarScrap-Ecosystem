@@ -89,46 +89,55 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Progress indicator
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Step 1 of 7',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF71717A),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Text(
-                          '14%',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF00A63E),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Segmented Progress Bar
-                    Row(
-                      children: List.generate(7, (index) {
-                        return Expanded(
-                          child: Container(
-                            height: 4,
-                            margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
-                            decoration: BoxDecoration(
-                              color: index == 0
-                                  ? const Color(0xFF00A63E)
-                                  : const Color(0xFFE5E7EB),
-                              borderRadius: BorderRadius.circular(2),
+                    // Dynamic progress indicator based on category selection
+                    Builder(
+                      builder: (context) {
+                        final bool isComplete = _selectedCategory == 'Complete Solar System';
+                        final int totalSteps = isComplete ? 7 : 6;
+                        final String percent = isComplete ? '14%' : '17%';
+                        return Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Step 1 of $totalSteps',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF71717A),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                Text(
+                                  percent,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF00A63E),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: List.generate(totalSteps, (index) {
+                                return Expanded(
+                                  child: Container(
+                                    height: 4,
+                                    margin: EdgeInsets.only(right: index < totalSteps - 1 ? 6 : 0),
+                                    decoration: BoxDecoration(
+                                      color: index == 0
+                                          ? const Color(0xFF00A63E)
+                                          : const Color(0xFFE5E7EB),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
                         );
-                      }),
+                      },
                     ),
                     const SizedBox(height: 20),
 

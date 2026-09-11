@@ -56,7 +56,7 @@ class _SellerListingSubmittedScreenState
 
                 // Title
                 const Text(
-                  'Listing Created & Live!',
+                  'Listing Submitted for Review',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -68,7 +68,7 @@ class _SellerListingSubmittedScreenState
 
                 // Description
                 Text(
-                  'Your listing has been created successfully and is now active on the Solar Scrap marketplace.',
+                  'Your listing has been submitted for admin approval. It will go live on the marketplace once accepted.',
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade600,
@@ -135,15 +135,16 @@ class _SellerListingSubmittedScreenState
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE6F9ED),
+                              color: const Color(0xFFFEF3C7),
                               borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: const Color(0xFFFDE68A)),
                             ),
                             child: const Text(
-                              'Active',
+                              'Pending Approval',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF00A63E),
+                                color: Color(0xFFD97706),
                               ),
                             ),
                           ),

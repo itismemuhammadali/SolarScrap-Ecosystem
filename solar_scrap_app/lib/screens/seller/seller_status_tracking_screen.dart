@@ -116,7 +116,11 @@ class _SellerStatusTrackingScreenState
       },
       {
         'title': 'Negotiation / Review',
-        'subtitle': isClosed ? 'Completed' : 'Reviewing highest offers',
+        'subtitle': isClosed
+            ? 'Completed'
+            : (_bids.isNotEmpty
+                ? 'Reviewing ${_bids.length} offer(s)'
+                : 'Awaiting buyer offers'),
         'isCompleted': isClosed,
         'isActive': false,
       },
@@ -151,11 +155,15 @@ class _SellerStatusTrackingScreenState
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: _loadListingBids,
+          color: const Color(0xFF00A63E),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Header Listing Info Card
               GestureDetector(
                 onTap: _bids.isNotEmpty ? () => _navigateToPriceOffer(_bids.first) : null,
@@ -331,6 +339,7 @@ class _SellerStatusTrackingScreenState
               const SizedBox(height: 32),
             ],
           ),
+        ),
         ),
       ),
     );

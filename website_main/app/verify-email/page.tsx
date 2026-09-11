@@ -103,7 +103,7 @@ export default function VerifyEmailPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="mymail@gmail.com"
                   required
-                  className="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#00873D] focus:ring-2 focus:ring-[#00873D]/15 transition-all duration-200"
+                  className="w-full px-4 py-3 sm:py-3.5 text-xs sm:text-sm md:text-base text-gray-900 placeholder:text-gray-400 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-2 focus:ring-[#009845]/15 transition-all duration-200"
                 />
               </div>
 
@@ -119,7 +119,7 @@ export default function VerifyEmailPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 sm:py-4 px-4 bg-[#00873D] hover:bg-[#007534] active:bg-[#00652d] text-white text-sm sm:text-base font-bold rounded-xl shadow-lg shadow-[#00873D]/25 hover:shadow-xl transition-all duration-200 flex items-center justify-center disabled:opacity-75 cursor-pointer"
+                  className="w-full py-3.5 sm:py-4 px-4 bg-[#009845] hover:bg-[#008230] active:bg-[#006d28] text-white text-sm sm:text-base font-bold rounded-xl shadow-lg shadow-[#009845]/25 hover:shadow-xl transition-all duration-200 flex items-center justify-center disabled:opacity-75 cursor-pointer"
                 >
                   {isLoading ? (
                     <span className="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

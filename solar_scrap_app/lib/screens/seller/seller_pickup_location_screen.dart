@@ -169,45 +169,60 @@ class _SellerPickupLocationScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Progress indicator
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Step 5 of 7',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF71717A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    '71%',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF00A63E),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+              Builder(
+                builder: (context) {
+                  final bool isComplete = widget.draft?.category == 'Complete Solar System';
+                  final int totalSteps = isComplete ? 4 : 6;
+                  final int currentStep = isComplete ? 2 : 4;
+                  final String stepText = isComplete
+                      ? 'Listing Details · Step 2 of 4 (Location)'
+                      : 'Step 4 of 6';
+                  final String percentText = isComplete ? '50%' : '67%';
 
-              // 7-segment progress bar
-              Row(
-                children: List.generate(7, (index) {
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(right: index < 6 ? 6 : 0),
-                      decoration: BoxDecoration(
-                        color: index <= 4
-                            ? const Color(0xFF00A63E)
-                            : const Color(0xFFE5E7EB),
-                        borderRadius: BorderRadius.circular(2),
+                  return Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            stepText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF71717A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            percentText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF00A63E),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: List.generate(totalSteps, (index) {
+                          return Expanded(
+                            child: Container(
+                              height: 4,
+                              margin: EdgeInsets.only(
+                                  right: index < totalSteps - 1 ? 6 : 0),
+                              decoration: BoxDecoration(
+                                color: index < currentStep
+                                    ? const Color(0xFF00A63E)
+                                    : const Color(0xFFE5E7EB),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
                   );
-                }),
+                },
               ),
               const SizedBox(height: 20),
 

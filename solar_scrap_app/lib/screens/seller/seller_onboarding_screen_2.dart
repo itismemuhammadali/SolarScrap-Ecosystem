@@ -82,8 +82,30 @@ class OnboardingPage2Widget extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Top spacing
-              const SizedBox(height: 20),
+              // Top Logo matching Figma (117x70 with #FFFFFF drop shadow glow)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x5AFFFFFF),
+                          blurRadius: 30,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/images/solar-scrap-logo-full.png',
+                      width: 117,
+                      height: 70,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
               // Main content at bottom
               Expanded(
                 child: Column(

@@ -32,9 +32,13 @@ class ListingService {
     if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
       return pathOrUrl;
     }
+    if (pathOrUrl.startsWith('assets/')) {
+      return pathOrUrl;
+    }
     final cleanPath = pathOrUrl.startsWith('/') ? pathOrUrl : '/$pathOrUrl';
     return '$_baseUrl$cleanPath';
   }
+
 
   /// Upload an image file for a listing
   Future<String?> uploadListingImage(File imageFile, {int retries = 1}) async {

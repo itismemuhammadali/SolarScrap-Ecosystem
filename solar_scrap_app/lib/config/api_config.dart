@@ -1,29 +1,16 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart';
-
 class ApiConfig {
-  // Configurable base URL override (e.g. for real physical devices on Wi-Fi)
+  // Configurable base URL override
   static String? customBaseUrl;
+
+  // VPS Production Server
+  static const String productionBaseUrl = 'http://2.25.116.203';
 
   static String get baseUrl {
     if (customBaseUrl != null && customBaseUrl!.isNotEmpty) {
       return customBaseUrl!;
     }
 
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000';
-    }
-
-    try {
-      if (Platform.isAndroid) {
-        // Android Emulator loops back to host via 10.0.2.2
-        return 'http://10.0.2.2:8000';
-      }
-    } catch (_) {
-      // Fallback for non-dart:io web / other targets
-    }
-
-    return 'http://127.0.0.1:8000';
+    return productionBaseUrl;
   }
 
   // Auth Endpoints

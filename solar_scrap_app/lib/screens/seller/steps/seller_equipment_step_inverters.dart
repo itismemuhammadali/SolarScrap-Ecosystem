@@ -188,14 +188,14 @@ class _SellerEquipmentStepInvertersState
               // Progress indicator
               Builder(
                 builder: (context) {
-                  final bool isHybrid = _selectedInverterType.trim().toLowerCase() == 'hybrid';
-                  final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 5 : 4) : 7;
+                  final bool isHybrid = _selectedInverterType.trim().toLowerCase() != 'on-grid';
+                  final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 7 : 6) : 6;
+                  final int currentStep = widget.isCompleteSolarSystem ? 3 : 2;
                   final String stepText = widget.isCompleteSolarSystem
-                      ? 'Step 2 of $totalSteps (Inverters)'
-                      : 'Step 2 of 7';
-                  final String percentText = widget.isCompleteSolarSystem
-                      ? '${((2 / totalSteps) * 100).round()}%'
-                      : '29%';
+                      ? 'Step 3 of $totalSteps (Inverters)'
+                      : 'Step 2 of 6';
+                  final String percentText =
+                      '${((currentStep / totalSteps) * 100).round()}%';
 
                   return Column(
                     children: [
@@ -228,7 +228,7 @@ class _SellerEquipmentStepInvertersState
                               height: 4,
                               margin: EdgeInsets.only(right: index < totalSteps - 1 ? 6 : 0),
                               decoration: BoxDecoration(
-                                color: index <= 1
+                                color: index < currentStep
                                     ? const Color(0xFF00A63E)
                                     : const Color(0xFFE5E7EB),
                                 borderRadius: BorderRadius.circular(2),

@@ -8,6 +8,7 @@ from app.api.storage import router as storage_router
 from app.api.listings import router as listings_router
 from app.api.notifications import router as notifications_router
 from app.api.bids import router as bids_router
+from app.api.admin import router as admin_router
 
 
 @asynccontextmanager
@@ -42,6 +43,7 @@ app.include_router(storage_router, prefix="/api/v1")
 app.include_router(listings_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(bids_router, prefix="/api/v1")
+app.include_router(admin_router, prefix="/api/v1")
 
 
 

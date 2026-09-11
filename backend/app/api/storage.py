@@ -103,7 +103,7 @@ async def upload_profile_photo(
     }
 
 
-@router.get("/profile-photo/{user_id}")
+@router.api_route("/profile-photo/{user_id}", methods=["GET", "HEAD"])
 async def get_profile_photo(user_id: str):
     """
     Serve the profile photo for a user.
@@ -175,7 +175,7 @@ async def upload_listing_image(
     }
 
 
-@router.get("/listing-image/{filename}")
+@router.api_route("/listing-image/{filename}", methods=["GET", "HEAD"])
 async def get_listing_image(filename: str):
     """
     Serve a listing image from local disk.
@@ -185,3 +185,4 @@ async def get_listing_image(filename: str):
         return FileResponse(path)
 
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing image not found")
+

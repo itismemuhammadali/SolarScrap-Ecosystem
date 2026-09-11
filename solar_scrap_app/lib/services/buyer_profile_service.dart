@@ -83,7 +83,7 @@ class BuyerProfileService {
     try {
       if (AuthService.instance.accessToken != null) {
         final response = await http.get(
-          Uri.parse('$_baseUrl/api/v1/auth/stats'),
+          Uri.parse('$_baseUrl/api/v1/auth/buyer-stats'),
           headers: _headers,
         ).timeout(const Duration(seconds: 15));
 

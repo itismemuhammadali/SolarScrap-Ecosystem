@@ -25,17 +25,36 @@ import {
   MessageSquare,
   FileText,
   Send,
+  Loader2,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+  Package,
+  Layers,
+  Zap,
+  Scale,
+  Tag,
+  Award,
+  User,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { getSession, getAvatarUrl } from "@/lib/auth";
+import { getAdminSellerPosts, updateAdminSellerPost } from "@/lib/admin-api";
+
+const DEFAULT_POST_IMAGES = [
+  "https://images.unsplash.com/photo-1509391365360-2e959784a276?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1508873696983-2df57046475a?auto=format&fit=crop&w=600&q=80",
+  "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=600&q=80",
+];
 
 interface SellerPost {
   id: string;
   postId: string;
   title: string;
-  category: "Solar Panels" | "Inverters" | "Batteries" | "Transformers" | "Cables";
+  category: "Solar Panels" | "Inverters" | "Batteries" | "Transformers" | "Cables" | string;
   qty: number;
-  condition: "Good" | "Fair" | "Scrap";
-  status: "New" | "Under Review" | "Price Offered" | "Negotiation" | "Auction" | "Closed";
+  condition: "Good" | "Fair" | "Scrap" | string;
+  status: "New" | "Under Review" | "Price Offered" | "Negotiation" | "Auction" | "Closed" | string;
   priceExpected: number;
   offeredPrice?: number;
   submittedDate: string;
@@ -50,174 +69,85 @@ interface SellerPost {
   estimatedWeight: string;
   disassemblyState: string;
   images: string[];
+  wattsPerUnit?: string;
+  manufacturer?: string;
+  purchaseYear?: string;
+  reasonForSale?: string;
 }
 
-const initialPosts: SellerPost[] = [
-  {
-    id: "1",
-    postId: "SP001",
-    title: "Solar Panels",
-    category: "Solar Panels",
-    qty: 200,
-    condition: "Good",
-    status: "New",
-    priceExpected: 4500000,
-    offeredPrice: 4200000,
-    submittedDate: "2024-12-07",
-    sellerName: "Sana Malik",
-    sellerCompany: "Voltex Energy",
-    sellerEmail: "sana.malik@voltex.pk",
-    sellerPhone: "+92 300 1234567",
-    city: "Karachi",
-    area: "SITE Area",
-    address: "Plot 45, Industrial Zone, SITE Area Karachi",
-    brandModel: "Longi Solar 400W Monocrystalline",
-    estimatedWeight: "4,200 kg",
-    disassemblyState: "Ready for pickup / packed",
-    images: [
-      "/images/sign-in-img.jpg",
-      "/images/otp-screen-img.jpg",
-      "/images/reset-password-img.jpg",
-    ],
-  },
-  {
-    id: "2",
-    postId: "SP002",
-    title: "Industrial Inverters",
-    category: "Inverters",
-    qty: 10,
-    condition: "Good",
-    status: "Under Review",
-    priceExpected: 850000,
-    offeredPrice: 800000,
-    submittedDate: "2024-12-05",
-    sellerName: "Raza Ahmed",
-    sellerCompany: "SolarTec Pvt Ltd",
-    sellerEmail: "raza@solartec.pk",
-    sellerPhone: "+92 321 5551234",
-    city: "Lahore",
-    area: "Gulberg III",
-    address: "Industrial Complex, Gulberg III Lahore",
-    brandModel: "Huawei SUN2000 50KTL",
-    estimatedWeight: "550 kg",
-    disassemblyState: "Dismantled and stored",
-    images: [
-      "/images/verify-email-screen.jpg",
-      "/images/sign-in-img.jpg",
-      "/images/otp-screen-img.jpg",
-    ],
-  },
-  {
-    id: "3",
-    postId: "SP003",
-    title: "Lithium Battery Bank 48V",
-    category: "Batteries",
-    qty: 25,
-    condition: "Fair",
-    status: "Price Offered",
-    priceExpected: 1200000,
-    offeredPrice: 1100000,
-    submittedDate: "2024-12-03",
-    sellerName: "Tariq Mehmood",
-    sellerCompany: "EcoPower Solutions",
-    sellerEmail: "tariq@ecopower.pk",
-    sellerPhone: "+92 333 4445555",
-    city: "Islamabad",
-    area: "I-9 Industrial",
-    address: "Street 4, Sector I-9/2 Islamabad",
-    brandModel: "Pylontech US3000C",
-    estimatedWeight: "800 kg",
-    disassemblyState: "Disconnected in warehouse",
-    images: [
-      "/images/otp-screen-img.jpg",
-      "/images/reset-password-img.jpg",
-      "/images/verify-email-screen.jpg",
-    ],
-  },
-  {
-    id: "4",
-    postId: "SP004",
-    title: "Commercial Solar Panels",
-    category: "Solar Panels",
-    qty: 150,
-    condition: "Good",
-    status: "Negotiation",
-    priceExpected: 3200000,
-    offeredPrice: 3000000,
-    submittedDate: "2024-12-02",
-    sellerName: "Zubair Khan",
-    sellerCompany: "GreenTech Systems",
-    sellerEmail: "zubair@greentech.pk",
-    sellerPhone: "+92 345 7778888",
-    city: "Faisalabad",
-    area: "Small Industrial Estate",
-    address: "Millat Road, Faisalabad",
-    brandModel: "JA Solar 450W",
-    estimatedWeight: "3,300 kg",
-    disassemblyState: "Stacked safely",
-    images: [
-      "/images/sign-in-img.jpg",
-      "/images/verify-email-screen.jpg",
-    ],
-  },
-  {
-    id: "5",
-    postId: "SP005",
-    title: "Step-Up Transformers",
-    category: "Transformers",
-    qty: 4,
-    condition: "Scrap",
-    status: "Auction",
-    priceExpected: 950000,
-    offeredPrice: 900000,
-    submittedDate: "2024-11-28",
-    sellerName: "Asim Qureshi",
-    sellerCompany: "Indus Heavy Industries",
-    sellerEmail: "asim@indusheavy.pk",
-    sellerPhone: "+92 312 9990000",
-    city: "Multan",
-    area: "Industrial Area",
-    address: "Khanewal Road, Multan",
-    brandModel: "Pel 500kVA",
-    estimatedWeight: "6,500 kg",
-    disassemblyState: "Decommissioned on pad",
-    images: [
-      "/images/otp-screen-img.jpg",
-    ],
-  },
-  {
-    id: "6",
-    postId: "SP006",
-    title: "Heavy Copper Cables",
-    category: "Cables",
-    qty: 50,
-    condition: "Good",
-    status: "Closed",
-    priceExpected: 450000,
-    offeredPrice: 450000,
-    submittedDate: "2024-11-20",
-    sellerName: "Hamza Ali",
-    sellerCompany: "Rawal Electric Works",
-    sellerEmail: "hamza@rawalelectric.pk",
-    sellerPhone: "+92 301 1122334",
-    city: "Rawalpindi",
-    area: "IJP Road",
-    address: "Sector 1-A, Rawalpindi",
-    brandModel: "Pakistan Cables 16mm",
-    estimatedWeight: "900 kg",
-    disassemblyState: "Coiled on wooden drums",
-    images: [
-      "/images/reset-password-img.jpg",
-    ],
-  },
-];
-
 export default function SellerPostsPage() {
-  const [posts, setPosts] = useState<SellerPost[]>(initialPosts);
+  const [posts, setPosts] = useState<SellerPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [adminName, setAdminName] = useState("Admin Platform");
+  const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("New");
   const [searchQuery, setSearchQuery] = useState("");
   const [topSearch, setTopSearch] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const fetchPosts = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAdminSellerPosts();
+      const mapped: SellerPost[] = data.map((item) => {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+        const images = (item.images || []).map((img) => {
+          if (img.startsWith("http://") || img.startsWith("https://")) return img;
+          if (img.startsWith("/")) return `${backendUrl}${img}`;
+          return img;
+        });
+
+        const validImages = images.filter((img) => !img.includes("solar-panel.png") && !img.includes("solar-panels-preview.jpg"));
+        const finalImages = validImages.length >= 3 ? validImages : DEFAULT_POST_IMAGES;
+
+        return {
+          id: item.id,
+          postId: item.post_id || "SP001",
+          title: item.title,
+          category: item.category,
+          qty: item.qty,
+          condition: item.condition,
+          status: item.status,
+          priceExpected: item.price_expected,
+          offeredPrice: item.offered_price || undefined,
+          submittedDate: item.submitted_date,
+          sellerName: item.seller_name,
+          sellerCompany: item.seller_company,
+          sellerEmail: item.seller_email,
+          sellerPhone: item.seller_phone,
+          city: item.city,
+          area: item.area,
+          address: item.address,
+          brandModel: item.brand_model,
+          estimatedWeight: item.estimated_weight,
+          disassemblyState: item.disassembly_state,
+          images: finalImages,
+          wattsPerUnit: (item as any).watts_per_unit || "400W",
+          manufacturer: (item as any).manufacturer || "Waaree Energies",
+          purchaseYear: (item as any).purchase_year || "2019",
+          reasonForSale: (item as any).reason_for_sale || "Project Decommission",
+        };
+      });
+      setPosts(mapped);
+    } catch (err: any) {
+      console.error("Failed to load seller posts:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  useEffect(() => {
+    const session = getSession();
+    if (session?.user) {
+      if (session.user.display_name) setAdminName(session.user.display_name);
+      else if (session.user.email) setAdminName(session.user.email.split("@")[0]);
+      if (session.user.profile_photo_url) setAdminPhotoUrl(session.user.profile_photo_url);
+    }
+  }, []);
 
   // Active Menu ID for 3-dots
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
@@ -305,17 +235,50 @@ export default function SellerPostsPage() {
   ];
 
   const filterTabs = [
-    { name: "New", count: posts.filter((p) => p.status === "New").length },
-    { name: "Under Review", count: posts.filter((p) => p.status === "Under Review").length },
-    { name: "Price Offered", count: posts.filter((p) => p.status === "Price Offered").length },
-    { name: "Negotiation", count: posts.filter((p) => p.status === "Negotiation").length },
-    { name: "Auction", count: posts.filter((p) => p.status === "Auction").length },
-    { name: "Closed", count: posts.filter((p) => p.status === "Closed").length },
+    {
+      name: "New",
+      count: posts.filter((p) => ["New", "Pending Approval", "pending", "created"].includes(p.status)).length,
+    },
+    {
+      name: "Under Review",
+      count: posts.filter((p) => ["Under Review", "under_review", "in_review", "Review"].includes(p.status)).length,
+    },
+    {
+      name: "Price Offered",
+      count: posts.filter((p) => ["Price Offered", "price_offered", "offered"].includes(p.status)).length,
+    },
+    {
+      name: "Negotiation",
+      count: posts.filter((p) => ["Negotiation", "negotiation", "in_negotiation"].includes(p.status)).length,
+    },
+    {
+      name: "Auction",
+      count: posts.filter((p) => ["Auction", "auction", "in_auction"].includes(p.status)).length,
+    },
+    {
+      name: "Closed",
+      count: posts.filter((p) => ["Closed", "closed", "Rejected", "rejected"].includes(p.status)).length,
+    },
   ];
 
   // Filtering
   const filteredPosts = posts.filter((p) => {
-    if (activeFilter && p.status !== activeFilter) return false;
+    if (activeFilter === "New") {
+      if (!["New", "Pending Approval", "pending", "created"].includes(p.status)) return false;
+    } else if (activeFilter === "Under Review") {
+      if (!["Under Review", "under_review", "in_review", "Review"].includes(p.status)) return false;
+    } else if (activeFilter === "Price Offered") {
+      if (!["Price Offered", "price_offered", "offered"].includes(p.status)) return false;
+    } else if (activeFilter === "Negotiation") {
+      if (!["Negotiation", "negotiation", "in_negotiation"].includes(p.status)) return false;
+    } else if (activeFilter === "Auction") {
+      if (!["Auction", "auction", "in_auction"].includes(p.status)) return false;
+    } else if (activeFilter === "Closed") {
+      if (!["Closed", "closed", "Rejected", "rejected"].includes(p.status)) return false;
+    } else if (activeFilter) {
+      if (p.status !== activeFilter) return false;
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const match =
@@ -330,6 +293,40 @@ export default function SellerPostsPage() {
   });
 
   // Action Handlers
+  const handleApprovePost = async (post: SellerPost) => {
+    try {
+      await updateAdminSellerPost(post.id, { status: "Approved" });
+      setPosts((prev) =>
+        prev.map((p) => (p.id === post.id ? { ...p, status: "Approved" } : p))
+      );
+      if (selectedPost && selectedPost.id === post.id) {
+        setSelectedPost({ ...selectedPost, status: "Approved" });
+      }
+      showToast(`Post "${post.title}" has been approved and is now active on the marketplace!`);
+    } catch (err: any) {
+      showToast(`Error: ${err.message || "Failed to approve post"}`);
+    } finally {
+      setActionMenuOpenId(null);
+    }
+  };
+
+  const handleRejectPost = async (post: SellerPost) => {
+    try {
+      await updateAdminSellerPost(post.id, { status: "Rejected" });
+      setPosts((prev) =>
+        prev.map((p) => (p.id === post.id ? { ...p, status: "Rejected" } : p))
+      );
+      if (selectedPost && selectedPost.id === post.id) {
+        setSelectedPost({ ...selectedPost, status: "Rejected" });
+      }
+      showToast(`Post "${post.title}" has been rejected.`);
+    } catch (err: any) {
+      showToast(`Error: ${err.message || "Failed to reject post"}`);
+    } finally {
+      setActionMenuOpenId(null);
+    }
+  };
+
   const handleOpenDetails = (post: SellerPost) => {
     setSelectedPost(post);
     setIsDetailsOpen(true);
@@ -344,18 +341,27 @@ export default function SellerPostsPage() {
     setActionMenuOpenId(null);
   };
 
-  const handleSaveSharePrice = (e: React.FormEvent) => {
+  const handleSaveSharePrice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPost) return;
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === selectedPost.id
-          ? { ...p, offeredPrice: offeredPriceInput, status: "Price Offered" }
-          : p
-      )
-    );
-    setIsSharePriceOpen(false);
-    showToast(`Price PKR ${offeredPriceInput.toLocaleString()} shared with ${selectedPost.sellerName}!`);
+    try {
+      await updateAdminSellerPost(selectedPost.id, {
+        status: "Price Offered",
+        offered_price: offeredPriceInput,
+        admin_notes: adminNotes,
+      });
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === selectedPost.id
+            ? { ...p, offeredPrice: offeredPriceInput, status: "Price Offered" }
+            : p
+        )
+      );
+      setIsSharePriceOpen(false);
+      showToast(`Price PKR ${offeredPriceInput.toLocaleString()} shared with ${selectedPost.sellerName}! Notification sent to seller.`);
+    } catch (err: any) {
+      showToast(`Error: ${err.message || "Failed to update price offer"}`);
+    }
   };
 
   const handleOpenEdit = (post: SellerPost) => {
@@ -365,14 +371,23 @@ export default function SellerPostsPage() {
     setActionMenuOpenId(null);
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPost) return;
-    setPosts((prev) =>
-      prev.map((p) => (p.id === selectedPost.id ? ({ ...p, ...editFormData } as SellerPost) : p))
-    );
-    setIsEditOpen(false);
-    showToast("Post updated successfully!");
+    try {
+      await updateAdminSellerPost(selectedPost.id, {
+        status: editFormData.status,
+        offered_price: editFormData.offeredPrice,
+        admin_notes: adminNotes,
+      });
+      setPosts((prev) =>
+        prev.map((p) => (p.id === selectedPost.id ? ({ ...p, ...editFormData } as SellerPost) : p))
+      );
+      setIsEditOpen(false);
+      showToast("Post updated successfully!");
+    } catch (err: any) {
+      showToast(`Error: ${err.message || "Failed to update post"}`);
+    }
   };
 
   const handleWhatsAppNegotiate = (post: SellerPost) => {
@@ -398,14 +413,77 @@ export default function SellerPostsPage() {
     setActionMenuOpenId(null);
   };
 
-  const handleSaveAuction = (e: React.FormEvent) => {
+  const handleSaveAuction = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPost) return;
-    setPosts((prev) =>
-      prev.map((p) => (p.id === selectedPost.id ? { ...p, status: "Auction" } : p))
-    );
-    setIsAuctionOpen(false);
-    showToast(`Auction created for ${selectedPost.title}!`);
+    try {
+      await updateAdminSellerPost(selectedPost.id, {
+        status: "Auction",
+        admin_notes: `Auction start bid: PKR ${auctionStartBid.toLocaleString()}, duration: ${auctionDuration}`,
+      });
+
+      const catIcons: Record<string, string> = {
+        "Solar Panels": "☀️",
+        "Inverters": "⚡",
+        "Batteries": "🔋",
+      };
+
+      const newAuction = {
+        id: `auc-${Date.now()}`,
+        auctionId: `AUC${Math.floor(100 + Math.random() * 900)}`,
+        title: selectedPost.title,
+        icon: catIcons[selectedPost.category] || "☀️",
+        category: selectedPost.category,
+        categoryColor:
+          selectedPost.category === "Solar Panels"
+            ? "bg-blue-50 text-blue-700 border-blue-200"
+            : selectedPost.category === "Inverters"
+            ? "bg-amber-50 text-amber-700 border-amber-200"
+            : selectedPost.category === "Batteries"
+            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+            : "bg-purple-50 text-purple-700 border-purple-200",
+        qty: `${selectedPost.qty} Units`,
+        sellerName: selectedPost.sellerName,
+        sellerCompany: selectedPost.sellerCompany || "Solar Enterprise",
+        sellerCity: selectedPost.city || "Karachi",
+        startingPrice: auctionStartBid,
+        priceDemand: selectedPost.priceExpected,
+        startingBid: auctionStartBid,
+        currentHighBid: 0,
+        highestBidderName: "No Bids Yet",
+        highestBidderCompany: "Awaiting Verified Dealers",
+        highestBidderCity: "-",
+        totalBids: 0,
+        status: "Active" as const,
+        createdAt: "Today, Just now",
+        endsIn: auctionDuration,
+        endDate: "10 Mar 2026",
+        reservePrice: auctionStartBid,
+        images: selectedPost.images && selectedPost.images.length > 0 ? selectedPost.images : ["/images/solar-panel.png"],
+      };
+
+      try {
+        const stored = localStorage.getItem("solar_scrap_auctions");
+        let list = [];
+        if (stored) {
+          try {
+            list = JSON.parse(stored);
+          } catch {}
+        }
+        list = [newAuction, ...list];
+        localStorage.setItem("solar_scrap_auctions", JSON.stringify(list));
+      } catch (errLocal) {
+        console.error("Failed to store auction in localStorage:", errLocal);
+      }
+
+      setPosts((prev) =>
+        prev.map((p) => (p.id === selectedPost.id ? { ...p, status: "Auction" } : p))
+      );
+      setIsAuctionOpen(false);
+      showToast(`Auction created for ${selectedPost.title}! Live bidding enabled.`);
+    } catch (err: any) {
+      showToast(`Error: ${err.message || "Failed to convert to auction"}`);
+    }
   };
 
   const handleOpenSendQuotation = (post: SellerPost) => {
@@ -415,14 +493,53 @@ export default function SellerPostsPage() {
     setActionMenuOpenId(null);
   };
 
-  const handleSaveSendQuotation = (e: React.FormEvent) => {
+  const handleSaveSendQuotation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPost) return;
-    setPosts((prev) =>
-      prev.map((p) => (p.id === selectedPost.id ? { ...p, status: "Price Offered" } : p))
-    );
-    setIsSendQuotationOpen(false);
-    showToast(`Formal Quotation sent to ${selectedPost.sellerEmail}!`);
+    try {
+      await updateAdminSellerPost(selectedPost.id, {
+        status: "Price Offered",
+        offered_price: quotationAmount,
+        admin_notes: `Formal quotation valid for ${quotationValidity}. Terms: ${quotationTerms}`,
+      });
+
+      const newQuotation = {
+        id: `QT-2026-${Math.floor(100 + Math.random() * 900)}`,
+        name: selectedPost.sellerName,
+        avatarLetter: (selectedPost.sellerName || "U").charAt(0).toUpperCase(),
+        company: selectedPost.sellerCompany || "Enterprise",
+        email: selectedPost.sellerEmail,
+        phone: selectedPost.sellerPhone || "+92 300 0000000",
+        city: selectedPost.city || "Karachi",
+        totalAmount: quotationAmount,
+        status: "Pending" as const,
+        date: "Today",
+        itemsCount: selectedPost.qty,
+        equipmentType: selectedPost.title,
+      };
+
+      try {
+        const storedQ = localStorage.getItem("solar_scrap_quotations");
+        let qList = [];
+        if (storedQ) {
+          try {
+            qList = JSON.parse(storedQ);
+          } catch {}
+        }
+        qList = [newQuotation, ...qList];
+        localStorage.setItem("solar_scrap_quotations", JSON.stringify(qList));
+      } catch (errLocal) {
+        console.error("Failed to store quotation in localStorage:", errLocal);
+      }
+
+      setPosts((prev) =>
+        prev.map((p) => (p.id === selectedPost.id ? { ...p, status: "Price Offered", offeredPrice: quotationAmount } : p))
+      );
+      setIsSendQuotationOpen(false);
+      showToast(`Formal Quotation sent to ${selectedPost.sellerEmail}!`);
+    } catch (err: any) {
+      showToast(`Error: ${err.message || "Failed to send quotation"}`);
+    }
   };
 
   const handleOpenDelete = (post: SellerPost) => {
@@ -431,15 +548,20 @@ export default function SellerPostsPage() {
     setActionMenuOpenId(null);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!selectedPost) return;
-    setPosts((prev) => prev.filter((p) => p.id !== selectedPost.id));
-    setIsDeleteOpen(false);
-    showToast("Post deleted successfully.");
+    try {
+      await updateAdminSellerPost(selectedPost.id, { status: "Closed" });
+      setPosts((prev) => prev.filter((p) => p.id !== selectedPost.id));
+      setIsDeleteOpen(false);
+      showToast("Post closed/archived successfully.");
+    } catch (err: any) {
+      showToast(`Error: ${err.message || "Failed to close post"}`);
+    }
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] flex flex-col lg:flex-row">
+    <div className="flex h-screen w-full bg-[#F5F6FA] overflow-hidden">
       {/* ===================== UNIFIED SIDEBAR ===================== */}
       <Sidebar
         activeItem="Seller Posts"
@@ -448,7 +570,7 @@ export default function SellerPostsPage() {
       />
 
       {/* ===================== MAIN CONTENT AREA ===================== */}
-      <div className="flex-1 bg-[#f8fafc] flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 bg-[#F5F6FA] flex flex-col min-w-0 h-screen overflow-hidden">
         
         {/* Top Navbar */}
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200/80 px-5 sm:px-8 py-3.5 flex items-center justify-between gap-4">
@@ -459,7 +581,7 @@ export default function SellerPostsPage() {
               value={topSearch}
               onChange={(e) => setTopSearch(e.target.value)}
               placeholder="Search users, posts, auctions, bids..."
-              className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-gray-50/70 border border-gray-200/80 rounded-xl outline-none focus:bg-white focus:border-[#00873D] focus:ring-2 focus:ring-[#00873D]/15 transition-all text-gray-800 placeholder:text-gray-400"
+              className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-gray-50/70 border border-gray-200/80 rounded-xl outline-none focus:bg-white focus:border-[#009845] focus:ring-2 focus:ring-[#009845]/15 transition-all text-gray-800 placeholder:text-gray-400"
             />
           </div>
 
@@ -477,13 +599,17 @@ export default function SellerPostsPage() {
               <span className="hidden sm:inline-block text-xs font-semibold text-gray-800">
                 Admin Platform
               </span>
-              <div className="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full overflow-hidden ring-2 ring-gray-100 shadow-sm">
-                <Image
-                  src="/images/admin.png"
-                  alt="Admin Avatar"
-                  fill
-                  className="object-cover"
-                />
+              <div className="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full overflow-hidden ring-2 ring-gray-100 shadow-sm bg-emerald-700 flex items-center justify-center text-white font-bold text-sm select-none">
+                {adminPhotoUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={getAvatarUrl(adminPhotoUrl)!}
+                    alt={adminName || "Admin Platform"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{adminName ? adminName.charAt(0).toUpperCase() : "A"}</span>
+                )}
               </div>
             </div>
           </div>
@@ -503,11 +629,11 @@ export default function SellerPostsPage() {
           </div>
 
           {/* Filter Tabs & Search Bar Container */}
-          <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-3 sm:p-4">
+          <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-4 sm:p-6 pb-0 overflow-hidden">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-gray-100">
               
-              {/* Filter Tabs (New 1, Under Review 1, Price Offered 1, etc.) */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+              {/* Filter Tabs (New 1, Under Review 1, Price Offered 1, Negotiation 1, Auction 1, Closed 1) */}
+              <div className="flex items-center gap-6 sm:gap-8 overflow-x-auto pb-0 scrollbar-none">
                 {filterTabs.map((tab) => {
                   const isActive = activeFilter === tab.name;
                   return (
@@ -515,17 +641,17 @@ export default function SellerPostsPage() {
                       key={tab.name}
                       type="button"
                       onClick={() => setActiveFilter(tab.name)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap flex items-center gap-2 ${
+                      className={`pb-3 text-xs transition-all duration-150 cursor-pointer whitespace-nowrap flex items-center gap-2 border-b-2 -mb-[13px] ${
                         isActive
-                          ? "bg-emerald-50/80 text-[#00873D] border border-[#00873D]/30 shadow-xs font-semibold"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/70 border border-transparent"
+                          ? "text-[#009845] border-[#009845] font-semibold"
+                          : "text-gray-500 hover:text-gray-900 border-transparent font-medium"
                       }`}
                     >
                       <span>{tab.name}</span>
                       <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-medium ${
                           isActive
-                            ? "bg-emerald-100 text-[#00873D]"
+                            ? "bg-emerald-50 text-[#009845] border border-emerald-200"
                             : "bg-gray-100 text-gray-500"
                         }`}
                       >
@@ -544,7 +670,7 @@ export default function SellerPostsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search posts..."
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#00873D] focus:ring-1 focus:ring-[#00873D]/20 text-gray-800 placeholder:text-gray-400"
+                  className="w-full pl-9 pr-3.5 py-1.5 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-800 placeholder:text-gray-400"
                 />
               </div>
 
@@ -567,7 +693,17 @@ export default function SellerPostsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-xs">
-                  {filteredPosts.map((post) => (
+                  {isLoading && (
+                    <tr>
+                      <td colSpan={9} className="py-12 text-center text-xs text-gray-400">
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 text-[#009845] animate-spin" />
+                          <span>Loading live seller posts from database...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  {!isLoading && filteredPosts.map((post) => (
                     <tr key={post.id} className="hover:bg-gray-50/60 transition-colors">
                       {/* POST ID */}
                       <td className="py-3.5 px-3 text-[12px] text-gray-600 whitespace-nowrap">
@@ -601,7 +737,7 @@ export default function SellerPostsPage() {
 
                       {/* CONDITION */}
                       <td className="py-3.5 px-3 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EAF7EE] text-[#00873D] border border-[#00873D]/30">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#EAF7EE] text-[#009845] border border-[#009845]/30">
                           {post.condition}
                         </span>
                       </td>
@@ -620,7 +756,7 @@ export default function SellerPostsPage() {
                       <td className="py-3.5 px-3 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${
-                            post.status === "New"
+                            ["New", "Pending", "Pending Approval", "pending", "created"].includes(post.status)
                               ? "bg-blue-50 text-blue-600 border border-blue-200"
                               : post.status === "Under Review"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
@@ -630,10 +766,14 @@ export default function SellerPostsPage() {
                               ? "bg-orange-50 text-orange-700 border border-orange-200"
                               : post.status === "Auction"
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : post.status === "Approved"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : ["Rejected", "rejected"].includes(post.status)
+                              ? "bg-red-50 text-red-600 border border-red-200"
                               : "bg-gray-100 text-gray-700 border border-gray-200"
                           }`}
                         >
-                          {post.status}
+                          {["Pending Approval", "pending", "created"].includes(post.status) ? "New" : post.status}
                         </span>
                       </td>
 
@@ -678,6 +818,26 @@ export default function SellerPostsPage() {
                               >
                                 <Eye className="w-4 h-4 text-gray-400 stroke-[1.75] shrink-0" />
                                 <span>View Details</span>
+                              </button>
+
+                              {/* 1b. Approve Post */}
+                              <button
+                                type="button"
+                                onClick={() => handleApprovePost(post)}
+                                className="w-full px-3 py-1.5 text-[12.5px] text-emerald-700 hover:bg-emerald-50 flex items-center gap-2.5 rounded-lg transition-colors cursor-pointer font-medium"
+                              >
+                                <CheckCircle className="w-4 h-4 text-emerald-600 stroke-[1.75] shrink-0" />
+                                <span>Approve Post</span>
+                              </button>
+
+                              {/* 1c. Reject Post */}
+                              <button
+                                type="button"
+                                onClick={() => handleRejectPost(post)}
+                                className="w-full px-3 py-1.5 text-[12.5px] text-red-600 hover:bg-red-50 flex items-center gap-2.5 rounded-lg transition-colors cursor-pointer font-medium"
+                              >
+                                <XCircle className="w-4 h-4 text-red-500 stroke-[1.75] shrink-0" />
+                                <span>Reject Post</span>
                               </button>
 
                               {/* 2. Share Price */}
@@ -751,7 +911,7 @@ export default function SellerPostsPage() {
                     </tr>
                   ))}
 
-                  {filteredPosts.length === 0 && (
+                  {!isLoading && filteredPosts.length === 0 && (
                     <tr>
                       <td colSpan={9} className="py-8 text-center text-xs text-gray-400">
                         No posts found under status &ldquo;{activeFilter}&rdquo;.
@@ -767,139 +927,223 @@ export default function SellerPostsPage() {
         </main>
       </div>
 
-      {/* ===================== 1. POST DETAILS MODAL ===================== */}
+      {/* ===================== 1. POST DETAILS MODAL (Exact 1:1 with Figma) ===================== */}
       {isDetailsOpen && selectedPost && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-[560px] w-full p-5 sm:p-6 shadow-2xl border border-gray-100 max-h-[92vh] overflow-y-auto">
+          <div className="bg-white rounded-[28px] max-w-[580px] w-full p-6 sm:p-7 shadow-2xl border border-gray-100 max-h-[92vh] overflow-y-auto">
             
             {/* Header */}
-            <div className="flex items-start justify-between pb-3 border-b border-gray-100">
+            <div className="flex items-start justify-between pb-1">
               <div>
-                <span className="text-[11px] font-bold text-[#00873D] uppercase tracking-wider">
-                  {selectedPost.category}
+                <span className="text-[11px] font-semibold text-gray-400 tracking-wider">
+                  {selectedPost.postId || "SP001"}
                 </span>
-                <h2 className="text-lg font-bold text-gray-900 leading-tight">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 leading-tight mt-0.5">
                   {selectedPost.title}
                 </h2>
-                <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                  <MapPin className="w-3 h-3" />
-                  <span>{selectedPost.city}, {selectedPost.area}</span>
-                  <span>•</span>
-                  <span className="font-mono">{selectedPost.postId}</span>
-                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium text-[#009845] border border-emerald-200 bg-emerald-50/70">
+                    <span>☀️</span>
+                    <span>{selectedPost.category || "Solar Panels"} • {selectedPost.condition || "Good Condition"}</span>
+                  </span>
+                  <span className="inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium text-blue-600 border border-blue-200 bg-blue-50/60">
+                    {selectedPost.status || "New"}
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsDetailsOpen(false)}
-                className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 -mr-1"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Expected Price Banner */}
-            <div className="mt-4 p-4 bg-emerald-50/90 rounded-2xl border border-emerald-200/80 flex items-center justify-between">
+            {/* Price Demand Banner */}
+            <div className="mt-4 p-4 sm:p-4.5 bg-[#F0FDF4] rounded-2xl border border-emerald-100/90 flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
+                <p className="text-[11px] font-bold text-[#009845] tracking-wider uppercase">
                   PRICE DEMAND
                 </p>
-                <p className="text-2xl font-black text-[#00873D] leading-tight">
+                <p className="text-2xl sm:text-[28px] font-black text-[#009845] leading-tight mt-0.5">
                   PKR {selectedPost.priceExpected.toLocaleString()}
                 </p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white text-amber-500 flex items-center justify-center shadow-xs border border-emerald-100">
-                <Sparkles className="w-5 h-5" />
+              <div className="text-3xl sm:text-4xl select-none pr-1">
+                ☀️
               </div>
             </div>
 
             {/* Photos Thumbnails */}
-            <div className="mt-4">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-                ATTACHED PHOTOS
+            <div className="mt-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
+                IMAGES ({selectedPost.images.length || 3})
               </p>
-              <div className="grid grid-cols-3 gap-2">
-                {selectedPost.images.map((img, idx) => (
-                  <div key={idx} className="relative h-20 rounded-xl overflow-hidden border border-gray-200 shadow-xs">
-                    <Image src={img} alt="Post image" fill className="object-cover" />
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                {(selectedPost.images.length >= 3 ? selectedPost.images : DEFAULT_POST_IMAGES).slice(0, 3).map((img, idx) => (
+                  <div key={idx} className="relative h-24 sm:h-28 rounded-2xl overflow-hidden border border-gray-100 shadow-2xs">
+                    <Image src={img} alt="Post image" fill unoptimized className="object-cover" />
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Specification Grid */}
-            <div className="space-y-3 mt-4 text-xs">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                ITEM SPECIFICATIONS
+            {/* Equipment Details Grid */}
+            <div className="mt-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
+                EQUIPMENT DETAILS
               </p>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-[10px] text-gray-400">Category</p>
-                  <p className="font-semibold text-gray-800">{selectedPost.category}</p>
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+                {/* 1. Category */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Package className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Category</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.category || "Solar Panels"}</p>
+                  </div>
                 </div>
-                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-[10px] text-gray-400">Condition</p>
-                  <p className="font-semibold text-gray-800">{selectedPost.condition}</p>
+
+                {/* 2. Quantity */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Layers className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Quantity</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.qty} units</p>
+                  </div>
                 </div>
-                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-[10px] text-gray-400">Brand / Model</p>
-                  <p className="font-semibold text-gray-800">{selectedPost.brandModel}</p>
+
+                {/* 3. Watts per Unit */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Zap className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Watts per Unit</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.wattsPerUnit || "400W"}</p>
+                  </div>
                 </div>
-                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-[10px] text-gray-400">Est. Weight</p>
-                  <p className="font-semibold text-gray-800">{selectedPost.estimatedWeight}</p>
+
+                {/* 4. Manufacturer */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Building2 className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Manufacturer</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.manufacturer || "Waaree Energies"}</p>
+                  </div>
                 </div>
-                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-[10px] text-gray-400">Disassembly State</p>
-                  <p className="font-semibold text-gray-800">{selectedPost.disassemblyState}</p>
+
+                {/* 5. Purchase Year */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Calendar className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Purchase Year</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.purchaseYear || "2019"}</p>
+                  </div>
                 </div>
-                <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="text-[10px] text-gray-400">Quantity</p>
-                  <p className="font-semibold text-gray-800">{selectedPost.qty} Units</p>
+
+                {/* 6. Weight */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Scale className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Weight</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.estimatedWeight || "~2,400 kg"}</p>
+                  </div>
+                </div>
+
+                {/* 7. Reason for Sale */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Tag className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Reason for Sale</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.reasonForSale || "Project Decommission"}</p>
+                  </div>
+                </div>
+
+                {/* 8. Condition */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Award className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Condition</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.condition || "Good"}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Seller Info Card */}
-            <div className="mt-4 p-3 bg-gray-50 rounded-2xl border border-gray-100 text-xs">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                SELLER INFORMATION
+            {/* Pickup Location Card */}
+            <div className="mt-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
+                PICKUP LOCATION
               </p>
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="p-3.5 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-bold text-gray-900">{selectedPost.sellerName}</p>
-                  <p className="text-[11px] text-gray-500">{selectedPost.sellerCompany}</p>
-                </div>
-                <div className="text-right text-[11px] text-gray-600">
-                  <p>{selectedPost.sellerEmail}</p>
-                  <p className="font-mono">{selectedPost.sellerPhone}</p>
+                  <p className="text-[13px] font-bold text-gray-900">
+                    {selectedPost.city}, {selectedPost.area || "PECHS"}
+                  </p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">
+                    {selectedPost.address || `Plot 45, ${selectedPost.area || "PECHS Block 2"}, ${selectedPost.city}`}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-5 pt-3 border-t border-gray-100">
+            {/* Contact Information Cards */}
+            <div className="mt-5">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
+                CONTACT INFORMATION
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                {/* Seller */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <User className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Seller</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.sellerName}</p>
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Phone className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-normal">Phone</p>
+                    <p className="font-bold text-gray-900 mt-0.5">{selectedPost.sellerPhone}</p>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="p-3 bg-gray-50/80 rounded-2xl border border-gray-100/80 flex items-start gap-2.5">
+                  <Mail className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-gray-400 font-normal">Email</p>
+                    <p className="font-bold text-gray-900 mt-0.5 truncate">{selectedPost.sellerEmail || `${selectedPost.sellerName.toLowerCase().replace(/\s+/g, '')}@voltex.pk`}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons (Exact 3 Figma buttons, equal width and narrow height) */}
+            <div className="pt-5 mt-2 grid grid-cols-3 gap-2.5">
               <button
                 type="button"
                 onClick={() => {
                   setIsDetailsOpen(false);
-                  handleOpenSharePrice(selectedPost);
+                  handleOpenEdit(selectedPost);
                 }}
-                className="py-2.5 px-3 bg-[#00873D] hover:bg-[#007534] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                className="w-full h-9 px-2 bg-[#009845] hover:bg-[#00823b] text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center whitespace-nowrap shadow-xs"
               >
-                <DollarSign className="w-3.5 h-3.5" />
-                <span>Share Price</span>
+                Edit Post
               </button>
 
               <button
                 type="button"
                 onClick={() => {
                   setIsDetailsOpen(false);
-                  handleWhatsAppNegotiate(selectedPost);
+                  handleOpenSendQuotation(selectedPost);
                 }}
-                className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 border border-emerald-200"
+                className="w-full h-9 px-2 bg-white hover:bg-emerald-50/40 text-[#009845] border border-gray-200 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center whitespace-nowrap"
               >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>WhatsApp</span>
+                Send Quotation
               </button>
 
               <button
@@ -908,10 +1152,9 @@ export default function SellerPostsPage() {
                   setIsDetailsOpen(false);
                   handleOpenAuction(selectedPost);
                 }}
-                className="py-2.5 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-xl border border-blue-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full h-9 px-2 bg-white hover:bg-purple-50/40 text-[#6366F1] border border-indigo-200 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center whitespace-nowrap"
               >
-                <Gavel className="w-3.5 h-3.5" />
-                <span>Convert to Auction</span>
+                Convert to Auction
               </button>
             </div>
 
@@ -925,7 +1168,7 @@ export default function SellerPostsPage() {
           <div className="bg-white rounded-2xl max-w-[420px] w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-[#00873D]" />
+                <DollarSign className="w-4 h-4 text-[#009845]" />
                 <span>Share Price Offer</span>
               </h3>
               <button
@@ -953,7 +1196,7 @@ export default function SellerPostsPage() {
                   value={offeredPriceInput}
                   onChange={(e) => setOfferedPriceInput(Number(e.target.value))}
                   required
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl outline-none focus:border-[#00873D] focus:ring-1 focus:ring-[#00873D]/20 font-bold text-gray-900 text-sm"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 font-bold text-gray-900 text-sm"
                 />
               </div>
 
@@ -964,7 +1207,7 @@ export default function SellerPostsPage() {
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
                   placeholder="e.g. Valuation based on current scrap copper and silicon index..."
-                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D] resize-none"
+                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845] resize-none"
                 />
               </div>
 
@@ -994,7 +1237,7 @@ export default function SellerPostsPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-[#00873D] hover:bg-[#007534] text-white font-semibold rounded-xl shadow-xs cursor-pointer"
+                    className="px-4 py-2 bg-[#009845] hover:bg-[#008230] text-white font-semibold rounded-xl shadow-xs cursor-pointer"
                   >
                     Save &amp; Offer
                   </button>
@@ -1011,7 +1254,7 @@ export default function SellerPostsPage() {
           <div className="bg-white rounded-2xl max-w-[440px] w-full p-5 sm:p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-[#00873D]" />
+                <Edit3 className="w-4 h-4 text-[#009845]" />
                 <span>Edit Seller Post</span>
               </h2>
               <button
@@ -1031,7 +1274,7 @@ export default function SellerPostsPage() {
                   value={editFormData.title || ""}
                   onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D]"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845]"
                 />
               </div>
 
@@ -1042,7 +1285,7 @@ export default function SellerPostsPage() {
                     type="text"
                     value={editFormData.city || ""}
                     onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845]"
                   />
                 </div>
                 <div>
@@ -1050,7 +1293,7 @@ export default function SellerPostsPage() {
                   <select
                     value={editFormData.condition || "Good"}
                     onChange={(e) => setEditFormData({ ...editFormData, condition: e.target.value as "Good" | "Fair" | "Scrap" })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D] bg-white"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845] bg-white"
                   >
                     <option value="Good">Good</option>
                     <option value="Fair">Fair</option>
@@ -1066,7 +1309,7 @@ export default function SellerPostsPage() {
                     type="number"
                     value={editFormData.qty || 0}
                     onChange={(e) => setEditFormData({ ...editFormData, qty: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845]"
                   />
                 </div>
                 <div>
@@ -1077,7 +1320,7 @@ export default function SellerPostsPage() {
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, priceExpected: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D]"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845]"
                   />
                 </div>
               </div>
@@ -1092,7 +1335,7 @@ export default function SellerPostsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#00873D] hover:bg-[#007534] text-white font-semibold rounded-xl shadow-xs cursor-pointer"
+                  className="px-5 py-2 bg-[#009845] hover:bg-[#008230] text-white font-semibold rounded-xl shadow-xs cursor-pointer"
                 >
                   Save Changes
                 </button>
@@ -1182,7 +1425,7 @@ export default function SellerPostsPage() {
                   value={auctionStartBid}
                   onChange={(e) => setAuctionStartBid(Number(e.target.value))}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D] font-bold text-gray-900"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845] font-bold text-gray-900"
                 />
               </div>
 
@@ -1191,7 +1434,7 @@ export default function SellerPostsPage() {
                 <select
                   value={auctionDuration}
                   onChange={(e) => setAuctionDuration(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D] bg-white font-medium"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845] bg-white font-medium"
                 >
                   <option value="24 Hours">24 Hours (1 Day)</option>
                   <option value="48 Hours">48 Hours (2 Days)</option>
@@ -1201,20 +1444,30 @@ export default function SellerPostsPage() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsAuctionOpen(false)}
-                  className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg cursor-pointer"
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-100">
+                <Link
+                  href={`/auctions/create?category=${encodeURIComponent(selectedPost.category)}&seller=${encodeURIComponent(selectedPost.sellerName)}&city=${encodeURIComponent(selectedPost.city)}&title=${encodeURIComponent(selectedPost.title)}&basePrice=${auctionStartBid}`}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-semibold hover:underline flex items-center gap-1"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#00873D] hover:bg-[#007534] text-white font-semibold rounded-lg shadow-xs cursor-pointer"
-                >
-                  Publish Auction
-                </button>
+                  <Gavel className="w-3.5 h-3.5" />
+                  <span>Open Full Auction Studio &rarr;</span>
+                </Link>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsAuctionOpen(false)}
+                    className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 bg-[#009845] hover:bg-[#008230] text-white font-semibold rounded-lg shadow-xs cursor-pointer"
+                  >
+                    Publish Auction
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -1227,7 +1480,7 @@ export default function SellerPostsPage() {
           <div className="bg-white rounded-2xl max-w-[440px] w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
             <div className="flex items-center justify-between pb-2 border-b border-gray-100">
               <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-[#00873D]" />
+                <FileText className="w-4 h-4 text-[#009845]" />
                 <span>Send Formal Quotation</span>
               </h3>
               <button
@@ -1252,7 +1505,7 @@ export default function SellerPostsPage() {
                   value={quotationAmount}
                   onChange={(e) => setQuotationAmount(Number(e.target.value))}
                   required
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D] font-bold text-gray-900"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845] font-bold text-gray-900"
                 />
               </div>
 
@@ -1261,7 +1514,7 @@ export default function SellerPostsPage() {
                 <select
                   value={quotationValidity}
                   onChange={(e) => setQuotationValidity(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D] bg-white font-medium"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845] bg-white font-medium"
                 >
                   <option value="3 Days">3 Days</option>
                   <option value="7 Days">7 Days</option>
@@ -1276,25 +1529,35 @@ export default function SellerPostsPage() {
                   rows={2}
                   value={quotationTerms}
                   onChange={(e) => setQuotationTerms(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#00873D] resize-none"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845] resize-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => setIsSendQuotationOpen(false)}
-                  className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg cursor-pointer"
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-gray-100">
+                <Link
+                  href={`/quotation-history/create?name=${encodeURIComponent(selectedPost.sellerName)}&phone=${encodeURIComponent(selectedPost.sellerPhone)}&city=${encodeURIComponent(selectedPost.city)}&area=${encodeURIComponent(selectedPost.area)}`}
+                  className="text-xs text-[#009845] hover:text-[#008230] font-semibold hover:underline flex items-center gap-1"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#00873D] hover:bg-[#007534] text-white font-semibold rounded-lg shadow-xs cursor-pointer flex items-center gap-1.5"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Send Quotation</span>
-                </button>
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Open Invoice Generator &rarr;</span>
+                </Link>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsSendQuotationOpen(false)}
+                    className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 bg-[#009845] hover:bg-[#008230] text-white font-semibold rounded-lg shadow-xs cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Send Quotation</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -1346,7 +1609,7 @@ export default function SellerPostsPage() {
       {/* ===================== TOAST NOTIFICATION ===================== */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 bg-gray-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 z-50 animate-slideUp">
-          <Check className="w-4 h-4 text-[#00873D]" />
+          <Check className="w-4 h-4 text-[#009845]" />
           <span>{toastMessage}</span>
         </div>
       )}

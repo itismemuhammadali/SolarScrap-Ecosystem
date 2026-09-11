@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'seller_forgot_password_screen.dart';
 import 'seller_create_account_screen.dart';
 import 'seller_dashboard_screen.dart';
+import 'seller_account_created_screen.dart';
 import '../../services/auth_service.dart';
 
 class SellerLoginScreen extends StatefulWidget {
@@ -34,7 +35,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (result.isSuccess) {
+    if (result.isSuccess && !result.isPending) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.message ?? 'Signed in successfully!'),
@@ -46,6 +47,26 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => const SellerDashboardScreen(),
+        ),
+      );
+    } else if (result.isPending || (result.message != null && result.message!.toLowerCase().contains('pending'))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account pending admin approval. Directing to verification screen...'),
+          backgroundColor: Color(0xFFD97706),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SellerAccountCreatedScreen(
+            companyName: result.user?.companyName ?? 'Solar Seller Account',
+            location: result.user?.city ?? 'Registered Office',
+            email: _emailController.text.trim(),
+            userId: result.user?.userId,
+          ),
         ),
       );
     } else {
@@ -76,60 +97,14 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with Icon and Title (Matching Figma)
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0xFF00A63E),
-                          Color(0xFF007D2E),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Center(
-                      child: SvgPicture.asset(
-                        'assets/icons/solar_scrap_icon.svg',
-                        width: 26,
-                        height: 26,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.white,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Solar Scrap',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF151516),
-                        ),
-                      ),
-                      Text(
-                        'Seller Portal',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              // Logo (Matching Figma: 117x70)
+              Image.asset(
+                'assets/images/solar-scrap-logo-full.png',
+                width: 117,
+                height: 70,
+                fit: BoxFit.contain,
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 24),
 
               // Welcome Back Text (Matching Figma: Poppins 700, 24px, line-height 40px, #151516)
               Text(

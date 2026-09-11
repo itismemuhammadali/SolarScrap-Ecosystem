@@ -1,17 +1,32 @@
-# solar_scrap
+# Solar Scrap Workspace
 
-A new Flutter project.
+Monorepo workspace containing the mobile app, web application, and backend service for Solar Scrap.
 
-## Getting Started
+## Repository Structure
 
-This project is a starting point for a Flutter application.
+- **`solar_scrap_app/`**: Flutter mobile application (iOS & Android).
+- **`website_main/`**: Next.js web application.
+- **`backend/`**: FastAPI backend service supporting both mobile and web clients.
 
-A few resources to get you started if this is your first Flutter project:
+## Quick Start
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Flutter Mobile App
+```bash
+cd solar_scrap_app
+flutter pub get
+flutter run
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Web Application
+```bash
+cd website_main
+npm install
+npm run dev
+```
+
+### Backend Service
+```bash
+cd backend
+source venv/bin/activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```

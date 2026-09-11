@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Bell,
@@ -13,6 +14,7 @@ import {
   Eye,
   Phone,
   MessageCircle,
+  MessageSquare,
   FileText,
   RefreshCw,
   Trash2,
@@ -26,8 +28,13 @@ import {
   Sparkles,
   AlertTriangle,
   Clock,
+  Gavel,
+  Receipt,
+  Filter,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import { getAdminLeads, updateAdminLead, createAdminLead } from "@/lib/admin-api";
+import { getSession, getAvatarUrl } from "@/lib/auth";
 
 interface FacebookLead {
   id: string;
@@ -43,76 +50,13 @@ interface FacebookLead {
   source: string;
 }
 
-const initialLeads: FacebookLead[] = [
-  {
-    id: "1",
-    leadId: "FB001",
-    name: "Kamran Sheikh",
-    phone: "+92 300 1112222",
-    email: "kamran@gmail.com",
-    city: "Karachi",
-    area: "Clifton",
-    receivedDate: "2024-12-07",
-    status: "New",
-    source: "Facebook Campaign (Solar Scrap Ad #4)",
-    notes: ["Customer requested valuation for 50 broken panels."],
-  },
-  {
-    id: "2",
-    leadId: "FB002",
-    name: "Fatima Zahra",
-    phone: "+92 321 3334444",
-    email: "fatima@yahoo.com",
-    city: "Lahore",
-    area: "Johar Town",
-    receivedDate: "2024-12-06",
-    status: "Contacted",
-    source: "Facebook Lead Form",
-    notes: ["Spoke on phone, sending photos on WhatsApp."],
-  },
-  {
-    id: "3",
-    leadId: "FB003",
-    name: "Imran Siddiqui",
-    phone: "+92 333 5556666",
-    email: "imran@hotmail.com",
-    city: "Islamabad",
-    area: "G-11",
-    receivedDate: "2024-12-05",
-    status: "Follow-up",
-    source: "Facebook Direct Message",
-    notes: ["Follow up scheduled for Monday morning."],
-  },
-  {
-    id: "4",
-    leadId: "FB004",
-    name: "Zainab Hassan",
-    phone: "+92 312 7778888",
-    email: "zainab@gmail.com",
-    city: "Karachi",
-    area: "DHA",
-    receivedDate: "2024-12-04",
-    status: "Converted",
-    source: "Facebook Boosted Post",
-    notes: ["Deal finalized, converted to registered seller."],
-  },
-  {
-    id: "5",
-    leadId: "FB005",
-    name: "Ahmed Raza",
-    phone: "+92 345 9990000",
-    email: "ahmed@live.com",
-    city: "Rawalpindi",
-    area: "Bahria Town",
-    receivedDate: "2024-12-03",
-    status: "New",
-    source: "Facebook Solar Scrap Ad",
-    notes: ["Newly registered lead via form."],
-  },
-];
-
 export default function FacebookLeadsPage() {
-  const [leads, setLeads] = useState<FacebookLead[]>(initialLeads);
+  const router = useRouter();
+  const [leads, setLeads] = useState<FacebookLead[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [adminName, setAdminName] = useState("Admin Platform");
+  const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [topSearch, setTopSearch] = useState("");
@@ -121,6 +65,182 @@ export default function FacebookLeadsPage() {
   // Actions menu state
   const [actionMenuOpenId, setActionMenuOpenId] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top?: number; bottom?: number; right: number } | null>(null);
+
+  useEffect(() => {
+    const session = getSession();
+    if (session?.user) {
+      if (session.user.display_name) setAdminName(session.user.display_name);
+      else if (session.user.email) setAdminName(session.user.email.split("@")[0]);
+      if (session.user.profile_photo_url) setAdminPhotoUrl(session.user.profile_photo_url);
+    }
+
+    loadLeads();
+  }, []);
+
+  const loadLeads = () => {
+    setIsLoading(true);
+    getAdminLeads()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setLeads(
+            data.map((l) => ({
+              id: l.id,
+              leadId: l.lead_id,
+              name: l.name,
+              phone: l.phone,
+              email: l.email,
+              city: l.city,
+              area: l.area,
+              receivedDate: l.received_date,
+              status: l.status as any,
+              source: l.source,
+              notes: l.notes,
+            }))
+          );
+        } else {
+          // Fallback seeded leads if emulator is empty (matches Figma screenshot 3)
+          setLeads([
+            {
+              id: "lead_demo_01",
+              leadId: "FB001",
+              name: "Kamran Sheikh",
+              phone: "+92 300 1112222",
+              email: "kamran@gmail.com",
+              city: "Karachi",
+              area: "Clifton",
+              receivedDate: "2024-12-07",
+              status: "New",
+              source: "Facebook Campaign",
+              notes: ["Customer submitted inquiry for 120x solar panels."],
+            },
+            {
+              id: "lead_demo_02",
+              leadId: "FB002",
+              name: "Fatima Zahra",
+              phone: "+92 321 3334444",
+              email: "fatima@yahoo.com",
+              city: "Lahore",
+              area: "Johar Town",
+              receivedDate: "2024-12-07",
+              status: "New",
+              source: "Facebook Campaign",
+              notes: ["Inverter 15kW + battery bank ready for inspection."],
+            },
+            {
+              id: "lead_demo_03",
+              leadId: "FB003",
+              name: "Imran Siddiqui",
+              phone: "+92 333 5556666",
+              email: "imran@hotmail.com",
+              city: "Islamabad",
+              area: "G-11",
+              receivedDate: "2024-12-07",
+              status: "Contacted",
+              source: "Facebook Campaign",
+              notes: ["400x Mono PERC panels. Awaiting site visit confirmation."],
+            },
+            {
+              id: "lead_demo_04",
+              leadId: "FB004",
+              name: "Zainab Hassan",
+              phone: "+92 312 7778888",
+              email: "zainab@gmail.com",
+              city: "Karachi",
+              area: "DHA",
+              receivedDate: "2024-12-07",
+              status: "Follow-up",
+              source: "Facebook Campaign",
+              notes: ["Heavy DC Copper Cables ~500kg."],
+            },
+            {
+              id: "lead_demo_05",
+              leadId: "FB005",
+              name: "Ahmed Raza",
+              phone: "+92 345 9990000",
+              email: "ahmed@live.com",
+              city: "Rawalpindi",
+              area: "Bahria Town",
+              receivedDate: "2024-12-07",
+              status: "Converted",
+              source: "Facebook Campaign",
+              notes: ["Narada Lithium 48V Battery Bank scrap offer."],
+            },
+          ]);
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading leads from API:", err);
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  const handleSimulateLead = async () => {
+    setIsSimulating(true);
+    const cities = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan"];
+    const names = [
+      "Malik Usman",
+      "Kashif Munir",
+      "Shehroz Khan",
+      "Dr. Arshad",
+      "Imran Rafiq",
+      "Chaudhry Naveed",
+    ];
+    const randomCity = cities[Math.floor(Math.random() * cities.length)];
+    const randomName = names[Math.floor(Math.random() * names.length)];
+    const randomPhone = `+92 3${Math.floor(10 + Math.random() * 39)} ${Math.floor(1000000 + Math.random() * 9000000)}`;
+    const randomLeadNumber = Math.floor(10500 + Math.random() * 500);
+
+    const newLeadPayload = {
+      lead_id: `LEAD-${randomLeadNumber}`,
+      name: randomName,
+      phone: randomPhone,
+      email: `${randomName.toLowerCase().replace(/\s+/g, ".")}@gmail.com`,
+      city: randomCity,
+      area: `${randomCity} Central Sector`,
+      received_date: "Just now",
+      status: "New" as const,
+      source: `Meta Ad (Lead Campaign - ${randomCity})`,
+      notes: [`Instant Form inquiry: 15kW Commercial solar scrap removal in ${randomCity}.`],
+    };
+
+    try {
+      const created = await createAdminLead(newLeadPayload);
+      const leadItem: FacebookLead = {
+        id: created.id || `lead-${Date.now()}`,
+        leadId: created.lead_id || newLeadPayload.lead_id,
+        name: created.name || newLeadPayload.name,
+        phone: created.phone || newLeadPayload.phone,
+        email: created.email || newLeadPayload.email,
+        city: created.city || newLeadPayload.city,
+        area: created.area || newLeadPayload.area,
+        receivedDate: "Just now",
+        status: "New",
+        source: created.source || newLeadPayload.source,
+        notes: created.notes || newLeadPayload.notes,
+      };
+      setLeads((prev) => [leadItem, ...prev]);
+      showToast(`⚡ New simulated Facebook lead from ${randomName} (${randomCity}) received!`);
+    } catch (err) {
+      console.warn("API create failed, adding locally:", err);
+      const localLead: FacebookLead = {
+        id: `local-${Date.now()}`,
+        leadId: newLeadPayload.lead_id,
+        name: newLeadPayload.name,
+        phone: newLeadPayload.phone,
+        email: newLeadPayload.email,
+        city: newLeadPayload.city,
+        area: newLeadPayload.area,
+        receivedDate: "Just now",
+        status: "New",
+        source: newLeadPayload.source,
+        notes: newLeadPayload.notes,
+      };
+      setLeads((prev) => [localLead, ...prev]);
+      showToast(`⚡ Simulated Meta Lead created: ${randomName}!`);
+    } finally {
+      setIsSimulating(false);
+    }
+  };
 
   useEffect(() => {
     const handleClose = () => {
@@ -145,7 +265,7 @@ export default function FacebookLeadsPage() {
     } else {
       const rect = e.currentTarget.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      const menuHeight = 240;
+      const menuHeight = 190;
       if (spaceBelow < menuHeight) {
         setMenuPos({
           bottom: window.innerHeight - rect.top + 6,
@@ -253,11 +373,15 @@ export default function FacebookLeadsPage() {
   const handleSaveStatus = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLead) return;
+    const targetLead = selectedLead;
     setLeads((prev) =>
-      prev.map((l) => (l.id === selectedLead.id ? { ...l, status: newStatusInput } : l))
+      prev.map((l) => (l.id === targetLead.id ? { ...l, status: newStatusInput } : l))
+    );
+    updateAdminLead(targetLead.id, { status: newStatusInput }).catch((err) =>
+      console.warn("Backend update error:", err)
     );
     setIsUpdateStatusOpen(false);
-    showToast(`Status updated to "${newStatusInput}" for ${selectedLead.name}!`);
+    showToast(`Status updated to "${newStatusInput}" for ${targetLead.name}!`);
   };
 
   const handleOpenAddNote = (lead: FacebookLead) => {
@@ -270,15 +394,40 @@ export default function FacebookLeadsPage() {
   const handleSaveNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLead || !noteInput.trim()) return;
+    const targetLead = selectedLead;
+    const updatedNotes = [...(targetLead.notes || []), noteInput.trim()];
     setLeads((prev) =>
       prev.map((l) =>
-        l.id === selectedLead.id
-          ? { ...l, notes: [...(l.notes || []), noteInput.trim()] }
+        l.id === targetLead.id
+          ? { ...l, notes: updatedNotes }
           : l
       )
     );
+    updateAdminLead(targetLead.id, { note: noteInput.trim() }).catch((err) =>
+      console.warn("Backend note error:", err)
+    );
     setIsAddNoteOpen(false);
     showToast("Note added successfully!");
+  };
+
+  const handleConvertToQuotation = (lead: FacebookLead) => {
+    const params = new URLSearchParams({
+      name: lead.name,
+      phone: lead.phone,
+      email: lead.email,
+      city: lead.city,
+      area: lead.area,
+    });
+    router.push(`/quotation-history/create?${params.toString()}`);
+  };
+
+  const handleConvertToAuction = (lead: FacebookLead) => {
+    const params = new URLSearchParams({
+      seller: lead.name,
+      city: lead.city,
+      category: "Solar Panels",
+    });
+    router.push(`/auctions/create?${params.toString()}`);
   };
 
   const handleOpenDelete = (lead: FacebookLead) => {
@@ -295,7 +444,7 @@ export default function FacebookLeadsPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] flex flex-col lg:flex-row">
+    <div className="flex h-screen w-full bg-[#F5F6FA] overflow-hidden">
       {/* ===================== UNIFIED SIDEBAR ===================== */}
       <Sidebar
         activeItem="Facebook Leads"
@@ -304,7 +453,7 @@ export default function FacebookLeadsPage() {
       />
 
       {/* ===================== MAIN CONTENT AREA ===================== */}
-      <div className="flex-1 bg-[#f8fafc] flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 bg-[#F5F6FA] flex flex-col min-w-0 h-screen overflow-hidden">
         
         {/* Top Navbar */}
         <header className="sticky top-0 z-20 bg-white border-b border-gray-200/80 px-5 sm:px-8 py-3.5 flex items-center justify-between gap-4">
@@ -315,31 +464,35 @@ export default function FacebookLeadsPage() {
                 value={topSearch}
                 onChange={(e) => setTopSearch(e.target.value)}
                 placeholder="Search users, posts, auctions, bids..."
-                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-gray-50/70 border border-gray-200/80 rounded-xl outline-none focus:bg-white focus:border-[#009639] focus:ring-2 focus:ring-[#009639]/15 transition-all text-gray-800 placeholder:text-gray-400"
+                className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-gray-50/70 border border-gray-200/80 rounded-xl outline-none focus:bg-white focus:border-[#009845] focus:ring-2 focus:ring-[#009845]/15 transition-all text-gray-800 placeholder:text-gray-400"
               />
             </div>
 
             <div className="flex items-center gap-4 sm:gap-6">
-              <button
-                type="button"
+              <Link
+                href="/notifications"
                 className="relative p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
                 aria-label="Notifications"
               >
                 <Bell className="w-4.5 h-4.5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
-              </button>
+              </Link>
 
               <div className="flex items-center gap-3 pl-2 sm:border-l border-gray-200">
                 <span className="hidden sm:inline-block text-xs font-semibold text-gray-800">
                   Admin Platform
                 </span>
-                <div className="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full overflow-hidden ring-2 ring-gray-100 shadow-sm">
-                  <Image
-                    src="/images/admin.png"
-                    alt="Admin Avatar"
-                    fill
-                    className="object-cover"
-                  />
+                <div className="relative w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full overflow-hidden ring-2 ring-gray-100 shadow-sm bg-emerald-700 flex items-center justify-center text-white font-bold text-sm select-none">
+                  {adminPhotoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={getAvatarUrl(adminPhotoUrl)!}
+                      alt={adminName || "Admin Platform"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span>{adminName ? adminName.charAt(0).toUpperCase() : "A"}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -369,14 +522,14 @@ export default function FacebookLeadsPage() {
                     onClick={() => setActiveFilter(stat.id)}
                     className={`bg-white rounded-2xl p-5 border text-left transition-all cursor-pointer flex flex-col justify-between shadow-2xs hover:shadow-xs min-h-[95px] ${
                       isCurrentActive
-                        ? "border-2 border-[#009639]"
+                        ? "border-2 border-[#009845]"
                         : "border-gray-200/80 hover:border-gray-300"
                     }`}
                   >
                     <div>
                       <p
                         className={`text-3xl font-bold tracking-tight leading-none ${
-                          isCurrentActive ? "text-[#009639]" : "text-gray-900"
+                          isCurrentActive ? "text-[#009845]" : "text-gray-900"
                         }`}
                       >
                         {stat.count}
@@ -387,7 +540,7 @@ export default function FacebookLeadsPage() {
                     </div>
 
                     {isCurrentActive && (
-                      <div className="w-6 h-0.5 bg-[#009639] mt-3 rounded-full" />
+                      <div className="w-6 h-0.5 bg-[#009845] mt-3 rounded-full" />
                     )}
                   </button>
                 );
@@ -397,11 +550,13 @@ export default function FacebookLeadsPage() {
             {/* Leads Data Table Card (Exact as media_1787855792122.png) */}
             <div className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
               
-              {/* Table Top Header: Count & Search */}
+              {/* Table Top Header: Count, City Filter & Search */}
               <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100">
-                <span className="text-xs text-gray-500 font-medium">
-                  {filteredLeads.length} leads
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 font-medium">
+                    {filteredLeads.length} leads
+                  </span>
+                </div>
 
                 <div className="relative w-full sm:w-[260px]">
                   <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -410,7 +565,7 @@ export default function FacebookLeadsPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search leads..."
-                    className="w-full pl-9 pr-3.5 py-2 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009639] focus:ring-1 focus:ring-[#009639]/20 text-gray-800 placeholder:text-gray-400 shadow-2xs"
+                    className="w-full pl-9 pr-3.5 py-2 text-xs bg-white border border-gray-200 rounded-xl outline-none focus:border-[#009845] focus:ring-1 focus:ring-[#009845]/20 text-gray-800 placeholder:text-gray-400 shadow-2xs"
                   />
                 </div>
               </div>
@@ -442,7 +597,7 @@ export default function FacebookLeadsPage() {
                         {/* Name */}
                         <td className="py-4 px-4 whitespace-nowrap">
                           <span
-                            className="font-bold text-gray-900 hover:text-[#009639] cursor-pointer text-xs"
+                            className="font-bold text-gray-900 hover:text-[#009845] cursor-pointer text-xs"
                             onClick={() => handleOpenDetails(lead)}
                           >
                             {lead.name}
@@ -519,39 +674,47 @@ export default function FacebookLeadsPage() {
                                   bottom: menuPos.bottom !== undefined ? `${menuPos.bottom}px` : "auto",
                                   right: `${menuPos.right}px`,
                                 }}
-                                className="w-44 bg-white rounded-xl shadow-[0_12px_35px_-5px_rgba(0,0,0,0.18),0_4px_12px_-2px_rgba(0,0,0,0.08)] border border-gray-100 py-1.5 z-[999] text-left"
+                                className="w-44 bg-white rounded-2xl shadow-[0_12px_35px_-5px_rgba(0,0,0,0.14),0_4px_12px_-2px_rgba(0,0,0,0.06)] border border-gray-100 py-2 z-[999] text-left animate-fadeIn"
                               >
                                 <button
                                   type="button"
                                   onClick={() => handleOpenDetails(lead)}
-                                  className="w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors cursor-pointer"
+                                  className="w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors cursor-pointer"
                                 >
                                   <Eye className="w-3.5 h-3.5 text-gray-500" />
                                   <span>View Details</span>
                                 </button>
-                                
+
                                 <a
-                                  href={`tel:${lead.phone.replace(/\s+/g, "")}`}
-                                  className="w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors cursor-pointer"
+                                  href={lead.phone ? `tel:${lead.phone.replace(/\s+/g, "")}` : "#"}
+                                  onClick={() => {
+                                    setActionMenuOpenId(null);
+                                    setMenuPos(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors cursor-pointer"
                                 >
                                   <Phone className="w-3.5 h-3.5 text-gray-500" />
-                                  <span>Call Lead</span>
+                                  <span>Contact</span>
                                 </a>
 
                                 <a
-                                  href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}`}
+                                  href={lead.phone ? `https://wa.me/${lead.phone.replace(/[^0-9]/g, "")}` : "#"}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="w-full px-3 py-1.5 text-xs text-emerald-600 hover:bg-emerald-50 flex items-center gap-2 transition-colors cursor-pointer font-medium"
+                                  onClick={() => {
+                                    setActionMenuOpenId(null);
+                                    setMenuPos(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors cursor-pointer"
                                 >
-                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  <MessageSquare className="w-3.5 h-3.5 text-gray-500" />
                                   <span>WhatsApp</span>
                                 </a>
 
                                 <button
                                   type="button"
                                   onClick={() => handleOpenAddNote(lead)}
-                                  className="w-full px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors cursor-pointer"
+                                  className="w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors cursor-pointer"
                                 >
                                   <FileText className="w-3.5 h-3.5 text-gray-500" />
                                   <span>Add Note</span>
@@ -560,19 +723,18 @@ export default function FacebookLeadsPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleOpenUpdateStatus(lead)}
-                                  className="w-full px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-colors cursor-pointer font-medium"
+                                  className="w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 transition-colors cursor-pointer"
                                 >
-                                  <RefreshCw className="w-3.5 h-3.5" />
+                                  <RefreshCw className="w-3.5 h-3.5 text-gray-500" />
                                   <span>Update Status</span>
                                 </button>
 
-                                <div className="border-t border-gray-100 my-1" />
                                 <button
                                   type="button"
                                   onClick={() => handleOpenDelete(lead)}
-                                  className="w-full px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors cursor-pointer"
+                                  className="w-full px-4 py-2 text-xs text-red-500 hover:bg-red-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
                                   <span>Delete Lead</span>
                                 </button>
                               </div>
@@ -582,13 +744,22 @@ export default function FacebookLeadsPage() {
                       </tr>
                     ))}
 
-                    {filteredLeads.length === 0 && (
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan={9} className="py-12 text-center text-xs text-gray-400">
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="w-4 h-4 border-2 border-[#009845] border-t-transparent rounded-full animate-spin" />
+                            <span>Loading leads...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : filteredLeads.length === 0 ? (
                       <tr>
                         <td colSpan={9} className="py-8 text-center text-xs text-gray-400">
                           No leads found matching your criteria.
                         </td>
                       </tr>
-                    )}
+                    ) : null}
                   </tbody>
                 </table>
               </div>
@@ -599,7 +770,7 @@ export default function FacebookLeadsPage() {
                   Showing {filteredLeads.length} of {leads.length} leads
                 </span>
                 <div className="flex items-center gap-1">
-                  <span className="w-6 h-6 rounded-md bg-[#009639] text-white flex items-center justify-center font-bold text-[11px]">
+                  <span className="w-6 h-6 rounded-md bg-[#009845] text-white flex items-center justify-center font-bold text-[11px]">
                     1
                   </span>
                 </div>
@@ -610,101 +781,112 @@ export default function FacebookLeadsPage() {
 
         </div>
 
-      {/* ===================== 1. LEAD DETAILS MODAL ===================== */}
+      {/* ===================== 1. LEAD DETAILS MODAL (Exact 1:1 with Figma) ===================== */}
       {isDetailsOpen && selectedLead && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 animate-fadeIn">
-          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-[460px] w-full p-5 sm:p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
-            
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+          <div className="bg-white rounded-2xl max-w-[580px] w-full p-6 sm:p-7 shadow-2xl border border-gray-100">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-gray-100">
               <h2 className="text-base font-bold text-gray-900">Lead Details</h2>
               <button
                 type="button"
                 onClick={() => setIsDetailsOpen(false)}
-                className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer p-1 -mr-1"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Profile Header */}
-            <div className="flex items-center justify-between mt-4 p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#009639] text-white font-bold text-base flex items-center justify-center shadow-xs">
-                  {selectedLead.name.charAt(0)}
+            {/* Profile Row */}
+            <div className="flex items-center justify-between py-4 border-b border-gray-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-[#009845] text-white font-bold text-lg flex items-center justify-center shrink-0 shadow-xs select-none">
+                  {selectedLead.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900">{selectedLead.name}</h3>
-                  <span className="inline-block mt-0.5 px-2 py-0.2 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                  <h3 className="text-base font-bold text-gray-900 leading-tight">
+                    {selectedLead.name}
+                  </h3>
+                  <span
+                    className={`inline-block mt-1 px-3 py-0.5 rounded-full text-[11px] font-medium ${
+                      selectedLead.status === "New"
+                        ? "text-blue-600 border border-blue-200 bg-blue-50/40"
+                        : selectedLead.status === "Contacted"
+                        ? "text-blue-600 border border-blue-200 bg-blue-50/40"
+                        : selectedLead.status === "Follow-up"
+                        ? "text-amber-600 border border-amber-200 bg-amber-50/40"
+                        : "text-[#009845] border border-[#009845]/40 bg-emerald-50/40"
+                    }`}
+                  >
                     {selectedLead.status}
                   </span>
                 </div>
               </div>
-              <span className="text-[11px] font-mono font-bold text-gray-400">
+              <span className="text-xs text-[#8F9CA9] font-normal">
                 {selectedLead.leadId}
               </span>
             </div>
 
-            {/* Details Fields */}
-            <div className="space-y-2.5 mt-4 text-xs">
-              <div className="flex items-center justify-between p-2.5 bg-gray-50/70 rounded-xl border border-gray-100">
-                <span className="text-gray-500">Phone:</span>
-                <span className="font-mono font-semibold text-gray-800">{selectedLead.phone}</span>
+            {/* Key-Values List with hairline dividers */}
+            <div className="text-[13px]">
+              <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
+                <span className="text-[#8F9CA9] font-normal">Phone</span>
+                <span className="font-bold text-gray-900 text-right">{selectedLead.phone}</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-gray-50/70 rounded-xl border border-gray-100">
-                <span className="text-gray-500">Email:</span>
-                <span className="font-mono font-semibold text-gray-800">{selectedLead.email}</span>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
+                <span className="text-[#8F9CA9] font-normal">Email</span>
+                <span className="font-bold text-gray-900 text-right">{selectedLead.email}</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-gray-50/70 rounded-xl border border-gray-100">
-                <span className="text-gray-500">City:</span>
-                <span className="font-semibold text-gray-800">{selectedLead.city}</span>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
+                <span className="text-[#8F9CA9] font-normal">City</span>
+                <span className="font-bold text-gray-900 text-right">{selectedLead.city}</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-gray-50/70 rounded-xl border border-gray-100">
-                <span className="text-gray-500">Area:</span>
-                <span className="font-semibold text-gray-800">{selectedLead.area}</span>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
+                <span className="text-[#8F9CA9] font-normal">Area</span>
+                <span className="font-bold text-gray-900 text-right">{selectedLead.area}</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-gray-50/70 rounded-xl border border-gray-100">
-                <span className="text-gray-500">Lead Source:</span>
-                <span className="font-medium text-gray-700">{selectedLead.source}</span>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
+                <span className="text-[#8F9CA9] font-normal">Lead Source</span>
+                <span className="font-bold text-gray-900 text-right">{selectedLead.source || "Facebook Campaign"}</span>
               </div>
-              <div className="flex items-center justify-between p-2.5 bg-gray-50/70 rounded-xl border border-gray-100">
-                <span className="text-gray-500">Received Date:</span>
-                <span className="font-mono text-gray-700">{selectedLead.receivedDate}</span>
+              <div className="flex items-center justify-between py-3">
+                <span className="text-[#8F9CA9] font-normal">Received Date</span>
+                <span className="font-bold text-gray-900 text-right">{selectedLead.receivedDate || "2024-12-07"}</span>
               </div>
             </div>
 
-            {/* Notes List */}
-            {selectedLead.notes && selectedLead.notes.length > 0 && (
-              <div className="mt-3 p-3 bg-amber-50/60 rounded-xl border border-amber-100 text-xs">
-                <p className="font-bold text-amber-900 mb-1">Remarks / Notes:</p>
-                <ul className="list-disc list-inside space-y-1 text-gray-700">
-                  {selectedLead.notes.map((n, i) => (
-                    <li key={i}>{n}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {/* Footer Buttons (Strictly equal width, height, symmetrical on single line) */}
+            <div className="pt-6 grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDetailsOpen(false);
+                  handleConvertToQuotation(selectedLead);
+                }}
+                className="w-full h-10 px-3 bg-[#009845] hover:bg-[#00823b] text-white rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center whitespace-nowrap shadow-xs"
+              >
+                Create Quotation
+              </button>
 
-            {/* Buttons */}
-            <div className="flex items-center gap-2.5 mt-5 pt-3 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => {
                   setIsDetailsOpen(false);
                   handleOpenUpdateStatus(selectedLead);
                 }}
-                className="flex-1 py-2.5 px-4 bg-[#009639] hover:bg-[#008230] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
+                className="w-full h-10 px-3 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center whitespace-nowrap shadow-2xs"
               >
                 Update Status
               </button>
+
               <button
                 type="button"
                 onClick={() => setIsDetailsOpen(false)}
-                className="py-2.5 px-5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                className="w-full h-10 px-3 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center whitespace-nowrap shadow-2xs"
               >
                 Close
               </button>
             </div>
-
           </div>
         </div>
       )}
@@ -735,7 +917,7 @@ export default function FacebookLeadsPage() {
                   key={st}
                   className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
                     newStatusInput === st
-                      ? "border-[#009639] bg-emerald-50/60 text-[#009639] font-bold"
+                      ? "border-[#009845] bg-emerald-50/60 text-[#009845] font-bold"
                       : "border-gray-200 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
@@ -746,7 +928,7 @@ export default function FacebookLeadsPage() {
                     value={st}
                     checked={newStatusInput === st}
                     onChange={() => setNewStatusInput(st)}
-                    className="accent-[#009639]"
+                    className="accent-[#009845]"
                   />
                 </label>
               ))}
@@ -761,7 +943,7 @@ export default function FacebookLeadsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-[#009639] hover:bg-[#008230] text-white font-semibold rounded-lg shadow-xs cursor-pointer"
+                  className="px-4 py-1.5 bg-[#009845] hover:bg-[#008230] text-white font-semibold rounded-lg shadow-xs cursor-pointer"
                 >
                   Update
                 </button>
@@ -799,7 +981,7 @@ export default function FacebookLeadsPage() {
                 onChange={(e) => setNoteInput(e.target.value)}
                 placeholder="e.g. Spoke with customer, interested in scrap panels..."
                 required
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009639] resize-none"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-[#009845] resize-none"
               />
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
@@ -812,7 +994,7 @@ export default function FacebookLeadsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-[#009639] hover:bg-[#008230] text-white font-semibold rounded-lg shadow-xs cursor-pointer"
+                  className="px-4 py-1.5 bg-[#009845] hover:bg-[#008230] text-white font-semibold rounded-lg shadow-xs cursor-pointer"
                 >
                   Save Note
                 </button>
@@ -870,7 +1052,7 @@ export default function FacebookLeadsPage() {
       {/* ===================== TOAST NOTIFICATION ===================== */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 bg-gray-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 z-50 animate-slideUp">
-          <Check className="w-4 h-4 text-[#009639]" />
+          <Check className="w-4 h-4 text-[#009845]" />
           <span>{toastMessage}</span>
         </div>
       )}
