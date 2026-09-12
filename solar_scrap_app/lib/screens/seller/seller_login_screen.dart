@@ -6,6 +6,8 @@ import 'seller_forgot_password_screen.dart';
 import 'seller_create_account_screen.dart';
 import 'seller_dashboard_screen.dart';
 import 'seller_account_created_screen.dart';
+import '../buyer/buyer_login_screen.dart';
+import '../role_selection_screen.dart';
 import '../../services/auth_service.dart';
 
 class SellerLoginScreen extends StatefulWidget {
@@ -70,14 +72,109 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
         ),
       );
     } else {
+      final msg = result.message ?? 'Login failed. Please check credentials.';
+      if (msg.toLowerCase().contains('registered as a') && msg.toLowerCase().contains('buyer')) {
+        _showRoleMismatchDialog(
+          title: 'Buyer Account Detected',
+          message: msg,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    final result = await AuthService.instance.signInWithGoogle(role: 'seller');
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.isSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.message ?? 'Login failed. Please check credentials.'),
-          backgroundColor: const Color(0xFFDC2626),
+          content: Text(result.message ?? 'Signed in with Google successfully!'),
+          backgroundColor: const Color(0xFF00A63E),
           behavior: SnackBarBehavior.floating,
         ),
       );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SellerDashboardScreen()),
+      );
+    } else {
+      final msg = result.message ?? 'Google sign-in failed.';
+      if (msg.toLowerCase().contains('buyer')) {
+        _showRoleMismatchDialog(
+          title: 'Buyer Account Detected',
+          message: msg,
+        );
+      } else if (!msg.toLowerCase().contains('cancelled')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
+  }
+
+  void _showRoleMismatchDialog({
+    required String title,
+    required String message,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          title,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(color: const Color(0xFF64748B)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const BuyerLoginScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              'Switch to Buyer Screen',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -97,6 +194,71 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Top Navigation Bar (Back to Role Selection & Switch to Buyer)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        size: 16,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const BuyerLoginScreen()),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.swap_horiz_rounded, size: 16, color: Color(0xFF2563EB)),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Switch to Buyer',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF2563EB),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
               // Logo (Matching Figma: 117x70)
               Image.asset(
                 'assets/images/solar-scrap-logo-full.png',
@@ -104,7 +266,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                 height: 70,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Welcome Back Text (Matching Figma: Poppins 700, 24px, line-height 40px, #151516)
               Text(
@@ -380,9 +542,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
-                        // Handle Google login
-                      },
+                      onPressed: _isLoading ? null : _handleGoogleLogin,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
                         side: const BorderSide(color: Color(0xFFE5E7EB)),

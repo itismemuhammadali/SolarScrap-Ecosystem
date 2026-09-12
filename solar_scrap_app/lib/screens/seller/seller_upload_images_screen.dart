@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/listing_draft.dart';
 import '../../services/listing_service.dart';
+import '../../utils/permission_helper.dart';
 import 'seller_pickup_location_screen.dart';
 
 class SellerUploadImagesScreen extends StatefulWidget {
@@ -68,32 +69,9 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
   }
 
   void _showPhotoOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Color(0xFF00A63E)),
-              title: const Text('Camera'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Color(0xFF00A63E)),
-              title: const Text('Gallery'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
-      ),
+    PermissionHelper.showImagePickerModal(
+      context,
+      onSourceSelected: (source) => _pickImage(source),
     );
   }
 

@@ -15,6 +15,7 @@ import 'seller_new_listing_screen.dart';
 import 'seller_listing_details_screen.dart';
 import 'seller_status_tracking_screen.dart';
 import '../role_selection_screen.dart';
+import '../../services/auth_service.dart';
 
 
 class SellerDashboardScreen extends StatefulWidget {
@@ -1820,15 +1821,18 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const RoleSelectionScreen(),
-                ),
-                (route) => false,
-              );
+              await AuthService.instance.logout();
+              if (context.mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RoleSelectionScreen(),
+                  ),
+                  (route) => false,
+                );
+              }
             },
             child: const Text('Logout'),
           ),

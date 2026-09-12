@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../config/api_config.dart';
 import '../models/registration_data.dart';
 
@@ -49,6 +51,19 @@ class AuthUser {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'user_id': userId,
+      'email': email,
+      'role': role,
+      'display_name': displayName,
+      'phone_number': phoneNumber,
+      'status': status,
+      'company_name': companyName,
+      'city': city,
+    };
+  }
+
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
       userId: json['user_id'] ?? '',
@@ -87,12 +102,58 @@ class AuthService {
   static final AuthService instance = AuthService._internal();
   AuthService._internal();
 
+  static const String _keyToken = 'solar_scrap_auth_token';
+  static const String _keyUser = 'solar_scrap_auth_user';
+  static const String _keyRole = 'solar_scrap_auth_role';
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
+
   String? _accessToken;
   AuthUser? _currentUser;
 
   String? get accessToken => _accessToken;
   AuthUser? get currentUser => _currentUser;
-  bool get isAuthenticated => _accessToken != null;
+  bool get isAuthenticated => _accessToken != null && _currentUser != null;
+
+  Future<void> _saveSession(String token, AuthUser user, String role) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_keyToken, token);
+      await prefs.setString(_keyUser, jsonEncode(user.toJson()));
+      await prefs.setString(_keyRole, role.toLowerCase());
+    } catch (_) {}
+  }
+
+  Future<bool> tryAutoLogin() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_keyToken);
+      final userStr = prefs.getString(_keyUser);
+
+      if (token != null && token.isNotEmpty && userStr != null && userStr.isNotEmpty) {
+        _accessToken = token;
+        _currentUser = AuthUser.fromJson(jsonDecode(userStr));
+        // Keep status fresh in background
+        checkUserStatus(userId: _currentUser?.userId, email: _currentUser?.email);
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  Future<void> logout() async {
+    _accessToken = null;
+    _currentUser = null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_keyToken);
+      await prefs.remove(_keyUser);
+      await prefs.remove(_keyRole);
+      await _googleSignIn.signOut();
+    } catch (_) {}
+  }
 
   Future<AuthResult> login({
     required String email,
@@ -126,6 +187,7 @@ class AuthService {
         _accessToken = data['access_token'];
         if (data['user'] != null) {
           _currentUser = AuthUser.fromJson(data['user']);
+          await _saveSession(_accessToken!, _currentUser!, role);
         }
         return AuthResult(
           isSuccess: true,
@@ -166,6 +228,73 @@ class AuthService {
     }
   }
 
+  Future<AuthResult> signInWithGoogle({
+    required String role,
+    bool isSignUp = false,
+  }) async {
+    try {
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+
+      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      if (account == null) {
+        return AuthResult(isSuccess: false, message: 'Google sign-in was cancelled.');
+      }
+
+      final GoogleSignInAuthentication authDetails = await account.authentication;
+      final String? idToken = authDetails.idToken;
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/v1/auth/google'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'id_token': idToken,
+          'email': account.email,
+          'display_name': account.displayName,
+          'photo_url': account.photoUrl,
+          'role': role.toLowerCase(),
+          'google_id': account.id,
+        }),
+      ).timeout(const Duration(seconds: 15));
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        _accessToken = data['access_token'];
+        if (data['user'] != null) {
+          _currentUser = AuthUser.fromJson(data['user']);
+          await _saveSession(_accessToken!, _currentUser!, role);
+        }
+        return AuthResult(
+          isSuccess: true,
+          token: _accessToken,
+          user: _currentUser,
+          message: data['message'] ?? 'Successfully signed in with Google.',
+          status: _currentUser?.status ?? 'approved',
+          isPending: _currentUser?.isPending ?? false,
+        );
+      } else {
+        final errorDetail = data['detail'];
+        String msg = 'Google sign-in failed.';
+        if (errorDetail is String) {
+          msg = errorDetail;
+        } else if (errorDetail is Map && errorDetail['message'] != null) {
+          msg = errorDetail['message'];
+        }
+        return AuthResult(
+          isSuccess: false,
+          message: msg,
+        );
+      }
+    } catch (e) {
+      return AuthResult(
+        isSuccess: false,
+        message: 'Google sign-in error: ${e.toString().replaceAll("Exception:", "").trim()}',
+      );
+    }
+  }
+
   Future<AuthResult> register(RegistrationData data) async {
     try {
       final response = await http.post(
@@ -180,6 +309,7 @@ class AuthService {
         _accessToken = responseData['access_token'];
         if (responseData['user'] != null) {
           _currentUser = AuthUser.fromJson(responseData['user']);
+          await _saveSession(_accessToken!, _currentUser!, data.role);
         }
         return AuthResult(
           isSuccess: true,
@@ -231,17 +361,13 @@ class AuthService {
             companyName: data['company_name'],
             city: data['city'],
           );
+          // Update cached user
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_keyUser, jsonEncode(_currentUser!.toJson()));
         }
         return data;
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (_) {}
     return {'status': 'unknown'};
-  }
-
-  void logout() {
-    _accessToken = null;
-    _currentUser = null;
   }
 }

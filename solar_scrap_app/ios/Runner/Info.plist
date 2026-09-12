@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Solar Scrap needs camera access to capture clear photos of solar scrap materials and equipment for your listings and profile.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Solar Scrap needs photo library access to select photos of solar panels, inverters, and scrap equipment for your listings and profile.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Solar Scrap needs permission to save equipment photos to your photo library.</string>
 </dict>
 </plist>

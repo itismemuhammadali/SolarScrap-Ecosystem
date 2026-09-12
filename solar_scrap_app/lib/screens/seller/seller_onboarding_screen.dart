@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'seller_onboarding_screen_2.dart';
 import 'seller_onboarding_screen_3.dart';
 import 'seller_login_screen.dart';
+import '../role_selection_screen.dart';
 
 class SellerOnboardingScreen extends StatefulWidget {
   const SellerOnboardingScreen({super.key});
@@ -40,36 +41,64 @@ class _SellerOnboardingScreenState extends State<SellerOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentPage = index;
-          });
-        },
+      body: Stack(
         children: [
-          OnboardingPageWidget(
-            image: 'assets/images/solar_scrap_bg.jpg',
-            title: 'List Your Solar Scrap',
-            description:
-                'Sell solar panels, batteries, inverters,\ntransformers and more — reach thousands of\nverified buyers nationwide.',
-            onNext: _nextPage,
-            currentPage: 0,
-            totalPages: 3,
+          PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            children: [
+              OnboardingPageWidget(
+                image: 'assets/images/solar_scrap_bg.jpg',
+                title: 'List Your Solar Scrap',
+                description:
+                    'Sell solar panels, batteries, inverters,\ntransformers and more — reach thousands of\nverified buyers nationwide.',
+                onNext: _nextPage,
+                currentPage: 0,
+                totalPages: 3,
+              ),
+              OnboardingPage2Widget(
+                image: 'assets/images/market_value_bg.png',
+                title: 'Get Best Market Value',
+                description:
+                    'Connect with verified buyers through a\ntransparent auction process. Every listing gets\ncompetitive offers.',
+                onNext: _nextPage,
+              ),
+              OnboardingPage3Widget(
+                image: 'assets/images/instant_alerts_bg.png',
+                title: 'Get Instant Alerts',
+                description:
+                    'When a room opens, you get a limited-time\nchance to claim it.',
+                onNext: _nextPage,
+              ),
+            ],
           ),
-          OnboardingPage2Widget(
-            image: 'assets/images/market_value_bg.png',
-            title: 'Get Best Market Value',
-            description:
-                'Connect with verified buyers through a\ntransparent auction process. Every listing gets\ncompetitive offers.',
-            onNext: _nextPage,
-          ),
-          OnboardingPage3Widget(
-            image: 'assets/images/instant_alerts_bg.png',
-            title: 'Get Instant Alerts',
-            description:
-                'When a room opens, you get a limited-time\nchance to claim it.',
-            onNext: _nextPage,
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+                );
+              },
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+            ),
           ),
         ],
       ),

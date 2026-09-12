@@ -1,10 +1,12 @@
 import random
 import uuid
+import httpx
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Depends, status, Header
 from firebase_admin import auth, firestore
 from app.schemas.auth import (
     LoginRequest,
+    GoogleAuthRequest,
     LoginResponse,
     UserProfile,
     UserRole,
@@ -234,6 +236,172 @@ async def login(payload: LoginRequest):
         token_type="bearer",
         user=user_profile,
         message=f"Welcome {display_name or email}! Successfully signed in as {registered_role}.",
+    )
+
+
+async def generate_firebase_token_for_uid(uid: str) -> str:
+    custom_token = auth.create_custom_token(uid)
+    token_str = custom_token.decode("utf-8") if isinstance(custom_token, bytes) else str(custom_token)
+    try:
+        if settings.USE_EMULATOR:
+            url = f"http://{settings.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=emulator-key"
+        else:
+            api_key = settings.FIREBASE_WEB_API_KEY
+            if not api_key:
+                return token_str
+            url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key={api_key}"
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            res = await client.post(url, json={"token": token_str, "returnSecureToken": True})
+            if res.status_code == 200:
+                data = res.json()
+                return data.get("idToken", token_str)
+    except Exception as e:
+        print(f"[Auth] Could not exchange custom token: {e}")
+    return token_str
+
+
+@router.post("/google", response_model=LoginResponse)
+async def google_auth(payload: GoogleAuthRequest):
+    """
+    Sign in or Register with Google account.
+    - If user exists: validates role match. If role does not match, returns HTTP 403.
+    - If user does not exist: creates new user in Firebase Auth and Firestore with target role.
+    """
+    email = payload.email.strip().lower()
+    if not email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required.")
+
+    # 1. Look up user in Firebase Auth
+    uid = None
+    try:
+        user_record = auth.get_user_by_email(email)
+        uid = user_record.uid
+    except auth.UserNotFoundError:
+        pass
+    except Exception as e:
+        print(f"[Auth] Error finding user by email: {e}")
+
+    db = get_firestore_db()
+
+    # 2. Also check Firestore by email if not found in Auth
+    if not uid:
+        query = list(db.collection("users").where("email", "==", email).limit(1).stream())
+        if query:
+            uid = query[0].id
+
+    # 3. If new user, create in Firebase Auth
+    if not uid:
+        try:
+            display_name = payload.display_name or email.split("@")[0].capitalize()
+            user_record = auth.create_user(
+                email=email,
+                display_name=display_name,
+                photo_url=payload.photo_url,
+            )
+            uid = user_record.uid
+            auth.set_custom_user_claims(uid, {"role": payload.role.value})
+        except Exception as e:
+            try:
+                user_record = auth.get_user_by_email(email)
+                uid = user_record.uid
+            except Exception:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Could not initialize user account: {str(e)}",
+                )
+
+    user_ref = db.collection("users").document(uid)
+    user_doc = user_ref.get()
+
+    if user_doc.exists:
+        user_data = user_doc.to_dict() or {}
+        registered_role = str(user_data.get("role") or payload.role.value).lower()
+
+        # Strict Role Matching
+        if registered_role != payload.role.value.lower():
+            registered = registered_role.capitalize()
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied. This Google account is registered as a {registered}. Please use the {registered} portal to sign in.",
+            )
+
+        user_status = str(user_data.get("status", "approved")).lower()
+        if user_status == "rejected":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account has been rejected by administrator. Please contact support.",
+            )
+
+        display_name = user_data.get("display_name") or payload.display_name or email.split("@")[0].capitalize()
+        phone = user_data.get("phone_number")
+        company_name = user_data.get("company_name")
+        city = user_data.get("city")
+        area = user_data.get("area")
+        address = user_data.get("address")
+        company_type = user_data.get("company_type")
+        gst_number = user_data.get("gst_number")
+        profile_photo_url = user_data.get("profile_photo_url") or payload.photo_url
+    else:
+        # Create user profile in Firestore
+        registered_role = payload.role.value.lower()
+        display_name = payload.display_name or email.split("@")[0].capitalize()
+        user_status = "approved"
+        phone = None
+        company_name = None
+        city = None
+        area = None
+        address = None
+        company_type = None
+        gst_number = None
+        profile_photo_url = payload.photo_url
+
+        user_ref.set({
+            "email": email,
+            "role": registered_role,
+            "status": user_status,
+            "display_name": display_name,
+            "profile_photo_url": profile_photo_url,
+            "auth_provider": "google",
+            "created_at": firestore.SERVER_TIMESTAMP,
+        })
+
+        if registered_role != "admin":
+            try:
+                from app.api.notifications import create_admin_notification
+                create_admin_notification(
+                    db=db,
+                    notif_type="new_user_registered",
+                    title="New Google User Registered",
+                    description=f"{display_name} signed up via Google as {registered_role.capitalize()}.",
+                    entity_id=uid,
+                    entity_type="user",
+                )
+            except Exception as e:
+                print(f"[Auth] Could not create admin notification: {e}")
+
+    access_token = await generate_firebase_token_for_uid(uid)
+
+    user_profile = UserProfile(
+        user_id=uid,
+        email=email,
+        role=UserRole(registered_role),
+        display_name=display_name,
+        phone_number=phone,
+        company_name=company_name,
+        city=city,
+        area=area,
+        address=address,
+        company_type=company_type,
+        gst_number=gst_number,
+        profile_photo_url=profile_photo_url,
+        status=user_status,
+    )
+
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=user_profile,
+        message=f"Welcome {display_name or email}! Signed in successfully with Google.",
     )
 
 

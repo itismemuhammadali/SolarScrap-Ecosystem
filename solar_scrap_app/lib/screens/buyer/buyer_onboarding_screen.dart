@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'buyer_onboarding_screen_2.dart';
 import 'buyer_onboarding_screen_3.dart';
 import 'buyer_login_screen.dart';
+import '../role_selection_screen.dart';
 
 class BuyerOnboardingScreen extends StatefulWidget {
   const BuyerOnboardingScreen({super.key});
@@ -39,36 +40,64 @@ class _BuyerOnboardingScreenState extends State<BuyerOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentPage = index;
-          });
-        },
+      body: Stack(
         children: [
-          BuyerOnboardingPageWidget(
-            image: 'assets/images/buyer_discover_auctions_bg.jpg',
-            title: 'Buy Quality Solar Scrap',
-            description:
-                'Buy quality solar scrap through a trusted\nmarketplace built for verified dealers.',
-            onNext: _nextPage,
-            currentPage: 0,
-            totalPages: 3,
+          PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            children: [
+              BuyerOnboardingPageWidget(
+                image: 'assets/images/buyer_discover_auctions_bg.jpg',
+                title: 'Buy Quality Solar Scrap',
+                description:
+                    'Buy quality solar scrap through a trusted\nmarketplace built for verified dealers.',
+                onNext: _nextPage,
+                currentPage: 0,
+                totalPages: 3,
+              ),
+              BuyerOnboardingPage2Widget(
+                image: 'assets/images/buyer_place_bids_bg.jpg',
+                title: 'Discover Live Auctions',
+                description:
+                    'Browse active auctions for solar panels,\nbatteries, inverters, transformers, and more.',
+                onNext: _nextPage,
+              ),
+              BuyerOnboardingPage3Widget(
+                image: 'assets/images/buyer_secure_transactions_bg.jpg',
+                title: 'Bid Smart, Win More',
+                description:
+                    'Place competitive bids, track your auctions, and\nsecure the best solar scrap deals.',
+                onNext: _nextPage,
+              ),
+            ],
           ),
-          BuyerOnboardingPage2Widget(
-            image: 'assets/images/buyer_place_bids_bg.jpg',
-            title: 'Discover Live Auctions',
-            description:
-                'Browse active auctions for solar panels,\nbatteries, inverters, transformers, and more.',
-            onNext: _nextPage,
-          ),
-          BuyerOnboardingPage3Widget(
-            image: 'assets/images/buyer_secure_transactions_bg.jpg',
-            title: 'Bid Smart, Win More',
-            description:
-                'Place competitive bids, track your auctions, and\nsecure the best solar scrap deals.',
-            onNext: _nextPage,
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 16,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
+                );
+              },
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.4),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+            ),
           ),
         ],
       ),

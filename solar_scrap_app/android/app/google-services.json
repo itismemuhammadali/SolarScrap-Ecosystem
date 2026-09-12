@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "436150981342",
+    "project_id": "solar-scrap-169f2",
+    "storage_bucket": "solar-scrap-169f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:436150981342:android:9d9f738ad3a1f5af55684f",
+        "android_client_info": {
+          "package_name": "com.example.solar_scrap"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1sJ3Ap_DnkUbsGeeHur-5pRF6v5LNaJg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

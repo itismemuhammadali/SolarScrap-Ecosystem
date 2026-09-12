@@ -15,6 +15,15 @@ class LoginRequest(BaseModel):
     role: Optional[UserRole] = Field(None, description="Expected role: buyer, seller, or admin (optional)")
 
 
+class GoogleAuthRequest(BaseModel):
+    id_token: Optional[str] = Field(None, description="Google ID Token")
+    email: str = Field(..., description="Google account email")
+    display_name: Optional[str] = Field(None, description="Display Name")
+    photo_url: Optional[str] = Field(None, description="Profile Photo URL")
+    role: UserRole = Field(..., description="Expected role: buyer or seller")
+    google_id: Optional[str] = Field(None, description="Google User ID")
+
+
 class UserProfile(BaseModel):
     user_id: str
     email: str

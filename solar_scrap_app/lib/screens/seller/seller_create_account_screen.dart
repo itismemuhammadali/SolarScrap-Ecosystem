@@ -5,6 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/registration_data.dart';
 import 'seller_create_account_security_screen.dart';
+import 'seller_dashboard_screen.dart';
+import '../buyer/buyer_login_screen.dart';
+import '../../utils/permission_helper.dart';
+import '../../services/auth_service.dart';
 
 class SellerCreateAccountScreen extends StatefulWidget {
   const SellerCreateAccountScreen({super.key});
@@ -52,87 +56,87 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
     }
   }
 
-  void _showImagePickerModal() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Add Profile Photo',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF151516),
-                ),
+  bool _isLoading = false;
+
+  Future<void> _handleGoogleSignUp() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    final result = await AuthService.instance.signInWithGoogle(role: 'seller', isSignUp: true);
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.isSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Registered and signed in with Google!'),
+          backgroundColor: const Color(0xFF00A63E),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SellerDashboardScreen()),
+      );
+    } else {
+      final msg = result.message ?? 'Google sign-up failed.';
+      if (msg.toLowerCase().contains('buyer')) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              'Buyer Account Detected',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+            content: Text(
+              msg,
+              style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF475569)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
               ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.camera_alt, color: Color(0xFF00A63E), size: 20),
-                ),
-                title: Text(
-                  'Take Photo (Camera)',
-                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickProfileImage(ImageSource.camera);
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BuyerLoginScreen()),
+                  );
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Switch to Buyer'),
               ),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.photo_library, color: Color(0xFF00A63E), size: 20),
-                ),
-                title: Text(
-                  'Choose from Gallery',
-                  style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickProfileImage(ImageSource.gallery);
-                },
-              ),
-              if (_profileImage != null)
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                  ),
-                  title: Text(
-                    'Remove Photo',
-                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.red),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    setState(() => _profileImage = null);
-                  },
-                ),
             ],
           ),
-        ),
-      ),
+        );
+      } else if (!msg.toLowerCase().contains('cancelled')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImagePickerModal() {
+    PermissionHelper.showImagePickerModal(
+      context,
+      hasExistingPhoto: _profileImage != null,
+      onSourceSelected: (source) => _pickProfileImage(source),
+      onRemovePhoto: () {
+        setState(() => _profileImage = null);
+      },
     );
   }
 
@@ -280,7 +284,64 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              // Continue with Google Option
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton(
+                  onPressed: _isLoading ? null : _handleGoogleSignUp,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    backgroundColor: Colors.white,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset(
+                        'assets/icons/google.svg',
+                        width: 20,
+                        height: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Continue with Google',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF151516),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // OR divider
+              Row(
+                children: [
+                  const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'OR REGISTER WITH EMAIL',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF9CA3AF),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                ],
+              ),
+              const SizedBox(height: 16),
 
               // Personal Information Section
               Text(
