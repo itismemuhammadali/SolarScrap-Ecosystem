@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/notification_item.dart';
 import '../../services/notification_service.dart';
+import '../../services/push_notification_service.dart';
 import 'buyer_dashboard_screen.dart';
 
 class BuyerNotificationsScreen extends StatefulWidget {
@@ -77,7 +78,28 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
   @override
   void initState() {
     super.initState();
+    PushNotificationService.onNotificationReceived.addListener(_onPushReceived);
     _loadNotifications();
+  }
+
+  @override
+  void dispose() {
+    PushNotificationService.onNotificationReceived.removeListener(_onPushReceived);
+    super.dispose();
+  }
+
+  void _onPushReceived() {
+    _loadNotificationsSilently();
+  }
+
+  Future<void> _loadNotificationsSilently() async {
+    final list = await NotificationService.instance.fetchNotifications();
+    if (!mounted) return;
+    setState(() {
+      if (list.isNotEmpty) {
+        _notifications = list;
+      }
+    });
   }
 
   Future<void> _loadNotifications() async {
@@ -231,28 +253,43 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
                       ),
                     )
                   : _notifications.isEmpty
-                      ? _buildEmptyState()
-                      : ListView(
-                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                          children: [
-                            if (todayList.isNotEmpty) ...[
-                              _buildSectionHeader('Today'),
-                              const SizedBox(height: 8),
-                              ...todayList.map((item) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _buildNotificationCard(item),
-                                  )),
+                      ? RefreshIndicator(
+                          onRefresh: _loadNotifications,
+                          color: const Color(0xFF00A63E),
+                          child: SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.6,
+                              child: _buildEmptyState(),
+                            ),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadNotifications,
+                          color: const Color(0xFF00A63E),
+                          child: ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                            children: [
+                              if (todayList.isNotEmpty) ...[
+                                _buildSectionHeader('Today'),
+                                const SizedBox(height: 8),
+                                ...todayList.map((item) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 12),
+                                      child: _buildNotificationCard(item),
+                                    )),
+                              ],
+                              if (earlierList.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                _buildSectionHeader('Earlier'),
+                                const SizedBox(height: 8),
+                                ...earlierList.map((item) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 12),
+                                      child: _buildNotificationCard(item),
+                                    )),
+                              ],
                             ],
-                            if (earlierList.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              _buildSectionHeader('Earlier'),
-                              const SizedBox(height: 8),
-                              ...earlierList.map((item) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _buildNotificationCard(item),
-                                  )),
-                            ],
-                          ],
+                          ),
                         ),
             ),
           ],

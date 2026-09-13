@@ -26,7 +26,17 @@ import {
   Mail,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
-import { getSession, getAvatarUrl } from "@/lib/auth";
+import { getSession, saveSession, getAvatarUrl } from "@/lib/auth";
+import {
+  updateUserProfile,
+  changeUserPassword,
+  getUserPreferences,
+  updateUserPreferences,
+  getUserSessions,
+  revokeUserSession,
+  revokeAllOtherSessions,
+  toggleTwoFactorAuth,
+} from "@/lib/admin-api";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<
@@ -48,6 +58,48 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState("+92 300 0000000");
   const [role, setRole] = useState("Super Admin");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  // Password Form state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  // Notifications Preferences toggles
+  const [emailUserApprovals, setEmailUserApprovals] = useState(true);
+  const [emailNewBids, setEmailNewBids] = useState(true);
+  const [emailFacebookLeads, setEmailFacebookLeads] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
+  const [pushDealUpdates, setPushDealUpdates] = useState(false);
+  const [smsFacebookLeads, setSmsFacebookLeads] = useState(false);
+
+  // Sessions state
+  const [sessions, setSessions] = useState<any[]>([
+    {
+      id: "curr_default",
+      device: "Current Web Browser",
+      location: "Karachi, PK",
+      time: "Active now",
+      isCurrent: true,
+    },
+  ]);
+
+  // Login Security toggles
+  const [twoFactorAuth, setTwoFactorAuth] = useState(false);
+  const [loginAlerts, setLoginAlerts] = useState(true);
+  const [trustedDevicesOnly, setTrustedDevicesOnly] = useState(false);
+
+  // Toast feedback
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   useEffect(() => {
     const session = getSession();
@@ -58,69 +110,61 @@ export default function SettingsPage() {
       if (session.user.role) setRole(session.user.role.toUpperCase());
       if (session.user.profile_photo_url) setProfilePhotoUrl(session.user.profile_photo_url);
     }
+
+    // Load persisted preferences from backend
+    getUserPreferences().then((prefs) => {
+      if (prefs) {
+        if (typeof prefs.email_user_approvals === "boolean") setEmailUserApprovals(prefs.email_user_approvals);
+        if (typeof prefs.email_new_bids === "boolean") setEmailNewBids(prefs.email_new_bids);
+        if (typeof prefs.email_facebook_leads === "boolean") setEmailFacebookLeads(prefs.email_facebook_leads);
+        if (typeof prefs.push_notifications === "boolean") setPushNotifications(prefs.push_notifications);
+        if (typeof prefs.push_deal_updates === "boolean") setPushDealUpdates(prefs.push_deal_updates);
+        if (typeof prefs.sms_facebook_leads === "boolean") setSmsFacebookLeads(prefs.sms_facebook_leads);
+        if (typeof prefs.login_alerts === "boolean") setLoginAlerts(prefs.login_alerts);
+        if (typeof prefs.trusted_devices_only === "boolean") setTrustedDevicesOnly(prefs.trusted_devices_only);
+        if (typeof prefs.two_factor_enabled === "boolean") setTwoFactorAuth(prefs.two_factor_enabled);
+      }
+    });
+
+    // Load active sessions from backend
+    getUserSessions().then((sessList) => {
+      if (sessList && sessList.length > 0) {
+        setSessions(sessList);
+      }
+    });
   }, []);
 
-  // Password Form state
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSavingProfile(true);
+      await updateUserProfile({
+        display_name: fullName,
+        phone_number: phone,
+      });
 
-  // Notifications Preferences toggles (Exact as media_1787849091091.png)
-  const [emailUserApprovals, setEmailUserApprovals] = useState(true);
-  const [emailNewBids, setEmailNewBids] = useState(true);
-  const [emailFacebookLeads, setEmailFacebookLeads] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(false);
-  const [pushDealUpdates, setPushDealUpdates] = useState(false);
-  const [smsFacebookLeads, setSmsFacebookLeads] = useState(false);
-
-  // Sessions state (Exact as media_1787849234992.png)
-  const [sessions, setSessions] = useState([
-    {
-      id: "1",
-      device: "Chrome on Windows 11",
-      location: "Karachi, PK",
-      time: "Active now",
-      isCurrent: true,
-    },
-    {
-      id: "2",
-      device: "Safari on MacBook Pro",
-      location: "Lahore, PK",
-      time: "2 days ago",
-      isCurrent: false,
-    },
-    {
-      id: "3",
-      device: "Firefox on Ubuntu",
-      location: "Islamabad, PK",
-      time: "5 days ago",
-      isCurrent: false,
-    },
-  ]);
-
-  // Login Security toggles (Exact as media_1787849437634.png)
-  const [twoFactorAuth, setTwoFactorAuth] = useState(false);
-  const [loginAlerts, setLoginAlerts] = useState(true);
-  const [trustedDevicesOnly, setTrustedDevicesOnly] = useState(false);
-
-  // Toast feedback
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+      const session = getSession();
+      if (session) {
+        saveSession(session.token, {
+          ...session.user,
+          display_name: fullName,
+          phone_number: phone,
+        });
+      }
+      showToast("Profile settings saved successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to save profile.");
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    showToast("Profile settings saved successfully!");
-  };
-
-  const handleSavePassword = (e: React.FormEvent) => {
-    e.preventDefault();
+    if (!currentPassword) {
+      showToast("Please enter your current password.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
       showToast("Passwords do not match!");
       return;
@@ -129,10 +173,68 @@ export default function SettingsPage() {
       showToast("Password must be at least 6 characters!");
       return;
     }
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    showToast("Password updated successfully!");
+    try {
+      setIsSavingPassword(true);
+      await changeUserPassword(currentPassword, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      showToast("Password updated successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to update password.");
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
+  const handleTogglePref = async (
+    key: string,
+    currentVal: boolean,
+    setter: (val: boolean) => void,
+    label: string
+  ) => {
+    const newVal = !currentVal;
+    setter(newVal);
+    try {
+      await updateUserPreferences({ [key]: newVal });
+      showToast(`${label} ${newVal ? "enabled" : "disabled"}`);
+    } catch (e) {
+      setter(currentVal);
+      showToast(`Failed to update ${label}`);
+    }
+  };
+
+  const handleToggle2FA = async () => {
+    const newVal = !twoFactorAuth;
+    setTwoFactorAuth(newVal);
+    try {
+      await toggleTwoFactorAuth(newVal);
+      await updateUserPreferences({ two_factor_enabled: newVal });
+      showToast(`Two-Factor Authentication ${newVal ? "enabled" : "disabled"}`);
+    } catch (e) {
+      setTwoFactorAuth(!newVal);
+      showToast("Failed to update Two-Factor Authentication");
+    }
+  };
+
+  const handleRevokeSession = async (sess: any) => {
+    try {
+      await revokeUserSession(sess.id);
+      setSessions((prev) => prev.filter((s) => s.id !== sess.id));
+      showToast(`Revoked session: ${sess.device}`);
+    } catch (e) {
+      showToast("Failed to revoke session");
+    }
+  };
+
+  const handleRevokeAllOtherSessions = async () => {
+    try {
+      await revokeAllOtherSessions();
+      setSessions((prev) => prev.filter((s) => s.isCurrent || s.is_current));
+      showToast("All other sessions revoked successfully!");
+    } catch (e) {
+      showToast("Failed to revoke sessions");
+    }
   };
 
   const navItems = [
@@ -351,9 +453,10 @@ export default function SettingsPage() {
                       <div className="pt-3">
                         <button
                           type="submit"
-                          className="px-6 py-2.5 bg-[#009845] hover:bg-[#008230] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                          disabled={isSavingProfile}
+                          className="px-6 py-2.5 bg-[#009845] hover:bg-[#008230] text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                         >
-                          Save Changes
+                          {isSavingProfile ? "Saving..." : "Save Changes"}
                         </button>
                       </div>
                     </form>
@@ -444,9 +547,10 @@ export default function SettingsPage() {
                       <div className="pt-2">
                         <button
                           type="submit"
-                          className="px-6 py-2.5 bg-[#009845] hover:bg-[#008230] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
+                          disabled={isSavingPassword}
+                          className="px-6 py-2.5 bg-[#009845] hover:bg-[#008230] text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                         >
-                          Update Password
+                          {isSavingPassword ? "Updating..." : "Update Password"}
                         </button>
                       </div>
                     </form>
@@ -476,12 +580,14 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setEmailUserApprovals(!emailUserApprovals);
-                            showToast(
-                              `User approval emails ${!emailUserApprovals ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={() =>
+                            handleTogglePref(
+                              "email_user_approvals",
+                              emailUserApprovals,
+                              setEmailUserApprovals,
+                              "User approval emails"
+                            )
+                          }
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             emailUserApprovals ? "bg-[#009845]" : "bg-gray-200"
                           }`}
@@ -509,12 +615,14 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setEmailNewBids(!emailNewBids);
-                            showToast(
-                              `Bid alert emails ${!emailNewBids ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={() =>
+                            handleTogglePref(
+                              "email_new_bids",
+                              emailNewBids,
+                              setEmailNewBids,
+                              "Bid alert emails"
+                            )
+                          }
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             emailNewBids ? "bg-[#009845]" : "bg-gray-200"
                           }`}
@@ -542,12 +650,14 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setEmailFacebookLeads(!emailFacebookLeads);
-                            showToast(
-                              `Facebook lead emails ${!emailFacebookLeads ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={() =>
+                            handleTogglePref(
+                              "email_facebook_leads",
+                              emailFacebookLeads,
+                              setEmailFacebookLeads,
+                              "Facebook lead emails"
+                            )
+                          }
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             emailFacebookLeads ? "bg-[#009845]" : "bg-gray-200"
                           }`}
@@ -575,12 +685,14 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setPushNotifications(!pushNotifications);
-                            showToast(
-                              `Push notifications ${!pushNotifications ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={() =>
+                            handleTogglePref(
+                              "push_notifications",
+                              pushNotifications,
+                              setPushNotifications,
+                              "Push notifications"
+                            )
+                          }
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             pushNotifications ? "bg-[#009845]" : "bg-gray-200"
                           }`}
@@ -608,12 +720,14 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setPushDealUpdates(!pushDealUpdates);
-                            showToast(
-                              `Deal update push alerts ${!pushDealUpdates ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={() =>
+                            handleTogglePref(
+                              "push_deal_updates",
+                              pushDealUpdates,
+                              setPushDealUpdates,
+                              "Deal update push alerts"
+                            )
+                          }
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             pushDealUpdates ? "bg-[#009845]" : "bg-gray-200"
                           }`}
@@ -641,12 +755,14 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSmsFacebookLeads(!smsFacebookLeads);
-                            showToast(
-                              `SMS lead alerts ${!smsFacebookLeads ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={() =>
+                            handleTogglePref(
+                              "sms_facebook_leads",
+                              smsFacebookLeads,
+                              setSmsFacebookLeads,
+                              "SMS lead alerts"
+                            )
+                          }
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             smsFacebookLeads ? "bg-[#009845]" : "bg-gray-200"
                           }`}
@@ -692,17 +808,14 @@ export default function SettingsPage() {
                             </div>
                           </div>
 
-                          {sess.isCurrent ? (
+                          {sess.isCurrent || sess.is_current ? (
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                               Current
                             </span>
                           ) : (
                             <button
                               type="button"
-                              onClick={() => {
-                                setSessions((prev) => prev.filter((s) => s.id !== sess.id));
-                                showToast(`Revoked session: ${sess.device}`);
-                              }}
+                              onClick={() => handleRevokeSession(sess)}
                               className="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
                             >
                               Revoke
@@ -716,10 +829,7 @@ export default function SettingsPage() {
                     <div className="pt-3">
                       <button
                         type="button"
-                        onClick={() => {
-                          setSessions((prev) => prev.filter((s) => s.isCurrent));
-                          showToast("All other sessions revoked successfully!");
-                        }}
+                        onClick={handleRevokeAllOtherSessions}
                         className="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold rounded-xl transition-colors cursor-pointer shadow-2xs"
                       >
                         Revoke All Other Sessions
@@ -748,12 +858,7 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setTwoFactorAuth(!twoFactorAuth);
-                            showToast(
-                              `Two-Factor Authentication ${!twoFactorAuth ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={handleToggle2FA}
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             twoFactorAuth ? "bg-[#009845]" : "bg-gray-200"
                           }`}
@@ -778,12 +883,14 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setLoginAlerts(!loginAlerts);
-                            showToast(
-                              `Login alerts ${!loginAlerts ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={() =>
+                            handleTogglePref(
+                              "login_alerts",
+                              loginAlerts,
+                              setLoginAlerts,
+                              "Login alerts"
+                            )
+                          }
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             loginAlerts ? "bg-[#009845]" : "bg-gray-200"
                           }`}
@@ -808,12 +915,14 @@ export default function SettingsPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setTrustedDevicesOnly(!trustedDevicesOnly);
-                            showToast(
-                              `Trusted devices only ${!trustedDevicesOnly ? "enabled" : "disabled"}`
-                            );
-                          }}
+                          onClick={() =>
+                            handleTogglePref(
+                              "trusted_devices_only",
+                              trustedDevicesOnly,
+                              setTrustedDevicesOnly,
+                              "Trusted devices only"
+                            )
+                          }
                           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
                             trustedDevicesOnly ? "bg-[#009845]" : "bg-gray-200"
                           }`}

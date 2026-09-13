@@ -12,7 +12,20 @@
           "package_name": "com.example.solar_scrap"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "436150981342-i7e3ahsc62hd0o5at77asiq7lkpb8gr9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.solar_scrap",
+            "certificate_hash": "026b1beda504fa922d407e5511e6da3e4653e1d6"
+          }
+        },
+        {
+          "client_id": "436150981342-p0al738lojtbed5lmn22gjo93ret6a0q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB1sJ3Ap_DnkUbsGeeHur-5pRF6v5LNaJg"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "436150981342-p0al738lojtbed5lmn22gjo93ret6a0q.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "436150981342-u70s82v7uq5alnljm47a2dvb4622edkh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.solarScrap"
+              }
+            }
+          ]
         }
       }
     }

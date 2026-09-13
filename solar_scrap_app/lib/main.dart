@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'screens/role_selection_screen.dart';
 import 'screens/buyer/buyer_dashboard_screen.dart';
 import 'screens/buyer/buyer_account_created_screen.dart';
 import 'screens/seller/seller_dashboard_screen.dart';
 import 'services/auth_service.dart';
+import 'services/remote_config_service.dart';
+import 'services/push_notification_service.dart';
+import 'services/user_preferences_service.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    await RemoteConfigService.instance.init();
+    await PushNotificationService.instance.initialize();
+    await UserPreferencesService.instance.init();
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
   final bool isLoggedIn = await AuthService.instance.tryAutoLogin();
   runApp(MyApp(isLoggedIn: isLoggedIn));
 }

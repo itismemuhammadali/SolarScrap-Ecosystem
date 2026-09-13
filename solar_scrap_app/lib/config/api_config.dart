@@ -16,5 +16,10 @@ class ApiConfig {
   // Auth Endpoints
   static String get loginUrl => '$baseUrl/api/v1/auth/login';
   static String get meUrl => '$baseUrl/api/v1/auth/me';
+  static String get deleteAccountUrl => '$baseUrl/api/v1/auth/account';
   static String get healthUrl => '$baseUrl/api/v1/health';
+
+  // Google OAuth Web Client ID (from Firebase Console)
+  static const String googleServerClientId =
+      '436150981342-p0al738lojtbed5lmn22gjo93ret6a0q.apps.googleusercontent.com';
 }

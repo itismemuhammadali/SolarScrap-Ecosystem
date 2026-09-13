@@ -450,5 +450,166 @@ export async function submitPublicLead(payload: {
   return response.json();
 }
 
+/**
+ * Update authenticated user profile
+ */
+export async function updateUserProfile(data: {
+  display_name?: string;
+  phone_number?: string;
+  company_name?: string;
+  city?: string;
+  area?: string;
+  address?: string;
+  company_type?: string;
+  gst_number?: string;
+  profile_photo_url?: string;
+}): Promise<any> {
+  const response = await fetch(`${API_BASE}/auth/profile`, {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
 
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update profile");
+  }
 
+  return response.json();
+}
+
+/**
+ * Change authenticated user password
+ */
+export async function changeUserPassword(currentPassword: string, newPassword: string): Promise<any> {
+  const response = await fetch(`${API_BASE}/auth/change-password`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to change password");
+  }
+
+  return response.json();
+}
+
+/**
+ * Get authenticated user notification & security preferences
+ */
+export async function getUserPreferences(): Promise<Record<string, boolean>> {
+  try {
+    const response = await fetch(`${API_BASE}/auth/preferences`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return {};
+    }
+
+    return await response.json();
+  } catch (e) {
+    console.error("Error fetching preferences:", e);
+    return {};
+  }
+}
+
+/**
+ * Update authenticated user notification & security preferences
+ */
+export async function updateUserPreferences(preferences: Record<string, any>): Promise<any> {
+  const response = await fetch(`${API_BASE}/auth/preferences`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(preferences),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update preferences");
+  }
+
+  return response.json();
+}
+
+/**
+ * Get active sessions for the authenticated user
+ */
+export async function getUserSessions(): Promise<any[]> {
+  try {
+    const response = await fetch(`${API_BASE}/auth/sessions`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    return data.sessions || [];
+  } catch (e) {
+    console.error("Error fetching sessions:", e);
+    return [];
+  }
+}
+
+/**
+ * Revoke a specific session
+ */
+export async function revokeUserSession(sessionId: string): Promise<any> {
+  const response = await fetch(`${API_BASE}/auth/sessions/${sessionId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to revoke session");
+  }
+
+  return response.json();
+}
+
+/**
+ * Revoke all sessions except the current one
+ */
+export async function revokeAllOtherSessions(): Promise<any> {
+  const response = await fetch(`${API_BASE}/auth/sessions/all-others`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to revoke sessions");
+  }
+
+  return response.json();
+}
+
+/**
+ * Toggle 2FA security status
+ */
+export async function toggleTwoFactorAuth(enabled: boolean): Promise<any> {
+  const response = await fetch(`${API_BASE}/auth/toggle-2fa`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ enabled }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to update 2FA status");
+  }
+
+  return response.json();
+}

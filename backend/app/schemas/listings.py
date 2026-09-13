@@ -22,6 +22,8 @@ class CreateListingRequest(BaseModel):
     contact_name: str = Field(..., description="Seller/Contact Person Name")
     contact_phone: str = Field(..., description="Contact Phone Number")
     contact_email: str = Field(..., description="Contact Email Address")
+    latitude: Optional[float] = Field(None, description="Pickup GPS Latitude")
+    longitude: Optional[float] = Field(None, description="Pickup GPS Longitude")
 
 
 class ListingResponse(BaseModel):
@@ -38,5 +40,7 @@ class ListingResponse(BaseModel):
     contact_name: str
     contact_phone: str
     contact_email: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None

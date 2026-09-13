@@ -12,6 +12,8 @@ class Listing {
   final String contactName;
   final String contactPhone;
   final String contactEmail;
+  final double? latitude;
+  final double? longitude;
   final String? createdAt;
   final String? updatedAt;
 
@@ -29,6 +31,8 @@ class Listing {
     required this.contactName,
     required this.contactPhone,
     required this.contactEmail,
+    this.latitude,
+    this.longitude,
     this.createdAt,
     this.updatedAt,
   });
@@ -50,6 +54,8 @@ class Listing {
       contactName: json['contact_name']?.toString() ?? '',
       contactPhone: json['contact_phone']?.toString() ?? '',
       contactEmail: json['contact_email']?.toString() ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       createdAt: json['created_at']?.toString(),
       updatedAt: json['updated_at']?.toString(),
     );
@@ -70,6 +76,8 @@ class Listing {
       'contact_name': contactName,
       'contact_phone': contactPhone,
       'contact_email': contactEmail,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };

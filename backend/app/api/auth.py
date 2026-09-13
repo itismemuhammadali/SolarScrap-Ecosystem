@@ -1,12 +1,14 @@
 import random
 import uuid
 import httpx
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Depends, status, Header
 from firebase_admin import auth, firestore
 from app.schemas.auth import (
     LoginRequest,
     GoogleAuthRequest,
+    AppleAuthRequest,
     LoginResponse,
     UserProfile,
     UserRole,
@@ -21,6 +23,12 @@ from app.schemas.auth import (
     VerifyOtpResponse,
     ResetPasswordRequest,
     ResetPasswordResponse,
+    Toggle2FARequest,
+    FcmTokenRequest,
+    ChangePasswordRequest,
+    UserPreferencesModel,
+    SessionItem,
+    SessionListResponse,
 )
 from app.core.firebase import verify_password_with_firebase, get_firestore_db
 from app.core.config import settings
@@ -93,6 +101,7 @@ async def get_current_user(authorization: str = Header(...)) -> UserProfile:
             user_data = user_doc.to_dict() or {}
             role = user_data.get("role", UserRole.BUYER)
             display_name = user_data.get("display_name", display_name)
+            email = user_data.get("email") or email
             phone_number = user_data.get("phone_number")
             company_name = user_data.get("company_name")
             city = user_data.get("city")
@@ -102,6 +111,17 @@ async def get_current_user(authorization: str = Header(...)) -> UserProfile:
             gst_number = user_data.get("gst_number")
             profile_photo_url = user_data.get("profile_photo_url")
             user_status = user_data.get("status", "approved")
+            user_lat = user_data.get("latitude")
+            user_lng = user_data.get("longitude")
+            email_verified = user_data.get("email_verified", False)
+            phone_verified = user_data.get("phone_verified", False)
+            two_factor_enabled = user_data.get("two_factor_enabled", False)
+            fcm_token = user_data.get("fcm_token")
+        else:
+            email_verified = False
+            phone_verified = False
+            two_factor_enabled = False
+            fcm_token = None
 
         return UserProfile(
             user_id=uid,
@@ -117,6 +137,12 @@ async def get_current_user(authorization: str = Header(...)) -> UserProfile:
             gst_number=gst_number,
             profile_photo_url=profile_photo_url,
             status=user_status,
+            email_verified=email_verified,
+            phone_verified=phone_verified,
+            two_factor_enabled=two_factor_enabled,
+            fcm_token=fcm_token,
+            latitude=user_lat,
+            longitude=user_lng,
         )
     except Exception as e:
         raise HTTPException(
@@ -405,6 +431,148 @@ async def google_auth(payload: GoogleAuthRequest):
     )
 
 
+@router.post("/apple", response_model=LoginResponse)
+async def apple_auth(payload: AppleAuthRequest):
+    """
+    Sign in or Register with Apple account.
+    Required by Apple App Store Review Guideline 4.8.
+    """
+    email = (payload.email or "").strip().lower()
+    user_id = payload.user_identifier.strip()
+
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Apple User Identifier is required.",
+        )
+
+    if not email:
+        email = f"{user_id}@apple.solarscrap.com"
+
+    db = get_firestore_db()
+    uid = None
+
+    # 1. Search in Firestore by apple_id or email
+    query = list(db.collection("users").where("apple_id", "==", user_id).limit(1).stream())
+    if query:
+        uid = query[0].id
+    else:
+        email_query = list(db.collection("users").where("email", "==", email).limit(1).stream())
+        if email_query:
+            uid = email_query[0].id
+
+    # 2. Check Firebase Auth
+    if not uid:
+        try:
+            user_record = auth.get_user_by_email(email)
+            uid = user_record.uid
+        except auth.UserNotFoundError:
+            pass
+        except Exception as e:
+            print(f"[Auth] Error checking user by email in Apple auth: {e}")
+
+    # 3. If new user, create in Firebase Auth
+    if not uid:
+        try:
+            display_name = payload.display_name or "Apple User"
+            user_record = auth.create_user(
+                email=email,
+                display_name=display_name,
+            )
+            uid = user_record.uid
+            auth.set_custom_user_claims(uid, {"role": payload.role.value})
+        except Exception as e:
+            try:
+                user_record = auth.get_user_by_email(email)
+                uid = user_record.uid
+            except Exception:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Could not initialize Apple account: {str(e)}",
+                )
+
+    user_ref = db.collection("users").document(uid)
+    user_doc = user_ref.get()
+
+    if user_doc.exists:
+        user_data = user_doc.to_dict() or {}
+        registered_role = str(user_data.get("role") or payload.role.value).lower()
+
+        if registered_role != payload.role.value.lower():
+            registered = registered_role.capitalize()
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied. This account is registered as a {registered}. Please use the {registered} portal to sign in.",
+            )
+
+        user_status = str(user_data.get("status", "approved")).lower()
+        if user_status == "rejected":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Your account has been rejected by administrator. Please contact support.",
+            )
+
+        display_name = user_data.get("display_name") or payload.display_name or "Apple User"
+        phone = user_data.get("phone_number")
+        company_name = user_data.get("company_name")
+        city = user_data.get("city")
+        area = user_data.get("area")
+        address = user_data.get("address")
+        company_type = user_data.get("company_type")
+        gst_number = user_data.get("gst_number")
+        profile_photo_url = user_data.get("profile_photo_url")
+    else:
+        registered_role = payload.role.value.lower()
+        display_name = payload.display_name or "Apple User"
+        phone = None
+        company_name = None
+        city = None
+        area = None
+        address = None
+        company_type = None
+        gst_number = None
+        profile_photo_url = None
+        user_status = "approved"
+
+        user_dict = {
+            "email": email,
+            "display_name": display_name,
+            "role": registered_role,
+            "status": user_status,
+            "apple_id": user_id,
+            "auth_provider": "apple",
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }
+        user_ref.set(user_dict)
+
+    access_token = await generate_firebase_token_for_uid(uid)
+
+    user_profile = UserProfile(
+        user_id=uid,
+        email=email,
+        role=UserRole(registered_role),
+        display_name=display_name,
+        phone_number=phone,
+        company_name=company_name,
+        city=city,
+        area=area,
+        address=address,
+        company_type=company_type,
+        gst_number=gst_number,
+        profile_photo_url=profile_photo_url,
+        status=user_status,
+    )
+
+    return LoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=user_profile,
+        message=f"Welcome {display_name or email}! Signed in successfully with Apple.",
+    )
+
+
+
 @router.get("/user-status")
 async def get_user_status(email: str = None, user_id: str = None):
     """
@@ -580,20 +748,51 @@ async def register(payload: RegisterRequest):
     """
     Register a new Buyer or Seller.
     Creates user in Firebase Auth, stores role in Firestore, and returns auth token.
+    Supports both email/password registration and Google/Apple social registrations.
     """
-    # 1. Create user in Firebase Auth
+    email = payload.email.strip().lower()
+    full_name = payload.full_name or email.split("@")[0].capitalize()
+
+    # 1. Look up or create user in Firebase Auth
+    uid = None
     try:
-        user_record = auth.create_user(
-            email=payload.email,
-            password=payload.password,
-            display_name=payload.full_name,
-        )
+        user_record = auth.get_user_by_email(email)
         uid = user_record.uid
-    except auth.EmailAlreadyExistsError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This email is already registered.",
-        )
+        # Update user display name and password if provided
+        update_args = {}
+        if full_name and user_record.display_name != full_name:
+            update_args["display_name"] = full_name
+        if payload.password:
+            update_args["password"] = payload.password
+        if update_args:
+            try:
+                auth.update_user(uid, **update_args)
+            except Exception as update_err:
+                print(f"[Auth] Could not update user in Firebase Auth: {update_err}")
+    except auth.UserNotFoundError:
+        try:
+            create_args = {
+                "email": email,
+                "display_name": full_name,
+            }
+            if payload.password:
+                create_args["password"] = payload.password
+            user_record = auth.create_user(**create_args)
+            uid = user_record.uid
+        except auth.EmailAlreadyExistsError:
+            try:
+                user_record = auth.get_user_by_email(email)
+                uid = user_record.uid
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This email is already registered.",
+                )
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Registration failed: {str(e)}",
+            )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -601,26 +800,47 @@ async def register(payload: RegisterRequest):
         )
 
     # 2. Set custom claims (optional but good for security)
-    auth.set_custom_user_claims(uid, {"role": payload.role.value})
+    try:
+        auth.set_custom_user_claims(uid, {"role": payload.role.value})
+    except Exception as claim_err:
+        print(f"[Auth] Could not set custom claims: {claim_err}")
 
-    # 3. Create Firestore record
+    # 3. Create or update Firestore record
     db = get_firestore_db()
     user_ref = db.collection("users").document(uid)
     initial_status = "approved" if payload.role == UserRole.ADMIN else "pending"
-    user_ref.set({
-        "email": payload.email,
+
+    # Check if doc already exists so we don't accidentally revert status
+    user_doc = user_ref.get()
+    if user_doc.exists:
+        doc_status = (user_doc.to_dict() or {}).get("status")
+        if doc_status:
+            initial_status = doc_status
+
+    user_data = {
+        "email": email,
         "role": payload.role.value,
         "status": initial_status,
-        "display_name": payload.full_name,
-        "phone_number": payload.phone_number,
-        "company_name": payload.company_name,
-        "city": payload.city,
-        "area": payload.area,
-        "address": payload.address,
+        "display_name": full_name,
+        "phone_number": payload.phone_number or "",
+        "company_name": payload.company_name or "",
+        "city": payload.city or "",
+        "area": payload.area or "",
+        "address": payload.address or "",
         "company_type": payload.company_type,
         "gst_number": payload.gst_number,
-        "created_at": firestore.SERVER_TIMESTAMP,
-    })
+        "latitude": payload.latitude,
+        "longitude": payload.longitude,
+        "email_verified": payload.email_verified,
+        "phone_verified": payload.phone_verified,
+        "two_factor_enabled": payload.two_factor_enabled,
+        "fcm_token": payload.fcm_token,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    }
+    if not user_doc.exists:
+        user_data["created_at"] = firestore.SERVER_TIMESTAMP
+
+    user_ref.set(user_data, merge=True)
 
     # Trigger admin notification for new user registration
     if payload.role != UserRole.ADMIN:
@@ -630,7 +850,7 @@ async def register(payload: RegisterRequest):
                 db=db,
                 notif_type="new_user_registered",
                 title="New User Registered",
-                description=f"{payload.full_name} registered as {payload.role.value.capitalize()} ({payload.city or 'Pakistan'}).",
+                description=f"{full_name} registered as {payload.role.value.capitalize()} ({payload.city or 'Pakistan'}).",
                 entity_id=uid,
                 entity_type="user",
             )
@@ -638,39 +858,44 @@ async def register(payload: RegisterRequest):
             print(f"[Auth] Could not create admin notification: {e}")
 
     # 4. Sign in to get ID token
-    auth_result = await verify_password_with_firebase(payload.email, payload.password)
-    
-    if not auth_result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="User created but failed to generate access token.",
-        )
+    id_token = None
+    if payload.password:
+        auth_result = await verify_password_with_firebase(email, payload.password)
+        if auth_result.get("success"):
+            id_token = auth_result.get("id_token")
 
-    id_token = auth_result["id_token"]
+    if not id_token:
+        id_token = await generate_firebase_token_for_uid(uid)
 
     user_profile = UserProfile(
         user_id=uid,
-        email=payload.email,
+        email=email,
         role=payload.role,
-        display_name=payload.full_name,
-        phone_number=payload.phone_number,
-        company_name=payload.company_name,
-        city=payload.city,
-        area=payload.area,
-        address=payload.address,
+        display_name=full_name,
+        phone_number=payload.phone_number or "",
+        company_name=payload.company_name or "",
+        city=payload.city or "",
+        area=payload.area or "",
+        address=payload.address or "",
         company_type=payload.company_type,
         gst_number=payload.gst_number,
         status=initial_status,
+        email_verified=payload.email_verified,
+        phone_verified=payload.phone_verified,
+        two_factor_enabled=payload.two_factor_enabled,
+        fcm_token=payload.fcm_token,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
     )
-    
-    # Mask phone for OTP UI (e.g. +923001234567 -> •••4567)
-    masked = "•••" + payload.phone_number[-4:] if len(payload.phone_number) > 4 else "•••"
+
+    phone_num = payload.phone_number or ""
+    masked = "•••" + phone_num[-4:] if len(phone_num) > 4 else "•••"
 
     return RegisterResponse(
         access_token=id_token,
         token_type="bearer",
         user=user_profile,
-        message=f"Registration successful for {payload.full_name}",
+        message=f"Registration successful for {full_name}",
         masked_phone=masked
     )
 
@@ -880,4 +1105,238 @@ async def reset_password(payload: ResetPasswordRequest):
     )
 
 
+@router.delete("/account")
+async def delete_account(current_user: UserProfile = Depends(get_current_user)):
+    """
+    Permanently delete the authenticated user's account and personal profile data.
+    Required for Apple App Store (Guideline 5.1.1(v)) and Google Play compliance.
+    """
+    uid = current_user.user_id
+    if not uid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User ID not identified.",
+        )
+
+    db = get_firestore_db()
+
+    # 1. Delete user record from Firestore
+    try:
+        user_ref = db.collection("users").document(uid)
+        user_ref.delete()
+    except Exception as e:
+        print(f"[Auth] Error deleting user document from Firestore: {e}")
+
+    # 2. Delete user from Firebase Auth
+    try:
+        auth.delete_user(uid)
+    except auth.UserNotFoundError:
+        pass
+    except Exception as e:
+        print(f"[Auth] Error deleting user from Firebase Auth: {e}")
+
+    return {"message": "Account and associated data deleted successfully."}
+
+
+@router.post("/fcm-token")
+async def register_fcm_token(
+    payload: FcmTokenRequest,
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Register or update the device FCM push token for the authenticated user.
+    """
+    token = payload.token.strip()
+    if not token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="FCM token cannot be empty.")
+
+    db = get_firestore_db()
+    try:
+        db.collection("users").document(current_user.user_id).set({
+            "fcm_token": token,
+            "fcm_token_updated_at": firestore.SERVER_TIMESTAMP,
+        }, merge=True)
+        return {"message": "FCM push token registered successfully."}
+    except Exception as e:
+        print(f"[Auth] Error registering FCM token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to register push token: {str(e)}",
+        )
+
+
+@router.post("/toggle-2fa")
+async def toggle_two_factor_auth(
+    payload: Toggle2FARequest,
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Enable or disable 2FA for the authenticated user.
+    """
+    db = get_firestore_db()
+    try:
+        db.collection("users").document(current_user.user_id).update({
+            "two_factor_enabled": payload.enabled,
+            "two_factor_updated_at": firestore.SERVER_TIMESTAMP,
+        })
+        return {
+            "message": f"Two-factor authentication {'enabled' if payload.enabled else 'disabled'} successfully.",
+            "two_factor_enabled": payload.enabled,
+        }
+    except Exception as e:
+        print(f"[Auth] Error updating 2FA preference: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update 2FA status: {str(e)}",
+        )
+
+
+@router.post("/change-password")
+async def change_password(
+    payload: ChangePasswordRequest,
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Change password for authenticated user. Verifies current password first.
+    """
+    # Verify current password if user has email and not in dev/bypass mode
+    if current_user.email:
+        is_dev_user = current_user.user_id in ("admin_system", "admin_dev")
+        if not is_dev_user and not settings.USE_EMULATOR:
+            is_valid, _ = verify_password_with_firebase(current_user.email, payload.current_password)
+            if not is_valid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Current password is incorrect.",
+                )
+
+    # Update password in Firebase Auth
+    try:
+        if current_user.user_id not in ("admin_system", "admin_dev"):
+            auth.update_user(current_user.user_id, password=payload.new_password)
+    except Exception as e:
+        print(f"[Auth] Error updating password in Firebase: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update password: {str(e)}",
+        )
+
+    return {"message": "Password updated successfully."}
+
+
+@router.get("/preferences")
+async def get_user_preferences(
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Get user notification & security preferences.
+    """
+    db = get_firestore_db()
+    user_doc = db.collection("users").document(current_user.user_id).get()
+    prefs = {}
+    if user_doc.exists:
+        data = user_doc.to_dict() or {}
+        prefs = data.get("preferences", {})
+    return prefs
+
+
+@router.put("/preferences")
+async def update_user_preferences(
+    payload: Dict[str, Any],
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Update user notification & security preferences.
+    """
+    db = get_firestore_db()
+    user_ref = db.collection("users").document(current_user.user_id)
+
+    user_doc = user_ref.get()
+    existing_prefs = {}
+    if user_doc.exists:
+        data = user_doc.to_dict() or {}
+        existing_prefs = data.get("preferences", {})
+
+    existing_prefs.update(payload)
+    user_ref.set({"preferences": existing_prefs, "updated_at": firestore.SERVER_TIMESTAMP}, merge=True)
+    return {"message": "Preferences updated successfully.", "preferences": existing_prefs}
+
+
+@router.get("/sessions", response_model=SessionListResponse)
+async def get_user_sessions(
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Get list of active sessions for the current user.
+    """
+    db = get_firestore_db()
+    sessions_ref = db.collection("users").document(current_user.user_id).collection("sessions")
+    docs = list(sessions_ref.limit(10).stream())
+
+    sessions_list = []
+    for doc in docs:
+        s_data = doc.to_dict() or {}
+        sessions_list.append(SessionItem(
+            id=doc.id,
+            device=s_data.get("device", "Browser Session"),
+            location=s_data.get("location", "Pakistan"),
+            time=s_data.get("time", "Active now"),
+            is_current=s_data.get("is_current", False),
+            ip_address=s_data.get("ip_address"),
+            created_at=str(s_data.get("created_at", "")),
+        ))
+
+    # If no sessions in DB yet, create a default current session
+    if not sessions_list:
+        default_session_id = "curr_" + current_user.user_id[:8]
+        current_sess = {
+            "device": "Current Web Session",
+            "location": "Karachi, PK",
+            "time": "Active now",
+            "is_current": True,
+            "created_at": firestore.SERVER_TIMESTAMP,
+        }
+        sessions_ref.document(default_session_id).set(current_sess)
+        sessions_list = [SessionItem(
+            id=default_session_id,
+            device="Current Web Session",
+            location="Karachi, PK",
+            time="Active now",
+            is_current=True,
+        )]
+
+    return SessionListResponse(sessions=sessions_list)
+
+
+@router.delete("/sessions/all-others")
+async def revoke_all_other_sessions(
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Revoke all other user sessions except the current one.
+    """
+    db = get_firestore_db()
+    sessions_ref = db.collection("users").document(current_user.user_id).collection("sessions")
+    docs = sessions_ref.stream()
+    for doc in docs:
+        s_data = doc.to_dict() or {}
+        if not s_data.get("is_current", False):
+            doc.reference.delete()
+    return {"message": "All other sessions revoked successfully."}
+
+
+@router.delete("/sessions/{session_id}")
+async def revoke_user_session(
+    session_id: str,
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Revoke a specific user session.
+    """
+    db = get_firestore_db()
+    session_ref = db.collection("users").document(current_user.user_id).collection("sessions").document(session_id)
+    session_doc = session_ref.get()
+    if session_doc.exists:
+        session_ref.delete()
+    return {"message": "Session revoked successfully."}
 

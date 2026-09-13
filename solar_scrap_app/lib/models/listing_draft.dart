@@ -9,6 +9,8 @@ class ListingDraft {
   String? contactName;
   String? contactPhone;
   String? contactEmail;
+  double? latitude;
+  double? longitude;
 
   ListingDraft({
     this.category,
@@ -21,6 +23,8 @@ class ListingDraft {
     this.contactName,
     this.contactPhone,
     this.contactEmail,
+    this.latitude,
+    this.longitude,
   })  : specs = specs ?? {},
         imageUrls = imageUrls ?? [];
 
@@ -36,6 +40,8 @@ class ListingDraft {
       'contact_name': contactName ?? '',
       'contact_phone': contactPhone ?? '',
       'contact_email': contactEmail ?? '',
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 

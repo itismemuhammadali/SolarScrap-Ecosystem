@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -9,6 +10,7 @@ import '../../models/seller_stats.dart';
 import '../../services/listing_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/profile_service.dart';
+import '../../services/push_notification_service.dart';
 import 'seller_edit_profile_screen.dart';
 import 'seller_settings_screen.dart';
 import 'seller_new_listing_screen.dart';
@@ -25,7 +27,8 @@ class SellerDashboardScreen extends StatefulWidget {
   State<SellerDashboardScreen> createState() => _SellerDashboardScreenState();
 }
 
-class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
+class _SellerDashboardScreenState extends State<SellerDashboardScreen>
+    with WidgetsBindingObserver {
   int _selectedIndex = 0;
   String _selectedFilter = 'All';
   String _searchQuery = '';
@@ -35,11 +38,60 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   List<Listing> _myListings = [];
   List<NotificationItem> _notifications = [];
   bool _isProfileLoading = false;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    PushNotificationService.onNotificationReceived.addListener(_onPushReceived);
     _loadProfileData();
+    // Silent background poll every 25 seconds while dashboard is open
+    _pollTimer = Timer.periodic(const Duration(seconds: 25), (_) {
+      _silentRefresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    PushNotificationService.onNotificationReceived.removeListener(_onPushReceived);
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _silentRefresh();
+    }
+  }
+
+  void _onPushReceived() {
+    _silentRefresh();
+  }
+
+  Future<void> _silentRefresh() async {
+    if (!mounted) return;
+    try {
+      final notifsFuture = NotificationService.instance.fetchNotifications();
+      final listingsFuture = ListingService.instance.fetchMyListings();
+      final statsFuture = ProfileService.instance.fetchStats();
+      final results = await Future.wait([notifsFuture, listingsFuture, statsFuture]);
+      if (!mounted) return;
+      setState(() {
+        final fetchedNotifs = results[0] as List<NotificationItem>;
+        if (fetchedNotifs.isNotEmpty) {
+          _notifications = fetchedNotifs;
+        }
+        final fetchedListings = results[1] as List<Listing>;
+        _myListings = fetchedListings;
+        _allListings = fetchedListings.map((l) => _mapListingToDashboard(l)).toList();
+        if (results[2] != null) {
+          _stats = results[2] as SellerStats;
+        }
+      });
+    } catch (_) {}
   }
 
   Future<void> _loadProfileData() async {
@@ -275,80 +327,80 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
       body: SafeArea(
         child: _buildCurrentView(),
       ),
-      // Bottom Navigation Bar
+      floatingActionButton: _buildCenterAddButton(),
+      floatingActionButtonLocation: const _CustomCenterDockedLocation(offsetY: -4),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
+  Widget _buildCenterAddButton() {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SellerNewListingScreen(),
+          ),
+        ).then((_) => _silentRefresh());
+      },
+      child: Container(
+        width: 68,
+        height: 68,
+        alignment: Alignment.center,
+        color: Colors.transparent, // Ensures 100% of the 68x68 touch area receives taps
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFF00A63E),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.add,
+              color: Color(0xFF00A63E),
+              size: 28,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomNavBar() {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.bottomCenter,
-      children: [
-        CustomPaint(
-          size: Size(MediaQuery.of(context).size.width, 68 + MediaQuery.of(context).padding.bottom),
-          painter: const NotchedBottomBarPainter(),
-          child: SafeArea(
-            top: false,
-            child: SizedBox(
-              height: 68,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  children: [
-                    Expanded(child: _buildNavItem('assets/icons/home.svg', 'Home', 0)),
-                    Expanded(child: _buildNavItem('assets/icons/listing.svg', 'Listing', 1)),
-                    const SizedBox(width: 80), // Space for center notch
-                    Expanded(child: _buildNavItem('assets/icons/bell.svg', 'Alerts', 2)),
-                    Expanded(child: _buildNavItem('assets/icons/person.svg', 'Profile', 3)),
-                  ],
-                ),
-              ),
+    return CustomPaint(
+      size: Size(MediaQuery.of(context).size.width, 68 + MediaQuery.of(context).padding.bottom),
+      painter: const NotchedBottomBarPainter(),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 68,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              children: [
+                Expanded(child: _buildNavItem('assets/icons/home.svg', 'Home', 0)),
+                Expanded(child: _buildNavItem('assets/icons/listing.svg', 'Listing', 1)),
+                const SizedBox(width: 80), // Space for center notch
+                Expanded(child: _buildNavItem('assets/icons/bell.svg', 'Alerts', 2)),
+                Expanded(child: _buildNavItem('assets/icons/person.svg', 'Profile', 3)),
+              ],
             ),
           ),
         ),
-        Positioned(
-          top: -34,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SellerNewListingScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFF00A63E),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.12),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Color(0xFF00A63E),
-                  size: 28,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -1824,7 +1876,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               await AuthService.instance.logout();
-              if (context.mounted) {
+              if (mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
@@ -2000,4 +2052,18 @@ class NotchedBottomBarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _CustomCenterDockedLocation extends FloatingActionButtonLocation {
+  final double offsetY;
+  const _CustomCenterDockedLocation({this.offsetY = 0});
+
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
+    final double fabX = (scaffoldGeometry.scaffoldSize.width - scaffoldGeometry.floatingActionButtonSize.width) / 2.0;
+    final double contentBottom = scaffoldGeometry.contentBottom;
+    final double fabHeight = scaffoldGeometry.floatingActionButtonSize.height;
+    final double fabY = contentBottom - fabHeight / 2.0 + offsetY;
+    return Offset(fabX, fabY);
+  }
 }

@@ -17,6 +17,43 @@ def _format_datetime(dt):
     return str(dt)
 
 
+def send_fcm_push_notification(fcm_token: str, title: str, description: str, data: Optional[dict] = None):
+    """Dispatch real-time push notification to device via Firebase Cloud Messaging."""
+    try:
+        from firebase_admin import messaging
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=description,
+            ),
+            data={k: str(v) for k, v in (data or {}).items()},
+            token=fcm_token,
+            android=messaging.AndroidConfig(
+                priority="high",
+                notification=messaging.AndroidNotification(
+                    channel_id="solar_scrap_channel",
+                    sound="default",
+                    icon="ic_notification",
+                    color="#00A63E",
+                ),
+            ),
+            apns=messaging.APNSConfig(
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(
+                        sound="default",
+                        badge=1,
+                    ),
+                ),
+            ),
+        )
+        response = messaging.send(message)
+        print(f"📲 [FCM] Sent push notification: {response}")
+        return response
+    except Exception as e:
+        print(f"⚠️ [FCM] Could not send push notification: {e}")
+        return None
+
+
 def create_user_notification(
     db,
     user_id: str,
@@ -28,6 +65,7 @@ def create_user_notification(
     """
     Helper function to insert a notification document into Firestore
     subcollection: users/{user_id}/notifications/{notif_id}
+    AND dispatches a native push notification if user has an active FCM token.
     """
     try:
         notif_ref = (
@@ -46,6 +84,47 @@ def create_user_notification(
             "created_at": firestore.SERVER_TIMESTAMP,
         }
         notif_ref.set(notif_data)
+
+        # Retrieve user FCM device token and dispatch push notification (respecting preferences)
+        try:
+            user_doc = db.collection("users").document(user_id).get()
+            if user_doc.exists:
+                user_info = user_doc.to_dict() or {}
+                prefs = user_info.get("preferences", {})
+
+                # Check if this type of notification is enabled by the user
+                send_push = True
+                nt = (notif_type or "").lower()
+                if "bid" in nt:
+                    send_push = prefs.get("bid_updates", True)
+                elif "listing" in nt:
+                    send_push = prefs.get("listing_updates", True)
+                elif "offer" in nt or "price" in nt:
+                    send_push = prefs.get("price_offers", True)
+                elif "won" in nt or "win" in nt:
+                    send_push = prefs.get("winning_notifications", True)
+                elif "auction" in nt:
+                    send_push = prefs.get("new_auctions", True)
+                elif "product" in nt:
+                    send_push = prefs.get("product_updates", False)
+
+                fcm_token = user_info.get("fcm_token")
+                if fcm_token and send_push:
+                    send_fcm_push_notification(
+                        fcm_token=fcm_token,
+                        title=title,
+                        description=description,
+                        data={
+                            "type": notif_type,
+                            "listing_id": listing_id or "",
+                            "notification_id": notif_ref.id,
+                        },
+                    )
+                elif not send_push:
+                    print(f"🔕 [Notifications] User {user_id} opted out of '{notif_type}' push notifications.")
+        except Exception as push_err:
+            print(f"[Notifications] Push dispatch error: {push_err}")
+
         return notif_ref.id
     except Exception as e:
         print(f"[Notifications] Error creating notification: {e}")
@@ -207,3 +286,22 @@ async def mark_all_notifications_read(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to mark all as read: {str(e)}",
         )
+
+
+@router.post("/test-push")
+async def send_test_push(
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Send an immediate test notification to the authenticated user's device.
+    """
+    db = get_firestore_db()
+    notif_id = create_user_notification(
+        db=db,
+        user_id=current_user.user_id,
+        notif_type="system_test",
+        title="🔔 Notification Test",
+        description="Solar Scrap push notifications are working smoothly!",
+    )
+    return {"message": "Test notification dispatched", "notification_id": notif_id}
+

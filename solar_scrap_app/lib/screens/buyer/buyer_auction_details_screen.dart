@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/listing.dart';
 import '../../services/listing_service.dart';
 import '../../services/saved_auctions_service.dart';
+import '../../widgets/listing_map_preview_widget.dart';
 import 'buyer_place_bid_screen.dart';
 
 class BuyerAuctionDetailsScreen extends StatefulWidget {
@@ -928,25 +929,14 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            const Icon(
-              Icons.location_on_outlined,
-              size: 18,
-              color: Color(0xFF00A63E),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                locationDetail,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
+        ListingMapPreviewWidget(
+          latitude: widget.listing?.latitude,
+          longitude: widget.listing?.longitude,
+          pickupCity: widget.listing?.pickupCity ?? _auction['location'] ?? 'Karachi',
+          pickupArea: widget.listing?.pickupArea,
+          pickupAddress: widget.listing?.pickupAddress.isNotEmpty == true
+              ? widget.listing!.pickupAddress
+              : locationDetail,
         ),
       ],
     );

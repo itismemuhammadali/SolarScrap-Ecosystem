@@ -48,6 +48,8 @@ async def create_listing(
         "contact_name": payload.contact_name,
         "contact_phone": payload.contact_phone,
         "contact_email": payload.contact_email,
+        "latitude": payload.latitude,
+        "longitude": payload.longitude,
         "created_at": firestore.SERVER_TIMESTAMP,
         "updated_at": firestore.SERVER_TIMESTAMP,
     }
@@ -103,6 +105,8 @@ async def create_listing(
             contact_name=data.get("contact_name", payload.contact_name),
             contact_phone=data.get("contact_phone", payload.contact_phone),
             contact_email=data.get("contact_email", payload.contact_email),
+            latitude=data.get("latitude", payload.latitude),
+            longitude=data.get("longitude", payload.longitude),
             created_at=_format_datetime(data.get("created_at")),
             updated_at=_format_datetime(data.get("updated_at")),
         )
@@ -146,6 +150,8 @@ async def get_my_listings(
                     contact_name=data.get("contact_name", ""),
                     contact_phone=data.get("contact_phone", ""),
                     contact_email=data.get("contact_email", ""),
+                    latitude=data.get("latitude"),
+                    longitude=data.get("longitude"),
                     created_at=_format_datetime(data.get("created_at")),
                     updated_at=_format_datetime(data.get("updated_at")),
                 )
@@ -192,6 +198,8 @@ async def get_all_active_listings(
                         contact_name=data.get("contact_name", ""),
                         contact_phone=data.get("contact_phone", ""),
                         contact_email=data.get("contact_email", ""),
+                        latitude=data.get("latitude"),
+                        longitude=data.get("longitude"),
                         created_at=_format_datetime(data.get("created_at")),
                         updated_at=_format_datetime(data.get("updated_at")),
                     )
@@ -242,6 +250,8 @@ async def get_listing_by_id(
         contact_name=data.get("contact_name", ""),
         contact_phone=data.get("contact_phone", ""),
         contact_email=data.get("contact_email", ""),
+        latitude=data.get("latitude"),
+        longitude=data.get("longitude"),
         created_at=_format_datetime(data.get("created_at")),
         updated_at=_format_datetime(data.get("updated_at")),
     )

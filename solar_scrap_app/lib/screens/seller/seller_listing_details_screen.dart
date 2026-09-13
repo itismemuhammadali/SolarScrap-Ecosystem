@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/listing.dart';
 import '../../services/listing_service.dart';
+import '../../widgets/listing_map_preview_widget.dart';
 import 'seller_status_tracking_screen.dart';
 
 class SellerListingDetailsScreen extends StatefulWidget {
@@ -320,6 +321,16 @@ class _SellerListingDetailsScreenState
                     _buildDetailRow('Contact Phone', l.contactPhone, showDivider: false),
                   ],
                 ),
+              ),
+              const SizedBox(height: 16),
+
+              // Pickup Location Map
+              ListingMapPreviewWidget(
+                latitude: l.latitude,
+                longitude: l.longitude,
+                pickupCity: l.pickupCity,
+                pickupArea: l.pickupArea,
+                pickupAddress: l.pickupAddress,
               ),
               const SizedBox(height: 16),
 

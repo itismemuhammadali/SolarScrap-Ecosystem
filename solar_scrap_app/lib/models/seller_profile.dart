@@ -12,6 +12,8 @@ class SellerProfile {
   final String gstNumber;
   final String? profilePhotoUrl;
   final String status;
+  final double? latitude;
+  final double? longitude;
 
   SellerProfile({
     required this.userId,
@@ -27,6 +29,8 @@ class SellerProfile {
     this.gstNumber = '',
     this.profilePhotoUrl,
     this.status = 'approved',
+    this.latitude,
+    this.longitude,
   });
 
   bool get isApproved => status.toLowerCase() == 'approved';
@@ -47,6 +51,8 @@ class SellerProfile {
       gstNumber: json['gst_number'] ?? '',
       profilePhotoUrl: json['profile_photo_url'],
       status: json['status'] ?? 'approved',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -64,6 +70,8 @@ class SellerProfile {
       'company_type': companyType,
       'gst_number': gstNumber,
       if (profilePhotoUrl != null) 'profile_photo_url': profilePhotoUrl,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 

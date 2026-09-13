@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/bid.dart';
 import '../../models/listing.dart';
 import '../../services/bid_service.dart';
+import '../../services/push_notification_service.dart';
 import 'seller_price_offer_screen.dart';
 
 class SellerStatusTrackingScreen extends StatefulWidget {
@@ -37,7 +38,27 @@ class _SellerStatusTrackingScreenState
   @override
   void initState() {
     super.initState();
+    PushNotificationService.onNotificationReceived.addListener(_onPushReceived);
     _loadListingBids();
+  }
+
+  @override
+  void dispose() {
+    PushNotificationService.onNotificationReceived.removeListener(_onPushReceived);
+    super.dispose();
+  }
+
+  void _onPushReceived() {
+    _silentLoadListingBids();
+  }
+
+  Future<void> _silentLoadListingBids() async {
+    if (widget.listing == null) return;
+    final fetched = await BidService.instance.fetchBidsForListing(widget.listing!.id);
+    if (!mounted) return;
+    setState(() {
+      _bids = fetched;
+    });
   }
 
   Future<void> _loadListingBids() async {

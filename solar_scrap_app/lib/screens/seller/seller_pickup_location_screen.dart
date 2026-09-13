@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/listing_draft.dart';
 import '../../services/profile_service.dart';
+import '../../widgets/location_picker_widget.dart';
 import 'seller_contact_information_screen.dart';
 
 class SellerPickupLocationScreen extends StatefulWidget {
@@ -21,6 +22,8 @@ class _SellerPickupLocationScreenState
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _areaController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  double? _selectedLatitude;
+  double? _selectedLongitude;
 
   @override
   void initState() {
@@ -34,6 +37,8 @@ class _SellerPickupLocationScreenState
       _cityController.text = widget.draft!.pickupCity!;
       _areaController.text = widget.draft!.pickupArea ?? '';
       _addressController.text = widget.draft!.pickupAddress ?? '';
+      _selectedLatitude = widget.draft!.latitude;
+      _selectedLongitude = widget.draft!.longitude;
       return;
     }
 
@@ -50,6 +55,8 @@ class _SellerPickupLocationScreenState
         if (_addressController.text.isEmpty && profile.address.isNotEmpty) {
           _addressController.text = profile.address;
         }
+        _selectedLatitude = profile.latitude;
+        _selectedLongitude = profile.longitude;
       });
     }
   }
@@ -115,6 +122,8 @@ class _SellerPickupLocationScreenState
     currentDraft.pickupCity = _cityController.text.trim();
     currentDraft.pickupArea = _areaController.text.trim().isNotEmpty ? _areaController.text.trim() : null;
     currentDraft.pickupAddress = _addressController.text.trim();
+    currentDraft.latitude = _selectedLatitude;
+    currentDraft.longitude = _selectedLongitude;
 
     Navigator.push(
       context,
@@ -225,6 +234,29 @@ class _SellerPickupLocationScreenState
                 },
               ),
               const SizedBox(height: 20),
+
+              // Interactive Google Map Location Picker
+              LocationPickerWidget(
+                height: 200,
+                initialLatitude: _selectedLatitude,
+                initialLongitude: _selectedLongitude,
+                onLocationSelected: (details) {
+                  setState(() {
+                    _selectedLatitude = details.latitude;
+                    _selectedLongitude = details.longitude;
+                    if (_cityController.text.trim().isEmpty || _cityController.text.trim() == 'Karachi') {
+                      _cityController.text = details.city;
+                    }
+                    if (_areaController.text.trim().isEmpty && details.area.isNotEmpty) {
+                      _areaController.text = details.area;
+                    }
+                    if (_addressController.text.trim().isEmpty && details.fullAddress.isNotEmpty) {
+                      _addressController.text = details.fullAddress;
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: 18),
 
               // City
               _buildTextField(

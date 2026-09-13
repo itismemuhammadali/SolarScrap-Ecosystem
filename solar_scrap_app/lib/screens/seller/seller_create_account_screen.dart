@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../models/registration_data.dart';
-import 'seller_create_account_security_screen.dart';
-import 'seller_dashboard_screen.dart';
-import '../buyer/buyer_login_screen.dart';
-import '../../utils/permission_helper.dart';
 import '../../services/auth_service.dart';
+import 'seller_create_account_details_screen.dart';
+import 'seller_login_screen.dart';
+import '../buyer/buyer_create_account_screen.dart';
+import '../buyer/buyer_privacy_policy_screen.dart';
+import '../buyer/buyer_terms_conditions_screen.dart';
 
 class SellerCreateAccountScreen extends StatefulWidget {
   const SellerCreateAccountScreen({super.key});
@@ -19,223 +19,373 @@ class SellerCreateAccountScreen extends StatefulWidget {
 }
 
 class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _companyNameController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _areaController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  File? _profileImage;
-  final ImagePicker _picker = ImagePicker();
-
-  String _selectedCompanyType = 'Private Limited';
-  final List<String> _companyTypes = [
-    'Private Limited',
-    'Public Limited',
-    'Partnership',
-    'Sole Proprietorship',
-    'Corporation',
-  ];
-
-  Future<void> _pickProfileImage(ImageSource source) async {
-    try {
-      final picked = await _picker.pickImage(source: source, imageQuality: 85);
-      if (picked != null) {
-        setState(() {
-          _profileImage = File(picked.path);
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
-        );
-      }
-    }
-  }
-
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _agreeToTerms = false;
+  bool _receiveUpdates = true;
   bool _isLoading = false;
+
+  bool get _hasMinLength => _passwordController.text.length >= 8;
+  bool get _hasUpperLower =>
+      RegExp(r'(?=.*[a-z])(?=.*[A-Z])').hasMatch(_passwordController.text);
+  bool get _hasNumberOrSymbol =>
+      RegExp(r'(?=.*[0-9!@#\$&*~])').hasMatch(_passwordController.text);
+  bool get _passwordsMatch =>
+      _passwordController.text.isNotEmpty &&
+      _passwordController.text == _confirmPasswordController.text;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleGoogleSignUp() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
-    final result = await AuthService.instance.signInWithGoogle(role: 'seller', isSignUp: true);
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (result.isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message ?? 'Registered and signed in with Google!'),
-          backgroundColor: const Color(0xFF00A63E),
-          behavior: SnackBarBehavior.floating,
-        ),
+    try {
+      final result = await AuthService.instance.signInWithGoogle(
+        role: 'seller',
+        isSignUp: true,
       );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const SellerDashboardScreen()),
-      );
-    } else {
-      final msg = result.message ?? 'Google sign-up failed.';
-      if (msg.toLowerCase().contains('buyer')) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text(
-              'Buyer Account Detected',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
-            ),
-            content: Text(
-              msg,
-              style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF475569)),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const BuyerLoginScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text('Switch to Buyer'),
-              ),
-            ],
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result.isSuccess && result.user != null) {
+        final regData = RegistrationData(
+          role: 'seller',
+          email: result.user!.email,
+          fullName: result.user!.displayName ?? '',
+          authProvider: 'google',
+          emailVerified: true,
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SellerCreateAccountDetailsScreen(data: regData),
           ),
         );
-      } else if (!msg.toLowerCase().contains('cancelled')) {
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(msg),
-            backgroundColor: const Color(0xFFDC2626),
-            behavior: SnackBarBehavior.floating,
+            content: Text(result.message ?? 'Google sign-up failed.'),
+            backgroundColor: Colors.red,
           ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
   }
 
-  void _showImagePickerModal() {
-    PermissionHelper.showImagePickerModal(
-      context,
-      hasExistingPhoto: _profileImage != null,
-      onSourceSelected: (source) => _pickProfileImage(source),
-      onRemovePhoto: () {
-        setState(() => _profileImage = null);
+  Future<void> _handleAppleSignUp() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await AuthService.instance.signInWithApple(
+        role: 'seller',
+        isSignUp: true,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result.isSuccess && result.user != null) {
+        final regData = RegistrationData(
+          role: 'seller',
+          email: result.user!.email,
+          fullName: result.user!.displayName ?? '',
+          authProvider: 'apple',
+          emailVerified: true,
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SellerCreateAccountDetailsScreen(data: regData),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message ?? 'Apple sign-up failed.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _handleEmailContinue() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (!_hasMinLength || !_hasUpperLower || !_hasNumberOrSymbol) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please meet all password security requirements.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!_passwordsMatch) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Passwords do not match.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!_agreeToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please accept the Terms & Conditions and Privacy Policy.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    setState(() => _isLoading = true);
+
+    await AuthService.instance.sendEmailVerificationLink(
+      email: email,
+      password: password,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    final regData = RegistrationData(
+      role: 'seller',
+      email: email,
+      password: password,
+      authProvider: 'password',
+    );
+
+    _showEmailVerificationPopup(regData);
+  }
+
+  void _showEmailVerificationPopup(RegistrationData regData) {
+    bool isChecking = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 70,
+                      height: 70,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE8F5E9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.mark_email_read_outlined,
+                        color: Color(0xFF00A63E),
+                        size: 36,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Verify Your Email',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: const Color(0xFF64748B),
+                          height: 1.5,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: 'We sent a verification link to\n',
+                          ),
+                          TextSpan(
+                            text: regData.email,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                          const TextSpan(
+                            text:
+                                '.\nPlease tap the link in your inbox to verify your address.',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // "I Have Verified Link" Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: isChecking
+                            ? null
+                            : () async {
+                                setDialogState(() => isChecking = true);
+                                final isVerified = await AuthService.instance
+                                    .checkEmailVerified();
+                                setDialogState(() => isChecking = false);
+
+                                if (isVerified) {
+                                  regData.emailVerified = true;
+                                  Navigator.pop(dialogCtx);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          SellerCreateAccountDetailsScreen(
+                                        data: regData,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Email not verified yet. Please check your inbox or spam.',
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00A63E),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: isChecking
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'I Have Verified Link',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Resend & Dev Skip options
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            await AuthService.instance.sendEmailVerificationLink(
+                              email: regData.email,
+                              password: regData.password ?? '',
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Verification link re-sent!'),
+                                backgroundColor: Color(0xFF00A63E),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Resend Link',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: const Color(0xFF00A63E),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            regData.emailVerified = true;
+                            Navigator.pop(dialogCtx);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    SellerCreateAccountDetailsScreen(
+                                  data: regData,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'Skip (Dev Mode)',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: const Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
       },
     );
-  }
-
-  Widget _buildProfilePhotoPicker() {
-    return Center(
-      child: Column(
-        children: [
-          Stack(
-            children: [
-              GestureDetector(
-                onTap: _showImagePickerModal,
-                child: Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFF3F4F6),
-                    border: Border.all(
-                      color: _profileImage != null
-                          ? const Color(0xFF00A63E)
-                          : const Color(0xFFE5E7EB),
-                      width: 2.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: _profileImage != null
-                        ? Image.file(
-                            _profileImage!,
-                            width: 90,
-                            height: 90,
-                            fit: BoxFit.cover,
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.person_outline,
-                                size: 40,
-                                color: Colors.grey.shade400,
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: _showImagePickerModal,
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00A63E),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                    child: Icon(
-                      _profileImage != null ? Icons.edit : Icons.camera_alt,
-                      size: 14,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _profileImage != null ? 'Change Photo' : 'Upload Profile Picture (Optional)',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF00A63E),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _fullNameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _companyNameController.dispose();
-    _cityController.dispose();
-    _areaController.dispose();
-    _addressController.dispose();
-    super.dispose();
   }
 
   @override
@@ -245,300 +395,444 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with Back Button and Centered Title
-              SizedBox(
-                height: 40,
-                child: Stack(
-                  alignment: Alignment.center,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with Back Button and Role Switch
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back,
-                              color: Color(0xFF151516), size: 20),
-                          onPressed: () => Navigator.pop(context),
-                          padding: EdgeInsets.zero,
-                        ),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back,
+                            color: Colors.black, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                        padding: EdgeInsets.zero,
                       ),
                     ),
-                    Center(
-                      child: Text(
-                        'Create Account',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF151516),
+                    Text(
+                      'Seller Sign Up',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BuyerCreateAccountScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEBF7EE),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Text(
+                          'Buyer?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF00A63E),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // Continue with Google Option
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton(
-                  onPressed: _isLoading ? null : _handleGoogleSignUp,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFE5E7EB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    backgroundColor: Colors.white,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/google.svg',
-                        width: 20,
-                        height: 20,
+                // Synchronized Step Progress Indicator: Step 1 of 3 (33%)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Step 1 of 3 · Credentials',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF6B7280),
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Continue with Google',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF151516),
+                    ),
+                    Text(
+                      '33%',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF00A63E),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00A63E),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE5E7EB),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Container(
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE5E7EB),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Continue with Google Option
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton(
+                    onPressed: _isLoading ? null : _handleGoogleSignUp,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      backgroundColor: Colors.white,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/google.svg',
+                          width: 20,
+                          height: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Continue with Google',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF151516),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (Platform.isIOS) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleAppleSignUp,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.apple, color: Colors.white, size: 24),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Continue with Apple',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+
+                // Divider
+                Row(
+                  children: [
+                    const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR Continue with Email',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF94A3B8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Email Address Field
+                Text(
+                  'Email Address *',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'e.g. seller@company.com',
+                    prefixIcon: const Icon(Icons.email_outlined,
+                        color: Color(0xFF94A3B8), size: 20),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF00A63E)),
+                    ),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) {
+                      return 'Please enter your email address.';
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(val.trim())) {
+                      return 'Please enter a valid email address.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Password Field
+                Text(
+                  'Password *',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  onChanged: (_) => setState(() {}),
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Create a secure password',
+                    prefixIcon: const Icon(Icons.lock_outline,
+                        color: Color(0xFF94A3B8), size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: const Color(0xFF94A3B8),
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF00A63E)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Confirm Password Field
+                Text(
+                  'Confirm Password *',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirmPassword,
+                  onChanged: (_) => setState(() {}),
+                  style: GoogleFonts.poppins(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Re-enter your password',
+                    prefixIcon: const Icon(Icons.lock_reset_outlined,
+                        color: Color(0xFF94A3B8), size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: const Color(0xFF94A3B8),
+                        size: 20,
+                      ),
+                      onPressed: () => setState(() =>
+                          _obscureConfirmPassword = !_obscureConfirmPassword),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFF00A63E)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Password Checklist
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildChecklistRow(
+                          'At least 8 characters', _hasMinLength),
+                      const SizedBox(height: 6),
+                      _buildChecklistRow(
+                          'Uppercase and lowercase letters', _hasUpperLower),
+                      const SizedBox(height: 6),
+                      _buildChecklistRow(
+                          'At least one number or symbol', _hasNumberOrSymbol),
+                      const SizedBox(height: 6),
+                      _buildChecklistRow('Passwords match', _passwordsMatch),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
-              // OR divider
-              Row(
-                children: [
-                  const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      'OR REGISTER WITH EMAIL',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF9CA3AF),
-                        letterSpacing: 0.5,
+                // Terms & Privacy Checkbox
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _agreeToTerms,
+                        activeColor: const Color(0xFF00A63E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        onChanged: (val) =>
+                            setState(() => _agreeToTerms = val ?? false),
                       ),
                     ),
-                  ),
-                  const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Personal Information Section
-              Text(
-                'Personal Information',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF151516),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                'Tell us about yourself and your company',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF6B7280),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Profile Photo Picker Avatar
-              _buildProfilePhotoPicker(),
-              const SizedBox(height: 20),
-
-              // Full Name Input
-              _buildInputField(
-                label: 'Full Name',
-                controller: _fullNameController,
-                placeholder: 'Ahmed Khan',
-                icon: 'assets/icons/person.svg',
-              ),
-              const SizedBox(height: 16),
-
-              // Email Address Input
-              _buildInputField(
-                label: 'Email Address',
-                controller: _emailController,
-                placeholder: 'ahmed@sunpower.pk',
-                icon: 'assets/icons/email.svg',
-              ),
-              const SizedBox(height: 16),
-
-              // Phone Number Input
-              _buildInputField(
-                label: 'Phone Number',
-                controller: _phoneController,
-                placeholder: '+92 300 1234567',
-                icon: 'assets/icons/phone_call.svg',
-              ),
-              const SizedBox(height: 16),
-
-              // Company Name Input
-              _buildInputField(
-                label: 'Company Name',
-                controller: _companyNameController,
-                placeholder: 'SunTech Solar Pvt. Ltd.',
-                icon: 'assets/icons/building.svg',
-              ),
-              const SizedBox(height: 16),
-
-              // City Input
-              _buildInputField(
-                label: 'City',
-                controller: _cityController,
-                placeholder: 'Karachi',
-                icon: 'assets/icons/location.svg',
-              ),
-              const SizedBox(height: 16),
-
-              // Area / District Input
-              _buildInputField(
-                label: 'Area / District',
-                controller: _areaController,
-                placeholder: 'Industrial Area',
-                icon: 'assets/icons/location.svg',
-              ),
-              const SizedBox(height: 16),
-
-              // Complete Address Input
-              const Text(
-                'Complete Address',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _addressController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'SITE Industrial Area / Korangi Industrial Area',
-                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.grey),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF00A63E)),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF5F5F5),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Company Type Dropdown
-              const Text(
-                'Company type (Optional)',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey),
-                ),
-                child: DropdownButtonFormField<String>(
-                  initialValue: _selectedCompanyType,
-                  items: _companyTypes.map((type) {
-                    return DropdownMenuItem(
-                      value: type,
-                      child: Text(type),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCompanyType = value ?? 'Private Limited';
-                    });
-                  },
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    suffixIcon: const Icon(Icons.keyboard_arrow_down,
-                        color: Colors.grey),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Map Section
-              Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/images/map_location_bg.png'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Stack(
-                  children: [
-                    // Green circular location marker in center
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Wrap(
                         children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF00A63E),
-                              shape: BoxShape.circle,
+                          Text(
+                            'I agree to the ',
+                            style: GoogleFonts.poppins(
+                                fontSize: 13, color: const Color(0xFF475569)),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const BuyerTermsConditionsScreen(),
+                              ),
                             ),
-                            child: Center(
-                              child: SvgPicture.asset(
-                                'assets/icons/location.svg',
-                                width: 28,
-                                height: 28,
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.white,
-                                  BlendMode.srcIn,
-                                ),
+                            child: Text(
+                              'Terms & Conditions',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF00A63E),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Tap to detect location',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF00A63E),
-                              fontWeight: FontWeight.w600,
+                          Text(
+                            ' and acknowledge the ',
+                            style: GoogleFonts.poppins(
+                                fontSize: 13, color: const Color(0xFF475569)),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const BuyerPrivacyPolicyScreen(),
+                              ),
+                            ),
+                            child: Text(
+                              'Privacy Policy',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF00A63E),
+                              ),
                             ),
                           ),
                         ],
@@ -546,144 +840,128 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 12),
 
-              // Next Button
-              Container(
-                width: double.infinity,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFF00A63E),
-                      Color(0xFF007D2E),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
+                // Receive Notifications Checkbox
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _receiveUpdates,
+                        activeColor: const Color(0xFF00A63E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        onChanged: (val) =>
+                            setState(() => _receiveUpdates = val ?? true),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Receive notifications about quotations and offers on your solar listings (Optional)',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Validation
-                    if (_fullNameController.text.trim().isEmpty ||
-                        _emailController.text.trim().isEmpty ||
-                        _phoneController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please fill in Name, Email, and Phone'),
-                          backgroundColor: Colors.red,
+                const SizedBox(height: 28),
+
+                // Continue Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleEmailContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00A63E),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Continue to Details',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Already have an account? Sign In
+                Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SellerLoginScreen(),
                         ),
                       );
-                      return;
-                    }
-
-                    final data = RegistrationData(
-                      role: 'seller',
-                      fullName: _fullNameController.text.trim(),
-                      email: _emailController.text.trim(),
-                      phoneNumber: _phoneController.text.trim(),
-                      companyName: _companyNameController.text.trim(),
-                      city: _cityController.text.trim(),
-                      area: _areaController.text.trim(),
-                      address: _addressController.text.trim(),
-                      companyType: _selectedCompanyType,
-                      profilePhotoFile: _profileImage,
-                    );
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            SellerCreateAccountSecurityScreen(data: data),
+                    },
+                    child: RichText(
+                      text: TextSpan(
+                        text: 'Already have an account? ',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: const Color(0xFF64748B),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Sign In',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF00A63E),
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    'Next',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildInputField({
-    required String label,
-    required TextEditingController controller,
-    required String placeholder,
-    required String icon,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildChecklistRow(String text, bool isMet) {
+    return Row(
       children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF151516),
-          ),
+        Icon(
+          isMet ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+          size: 16,
+          color: isMet ? const Color(0xFF00A63E) : const Color(0xFF94A3B8),
         ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
+        const SizedBox(width: 8),
+        Text(
+          text,
           style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: const Color(0xFF151516),
-          ),
-          decoration: InputDecoration(
-            hintText: placeholder,
-            hintStyle: GoogleFonts.poppins(
-              fontSize: 14,
-              color: const Color(0xFF9CA3AF),
-            ),
-            prefixIcon: Padding(
-              padding: const EdgeInsets.all(12),
-              child: SvgPicture.asset(
-                icon,
-                width: 18,
-                height: 18,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF9CA3AF),
-                  BlendMode.srcIn,
-                ),
-              ),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF00A63E)),
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF9FAFB),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            fontSize: 12,
+            color: isMet ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+            fontWeight: isMet ? FontWeight.w500 : FontWeight.normal,
           ),
         ),
       ],

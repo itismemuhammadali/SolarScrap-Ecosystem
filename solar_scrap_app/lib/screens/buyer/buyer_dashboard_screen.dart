@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,6 +12,7 @@ import '../../services/bid_service.dart';
 import '../../services/buyer_profile_service.dart';
 import '../../services/listing_service.dart';
 import '../../services/notification_service.dart';
+import '../../services/push_notification_service.dart';
 import '../../services/saved_auctions_service.dart';
 import '../role_selection_screen.dart';
 import 'buyer_edit_profile_screen.dart';
@@ -34,7 +36,8 @@ class BuyerDashboardScreen extends StatefulWidget {
   State<BuyerDashboardScreen> createState() => _BuyerDashboardScreenState();
 }
 
-class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
+class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
+    with WidgetsBindingObserver {
   late int _selectedTabIndex;
 
   BuyerProfile? _profile;
@@ -44,13 +47,79 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
   List<Bid> _myBids = [];
   bool _isProfileLoading = false;
   bool _isListingsLoading = true;
+  Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
     _selectedTabIndex = widget.initialTabIndex;
+    WidgetsBinding.instance.addObserver(this);
+    PushNotificationService.onNotificationReceived.addListener(_onPushReceived);
     SavedAuctionsService.instance.addListener(_onFavoritesChanged);
     _loadDashboardData();
+    // Silent background poll every 25 seconds while dashboard is open
+    _pollTimer = Timer.periodic(const Duration(seconds: 25), (_) {
+      _silentRefresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    PushNotificationService.onNotificationReceived.removeListener(_onPushReceived);
+    _pollTimer?.cancel();
+    SavedAuctionsService.instance.removeListener(_onFavoritesChanged);
+    _homeSearchController.dispose();
+    _auctionSearchController.dispose();
+    _bidsSearchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _silentRefresh();
+    }
+  }
+
+  void _onPushReceived() {
+    _silentRefresh();
+  }
+
+  Future<void> _silentRefresh() async {
+    if (!mounted) return;
+    try {
+      final profileFuture = BuyerProfileService.instance.fetchProfile();
+      final statsFuture = BuyerProfileService.instance.fetchStats();
+      final notifsFuture = NotificationService.instance.fetchNotifications();
+      final listingsFuture = ListingService.instance.fetchAllActiveListings(forceRefresh: true);
+      final bidsFuture = BidService.instance.fetchMyBids(forceRefresh: true);
+
+      final results = await Future.wait([profileFuture, statsFuture, notifsFuture, listingsFuture, bidsFuture]);
+      if (!mounted) return;
+
+      setState(() {
+        if (results[0] != null) {
+          _profile = results[0] as BuyerProfile;
+        }
+        if (results[1] != null) {
+          _stats = results[1] as BuyerStats;
+        }
+        final notifs = results[2] as List<NotificationItem>;
+        if (notifs.isNotEmpty) {
+          _notifications = notifs;
+        }
+        _listings = results[3] as List<Listing>;
+        _myBids = results[4] as List<Bid>;
+        final activeBidsCount = _myBids.where((b) => b.statusGroup != 'Closed').length;
+        final wonAuctionsCount = _myBids.where((b) => b.status.toLowerCase() == 'accepted' || b.status.toLowerCase() == 'won').length;
+        _stats = BuyerStats(
+          totalBids: _myBids.length,
+          activeBids: activeBidsCount,
+          wonAuctions: wonAuctionsCount,
+        );
+      });
+    } catch (_) {}
   }
 
   void _onFavoritesChanged() {
@@ -149,15 +218,6 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
     'Winning',
     'Closed',
   ];
-
-  @override
-  void dispose() {
-    SavedAuctionsService.instance.removeListener(_onFavoritesChanged);
-    _homeSearchController.dispose();
-    _auctionSearchController.dispose();
-    _bidsSearchController.dispose();
-    super.dispose();
-  }
 
   // Filtered lists getters
   List<Listing> get _filteredHomeAuctions {
@@ -1633,7 +1693,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen> {
               MaterialPageRoute(
                 builder: (context) => const BuyerNotificationsScreen(),
               ),
-            );
+            ).then((_) => _silentRefresh());
           },
           child: Stack(
             children: [

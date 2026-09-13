@@ -70,7 +70,22 @@
 	<string>Solar Scrap needs camera access to capture clear photos of solar scrap materials and equipment for your listings and profile.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Solar Scrap needs photo library access to select photos of solar panels, inverters, and scrap equipment for your listings and profile.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Solar Scrap needs permission to save equipment photos to your photo library.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Solar Scrap needs your location to pinpoint scrap pickup locations and show nearby equipment listings.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Solar Scrap needs your location to pinpoint scrap pickup locations and calculate distances to equipment.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.436150981342-u70s82v7uq5alnljm47a2dvb4622edkh</string>
+			</array>
+		</dict>
+	</array>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 </dict>
 </plist>

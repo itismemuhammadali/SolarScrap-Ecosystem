@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -125,6 +126,58 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
       );
     } else {
       final msg = result.message ?? 'Google sign-in failed.';
+      if (msg.toLowerCase().contains('seller')) {
+        _showRoleMismatchDialog(
+          title: 'Seller Account Detected',
+          message: msg,
+        );
+      } else if (!msg.toLowerCase().contains('cancelled')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleAppleLogin() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    final result = await AuthService.instance.signInWithApple(role: 'buyer');
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.isSuccess && !result.isPending) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Signed in with Apple successfully!'),
+          backgroundColor: const Color(0xFF00A63E),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const BuyerDashboardScreen()),
+      );
+    } else if (result.isPending) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BuyerAccountCreatedScreen(
+            companyName: result.user?.companyName ?? 'Scrap Buyer Account',
+            location: result.user?.city ?? 'Registered Office',
+            email: result.user?.email ?? '',
+            userId: result.user?.userId,
+          ),
+        ),
+      );
+    } else {
+      final msg = result.message ?? 'Apple sign-in failed.';
       if (msg.toLowerCase().contains('seller')) {
         _showRoleMismatchDialog(
           title: 'Seller Account Detected',
@@ -516,65 +569,65 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
               const SizedBox(height: 24),
 
               // Social Login Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : _handleGoogleLogin,
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                        side: const BorderSide(color: Colors.grey),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/google.svg',
-                            width: 20,
-                            height: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Google',
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ],
+              OutlinedButton(
+                onPressed: _isLoading ? null : _handleGoogleLogin,
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  side: const BorderSide(color: Color(0xFFE5E7EB)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/google.svg',
+                      width: 20,
+                      height: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Continue with Google',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF151516),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                        side: const BorderSide(color: Colors.grey),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/icons/facebook.svg',
-                            width: 20,
-                            height: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Facebook',
-                            style: TextStyle(color: Colors.black),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              if (Platform.isIOS) ...[
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _handleAppleLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.apple, color: Colors.white, size: 24),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Continue with Apple',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
 
               // Sign Up Link

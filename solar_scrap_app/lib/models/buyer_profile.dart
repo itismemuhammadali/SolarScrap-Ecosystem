@@ -10,6 +10,8 @@ class BuyerProfile {
   final String? profilePhotoUrl;
   final bool isVerified;
   final String status;
+  final double? latitude;
+  final double? longitude;
 
   BuyerProfile({
     required this.userId,
@@ -23,6 +25,8 @@ class BuyerProfile {
     this.profilePhotoUrl,
     this.isVerified = false,
     this.status = 'approved',
+    this.latitude,
+    this.longitude,
   });
 
   bool get isApproved => status.toLowerCase() == 'approved';
@@ -42,6 +46,8 @@ class BuyerProfile {
       profilePhotoUrl: json['profile_photo_url']?.toString(),
       isVerified: rawStatus.toLowerCase() == 'approved' || json['is_verified'] == true,
       status: rawStatus,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -57,6 +63,8 @@ class BuyerProfile {
       'address': address,
       if (profilePhotoUrl != null) 'profile_photo_url': profilePhotoUrl,
       'is_verified': isVerified,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 

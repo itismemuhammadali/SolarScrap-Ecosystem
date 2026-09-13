@@ -10,8 +10,16 @@ class RegistrationData {
   String area;
   String address;
   String? companyType;
+  String? gstNumber;
   String? password;
+  String? authProvider;
+  bool emailVerified;
+  bool phoneVerified;
+  bool twoFactorEnabled;
+  String? fcmToken;
   File? profilePhotoFile;
+  double? latitude;
+  double? longitude;
 
   RegistrationData({
     required this.role,
@@ -23,8 +31,16 @@ class RegistrationData {
     this.area = '',
     this.address = '',
     this.companyType,
+    this.gstNumber,
     this.password,
+    this.authProvider = 'password',
+    this.emailVerified = false,
+    this.phoneVerified = false,
+    this.twoFactorEnabled = false,
+    this.fcmToken,
     this.profilePhotoFile,
+    this.latitude,
+    this.longitude,
   });
 
   Map<String, dynamic> toJson() {
@@ -38,7 +54,14 @@ class RegistrationData {
       'area': area,
       'address': address,
       'company_type': companyType,
+      if (gstNumber != null) 'gst_number': gstNumber,
       if (password != null) 'password': password,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      'email_verified': emailVerified,
+      'phone_verified': phoneVerified,
+      'two_factor_enabled': twoFactorEnabled,
+      if (fcmToken != null) 'fcm_token': fcmToken,
     };
   }
 }
