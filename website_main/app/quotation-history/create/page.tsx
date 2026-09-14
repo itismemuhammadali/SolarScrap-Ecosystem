@@ -194,6 +194,8 @@ export default function CreateQuotationPage() {
     }
   };
 
+  const [isInvoice, setIsInvoice] = useState(false);
+
   const handleWhatsAppShare = () => {
     const cleanPhone = phone.replace(/[^0-9]/g, "");
     const lines = items
@@ -203,7 +205,15 @@ export default function CreateQuotationPage() {
       )
       .join("\n");
 
-    const message = `*SOLAR SCRAP OFFICIAL QUOTATION & INVOICE*\nDate: ${date}\nValid Till: ${validTill}\nCustomer: ${customerName || "Valued Client"}\nLocation: ${location || "Pakistan"}\n\n*Line Items:*\n${lines}\n\n*Total Offer:* PKR ${formatNumber(totalOffer)}\n\nThank you for choosing Solar Scrap!`;
+    const header = isInvoice
+      ? "*SOLAR SCRAP OFFICIAL COMMERCIAL INVOICE*"
+      : "*SOLAR SCRAP OFFICIAL ESTIMATED QUOTATION*";
+    const ref = isInvoice ? "Invoice No: #INV-2024-005" : "Quote No: #QT-2024-005";
+    const dateLine = isInvoice
+      ? `Invoice Date: ${date}\nDue Date: Upon Receipt / Settled`
+      : `Date: ${date}\nValid Till: ${validTill}`;
+
+    const message = `${header}\n${ref}\n${dateLine}\nCustomer: ${customerName || "Valued Client"}\nLocation: ${location || "Pakistan"}\n\n*Line Items:*\n${lines}\n\n*Total Amount:* PKR ${formatNumber(totalOffer)}\n\nThank you for choosing Solar Scrap!`;
 
     const url = cleanPhone
       ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
@@ -214,7 +224,9 @@ export default function CreateQuotationPage() {
   const handlePrintPdf = () => {
     const originalTitle = document.title;
     const cleanCustomer = (customerName || "Customer").trim().replace(/[^a-zA-Z0-9_-]/g, "_");
-    document.title = `Solar_Scrap_Quotation_${cleanCustomer}_Qt-2024-005`;
+    const docType = isInvoice ? "Invoice" : "Quotation";
+    const refId = isInvoice ? "INV-2024-005" : "QT-2024-005";
+    document.title = `Solar_Scrap_${docType}_${cleanCustomer}_${refId}`;
     window.print();
     setTimeout(() => {
       document.title = originalTitle;
@@ -561,12 +573,30 @@ export default function CreateQuotationPage() {
                   </div>
 
                   <div className="text-right">
-                    <h2 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
-                      Quotation
-                    </h2>
-                    <p className="text-[11px] font-mono text-gray-500 mt-0.5">
-                      #Qt-2024-005
-                    </p>
+                    {isInvoice ? (
+                      <div>
+                        <div className="flex items-center justify-end gap-1.5 mb-1">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F9ED] text-[#009845] border border-[#009845]/40 uppercase tracking-wider">
+                            Paid / Issued
+                          </span>
+                        </div>
+                        <h2 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
+                          Commercial Invoice
+                        </h2>
+                        <p className="text-[11px] font-mono text-gray-500 mt-0.5">
+                          #INV-2024-005
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <h2 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
+                          Quotation
+                        </h2>
+                        <p className="text-[11px] font-mono text-gray-500 mt-0.5">
+                          #Qt-2024-005
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -589,12 +619,18 @@ export default function CreateQuotationPage() {
 
                   <div className="space-y-1 text-right text-[11px]">
                     <p className="flex justify-end gap-2">
-                      <span className="font-bold text-gray-900">Date:</span>
+                      <span className="font-bold text-gray-900">
+                        {isInvoice ? "Invoice Date:" : "Date:"}
+                      </span>
                       <span className="text-gray-700 font-medium">{date || "03 Dec 2024"}</span>
                     </p>
                     <p className="flex justify-end gap-2">
-                      <span className="font-bold text-gray-900">Valid Till:</span>
-                      <span className="text-gray-700 font-medium">{validTill || "10 Dec 2024"}</span>
+                      <span className="font-bold text-gray-900">
+                        {isInvoice ? "Due Date:" : "Valid Till:"}
+                      </span>
+                      <span className="text-gray-700 font-medium">
+                        {isInvoice ? "Upon Receipt / Settled" : (validTill || "10 Dec 2024")}
+                      </span>
                     </p>
                     <p className="flex justify-end gap-2">
                       <span className="font-bold text-gray-900">From:</span>
@@ -649,9 +685,9 @@ export default function CreateQuotationPage() {
                   </div>
                 </div>
 
-                {/* Solid Green Total Offer Bar */}
+                {/* Solid Green Total Offer / Total Amount Bar */}
                 <div className="print-highlight bg-[#009845] text-white rounded-xl px-4 py-2.5 flex justify-between items-center font-bold text-xs shadow-xs mt-1">
-                  <span>Total Offer ( PKR )</span>
+                  <span>{isInvoice ? "Total Amount ( PKR )" : "Total Offer ( PKR )"}</span>
                   <span>{formatNumber(totalOffer)}</span>
                 </div>
 
@@ -660,22 +696,42 @@ export default function CreateQuotationPage() {
                 {/* Terms & Conditions */}
                 <div className="space-y-1 text-[11px] text-gray-600">
                   <p className="font-bold text-gray-900">Terms &amp; Conditions</p>
-                  <p className="text-[10px] text-gray-500">
-                    • This is an estimated offer and valid for the mentioned date only.
-                  </p>
-                  <p className="text-[10px] text-gray-500">
-                    • Final price may vary after physical inspection
-                  </p>
+                  {isInvoice ? (
+                    <>
+                      <p className="text-[10px] text-gray-500">
+                        • Official commercial invoice for inspected solar scrap &amp; equipment.
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        • Certified transaction and equipment handover.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[10px] text-gray-500">
+                        • This is an estimated offer and valid for the mentioned date only.
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        • Final price may vary after physical inspection
+                      </p>
+                    </>
+                  )}
                   <p className="font-bold text-gray-900 pt-1 text-[11px]">Thank you</p>
                 </div>
               </div>
             </div>
 
-            {/* ===================== BOX 3: QUOTATION ACTIONS (NO PRINT) ===================== */}
+            {/* ===================== BOX 3: QUOTATION / INVOICE ACTIONS (NO PRINT) ===================== */}
             <div className="no-print bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/60 space-y-3">
-              <h4 className="text-xs font-bold text-gray-900">
-                Quotation Actions
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-gray-900">
+                  {isInvoice ? "Invoice Actions" : "Quotation Actions"}
+                </h4>
+                {isInvoice && (
+                  <span className="text-[11px] font-bold text-[#009845] bg-[#E6F9ED] px-2.5 py-0.5 rounded-full border border-[#009845]/30">
+                    Invoice Mode Active
+                  </span>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -696,7 +752,10 @@ export default function CreateQuotationPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const mailto = `mailto:?subject=Solar Scrap Quotation - ${customerName}&body=Please find the estimated quotation total of PKR ${formatNumber(totalOffer)}`;
+                    const subject = isInvoice
+                      ? `Solar Scrap Commercial Invoice - ${customerName}`
+                      : `Solar Scrap Quotation - ${customerName}`;
+                    const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=Please find the estimated total of PKR ${formatNumber(totalOffer)}`;
                     window.location.href = mailto;
                   }}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0070F3] hover:bg-[#0060df] text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
@@ -711,17 +770,36 @@ export default function CreateQuotationPage() {
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5 text-gray-500" />
-                  <span>Download pdf</span>
+                  <span>{isInvoice ? "Download Invoice PDF" : "Download pdf"}</span>
                 </button>
 
                 <button
                   type="button"
+                  onClick={() => {
+                    const next = !isInvoice;
+                    setIsInvoice(next);
+                    showToast(next ? "Converted to Commercial Invoice view!" : "Switched back to Quotation view!");
+                  }}
+                  className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer ${
+                    isInvoice
+                      ? "bg-[#E6F9ED] text-[#009845] border border-[#009845]/40 hover:bg-[#d5f5e0]"
+                      : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-200"
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{isInvoice ? "Switch to Quotation" : "Convert to Invoice"}</span>
+                </button>
+              </div>
+
+              <div className="pt-2 border-t border-gray-200/60 flex justify-end">
+                <button
+                  type="button"
                   onClick={handleSaveAndIssue}
                   disabled={isSaving}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer disabled:opacity-60"
+                  className="text-xs font-bold text-[#009845] hover:text-[#00823b] flex items-center gap-1.5 cursor-pointer py-1 disabled:opacity-50"
                 >
-                  <FileText className="w-3.5 h-3.5 text-gray-500" />
-                  <span>{isSaving ? "Saving..." : "Convert to Invoice"}</span>
+                  <CheckCircle className="w-4 h-4" />
+                  <span>{isSaving ? "Saving..." : (isInvoice ? "Save & Issue Invoice" : "Save Quotation to Records")}</span>
                 </button>
               </div>
             </div>
