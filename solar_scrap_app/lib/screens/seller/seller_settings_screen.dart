@@ -6,6 +6,8 @@ import '../buyer/buyer_help_center_screen.dart';
 import '../role_selection_screen.dart';
 import '../../services/auth_service.dart';
 import '../../services/user_preferences_service.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 
 class SellerSettingsScreen extends StatefulWidget {
   const SellerSettingsScreen({super.key});
@@ -200,22 +202,28 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                                 final code = otpControllers.map((c) => c.text).join();
                                 setModalState(() => modalLoading = true);
                                 final ok = await AuthService.instance.verifySmsCode(verificationId: verId, smsCode: code);
+                                if (!context.mounted) return;
                                 if (ok) {
                                   await AuthService.instance.toggle2FA(true);
+                                  if (!context.mounted) return;
                                   setState(() {
                                     _phoneNumber = phoneCtrl.text.trim();
                                     _phoneVerified = true;
                                     _twoFactorEnabled = true;
                                   });
-                                  Navigator.pop(ctx);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Two-factor phone authentication verified successfully!'), backgroundColor: Color(0xFF00A63E)),
-                                  );
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Two-factor phone authentication verified successfully!'), backgroundColor: Color(0xFF00A63E)),
+                                    );
+                                  }
                                 } else {
                                   setModalState(() => modalLoading = false);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Invalid OTP code. Try 000000.'), backgroundColor: Colors.red),
-                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Invalid OTP code. Try 000000.'), backgroundColor: Colors.red),
+                                    );
+                                  }
                                 }
                               },
                         style: ElevatedButton.styleFrom(
@@ -237,6 +245,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
   }
 
   void _showLanguagePicker() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -251,18 +260,18 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Select Language',
-                  style: TextStyle(
+                Text(
+                  l10n.selectLanguage,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildLanguageOption('English', 'English (Default)'),
+                _buildLanguageOption('English', l10n.languageEnglish),
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                _buildLanguageOption('Urdu', 'اردو (Urdu)'),
+                _buildLanguageOption('Urdu', l10n.languageUrdu),
                 const SizedBox(height: 12),
               ],
             ),
@@ -279,10 +288,12 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
         setState(() {
           _language = langCode;
         });
+        UserPreferencesService.instance.setLanguage(langCode);
         Navigator.pop(context);
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Language changed to $langCode'),
+            content: Text(l10n.languageChanged(langCode == 'Urdu' ? 'اردو' : 'English')),
             duration: const Duration(seconds: 1),
           ),
         );
@@ -313,6 +324,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
   }
 
   void _showDeleteAccountDialog() {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -320,17 +332,17 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Delete Account',
-            style: TextStyle(
+          title: Text(
+            l10n.deleteAccount,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
-          content: const Text(
-            'Are you sure you want to delete your account? This action cannot be undone and all your listings, profile data, and history will be permanently deleted.',
-            style: TextStyle(
+          content: Text(
+            l10n.deleteAccountConfirm,
+            style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
               height: 1.4,
@@ -339,9 +351,9 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
+              child: Text(
+                l10n.cancel,
+                style: const TextStyle(
                   color: Color(0xFF6B7280),
                   fontWeight: FontWeight.w600,
                 ),
@@ -382,7 +394,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Delete'),
+              child: Text(l10n.delete),
             ),
           ],
         );
@@ -391,6 +403,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
   }
 
   void _showLogoutDialog() {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -398,17 +411,17 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Log Out',
-            style: TextStyle(
+          title: Text(
+            l10n.logout,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
-          content: const Text(
-            'Are you sure you want to log out of your account?',
-            style: TextStyle(
+          content: Text(
+            l10n.logoutConfirm,
+            style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
               height: 1.4,
@@ -417,9 +430,9 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
+              child: Text(
+                l10n.cancel,
+                style: const TextStyle(
                   color: Color(0xFF6B7280),
                   fontWeight: FontWeight.w600,
                 ),
@@ -446,7 +459,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Log Out'),
+              child: Text(l10n.logout),
             ),
           ],
         );
@@ -456,6 +469,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -469,8 +483,8 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
+            icon: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -480,9 +494,9 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
           ),
         ),
         centerTitle: true,
-        title: const Text(
-          'Settings',
-          style: TextStyle(
+        title: Text(
+          l10n.settingsTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -507,11 +521,11 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                       child: Text(
-                        'NOTIFICATIONS',
-                        style: TextStyle(
+                        l10n.notificationsTitle.toUpperCase(),
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF8E8E93),
@@ -521,7 +535,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     _buildSwitchTile(
-                      title: 'Listing Updates',
+                      title: l10n.listingUpdates,
                       value: _listingUpdates,
                       onChanged: (val) {
                         setState(() {
@@ -532,7 +546,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     _buildSwitchTile(
-                      title: 'Price Offers',
+                      title: l10n.priceOffersNotification,
                       value: _priceOffers,
                       onChanged: (val) {
                         setState(() {
@@ -543,7 +557,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     _buildSwitchTile(
-                      title: 'Product Updates',
+                      title: l10n.productUpdates,
                       value: _productUpdates,
                       onChanged: (val) {
                         setState(() {
@@ -570,7 +584,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                 child: Column(
                   children: [
                     _buildSwitchTile(
-                      title: 'Two-Factor Authentication (2FA)',
+                      title: l10n.twoFA,
                       value: _twoFactorEnabled,
                       onChanged: (val) async {
                         if (val && !_phoneVerified) {
@@ -594,7 +608,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Email Address', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(l10n.emailLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   Text(_email ?? 'Registered Email', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                                 ],
                               ),
@@ -610,7 +624,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                               children: [
                                 Icon(_emailVerified ? Icons.check_circle : Icons.warning_amber_rounded, size: 14, color: _emailVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B)),
                                 const SizedBox(width: 4),
-                                Text(_emailVerified ? 'Verified' : 'Unverified', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _emailVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B))),
+                                Text(_emailVerified ? l10n.verified : l10n.unverified, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _emailVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B))),
                               ],
                             ),
                           ),
@@ -648,7 +662,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                                 children: [
                                   Icon(_phoneVerified ? Icons.check_circle : Icons.warning_amber_rounded, size: 14, color: _phoneVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B)),
                                   const SizedBox(width: 4),
-                                  Text(_phoneVerified ? 'Verified' : 'Verify Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _phoneVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B))),
+                                  Text(_phoneVerified ? l10n.verified : l10n.verifyNow, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _phoneVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B))),
                                 ],
                               ),
                             ),
@@ -674,13 +688,15 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                 child: Column(
                   children: [
                     _buildLinkTile(
-                      title: 'Language',
-                      trailingText: _language,
+                      context: context,
+                      title: l10n.languageLabel,
+                      trailingText: _language == 'Urdu' ? l10n.languageUrdu : l10n.languageEnglish,
                       onTap: _showLanguagePicker,
                     ),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     _buildLinkTile(
-                      title: 'Terms & Conditions',
+                      context: context,
+                      title: l10n.termsConditions,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -692,7 +708,8 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     _buildLinkTile(
-                      title: 'Privacy Policy',
+                      context: context,
+                      title: l10n.privacyPolicy,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -704,7 +721,8 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     _buildLinkTile(
-                      title: 'Contact Support',
+                      context: context,
+                      title: l10n.contactSupport,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -732,14 +750,16 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                 child: Column(
                   children: [
                     _buildActionTile(
-                      title: 'Log Out',
+                      context: context,
+                      title: l10n.logout,
                       icon: Icons.logout,
                       color: const Color(0xFF1E293B),
                       onTap: _showLogoutDialog,
                     ),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     _buildActionTile(
-                      title: 'Delete Account',
+                      context: context,
+                      title: l10n.deleteAccount,
                       icon: Icons.delete_outline,
                       color: const Color(0xFFEF4444),
                       onTap: _showDeleteAccountDialog,
@@ -750,17 +770,17 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
               const SizedBox(height: 48),
 
               // Footer
-              const Text(
-                'Solar Scrap v1.0.0',
-                style: TextStyle(
+              Text(
+                l10n.version,
+                style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF8E8E93),
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
-                '© 2026 Solar Scrap Platform',
-                style: TextStyle(
+              Text(
+                l10n.copyright,
+                style: const TextStyle(
                   fontSize: 12,
                   color: Color(0xFF8E8E93),
                 ),
@@ -802,6 +822,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
   }
 
   Widget _buildLinkTile({
+    required BuildContext context,
     required String title,
     String? trailingText,
     required VoidCallback onTap,
@@ -834,9 +855,9 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                   ),
                   const SizedBox(width: 4),
                 ],
-                const Icon(
-                  Icons.chevron_right,
-                  color: Color(0xFFC7C7CC),
+                RTLHelper.chevronIcon(
+                  context,
+                  color: const Color(0xFFC7C7CC),
                   size: 18,
                 ),
               ],
@@ -848,6 +869,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
   }
 
   Widget _buildActionTile({
+    required BuildContext context,
     required String title,
     required IconData icon,
     required Color color,
@@ -871,9 +893,9 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
               ),
             ),
             const Spacer(),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFFC7C7CC),
+            RTLHelper.chevronIcon(
+              context,
+              color: const Color(0xFFC7C7CC),
               size: 18,
             ),
           ],

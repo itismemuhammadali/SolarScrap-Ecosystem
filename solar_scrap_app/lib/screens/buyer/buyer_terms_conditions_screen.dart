@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 
 class BuyerTermsConditionsScreen extends StatelessWidget {
   const BuyerTermsConditionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -22,7 +26,7 @@ class BuyerTermsConditionsScreen extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: GestureDetector(
                         onTap: () {
                           Navigator.pop(context);
@@ -34,18 +38,20 @@ class BuyerTermsConditionsScreen extends StatelessWidget {
                             color: const Color(0xFFF5F5F5),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.black,
-                            size: 20,
+                          child: Center(
+                            child: RTLHelper.backIcon(
+                              context,
+                              color: Colors.black,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Terms & Conditions',
-                        style: TextStyle(
+                        l10n.termsConditions,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0F172A),
@@ -58,9 +64,9 @@ class BuyerTermsConditionsScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // FAQs Section Title
-              const Text(
-                'FAQs',
-                style: TextStyle(
+              Text(
+                l10n.faqsSection,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -70,48 +76,43 @@ class BuyerTermsConditionsScreen extends StatelessWidget {
 
               // FAQ 1
               _buildFaqCard(
-                title: '1. How Do I Sell My Solar Scrap?',
-                content:
-                    'Simply Create An Account, Add Your Scrap Details, Submit A Pickup Request, And Our Team Will Review And Arrange Collection.',
+                title: l10n.faq1Title,
+                content: l10n.faq1Desc,
               ),
               const SizedBox(height: 12),
 
               // FAQ 2
               _buildFaqCard(
-                title: '2. What Types Of Scrap Do You Accept?',
-                content:
-                    'We Accept Various Types Of Solar-Related Scrap, Including Solar Panels, Inverters, Cables, Aluminum Frames, Batteries (Where Applicable), And Other Recyclable Components.',
+                title: l10n.faq2Title,
+                content: l10n.faq2Desc,
               ),
               const SizedBox(height: 12),
 
               // FAQ 3
               _buildFaqCard(
-                title: '3. How Will I Know The Value Of My Scrap?',
-                content:
-                    'Our Team Evaluates Your Scrap Based On Its Type, Quantity, Condition, And Current Market Value Before Confirming The Purchase Price.',
+                title: l10n.faq3Title,
+                content: l10n.faq3Desc,
               ),
               const SizedBox(height: 12),
 
               // FAQ 4
               _buildFaqCard(
-                title: '4. How Do I Schedule A Pickup?',
-                content:
-                    'After Submitting Your Scrap Details, You Can Choose A Preferred Pickup Location And Time. We\'ll Contact You To Confirm The Schedule.',
+                title: l10n.faq4Title,
+                content: l10n.faq4Desc,
               ),
               const SizedBox(height: 12),
 
               // FAQ 5
               _buildFaqCard(
-                title: '5. Is My Personal Information Secure?',
-                content:
-                    'Yes. We Use Industry-Standard Security Measures To Protect Your Personal Information And Never Sell Your Data To Third Parties.',
+                title: l10n.faq5Title,
+                content: l10n.faq5Desc,
               ),
               const SizedBox(height: 24),
 
               // Contact Us Section
-              const Text(
-                'Contact Us',
-                style: TextStyle(
+              Text(
+                l10n.contactUsSection,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -162,6 +163,7 @@ class BuyerTermsConditionsScreen extends StatelessWidget {
                         SizedBox(width: 12),
                         Text(
                           '+1 (800) 123-4567',
+                          textDirection: TextDirection.ltr,
                           style: TextStyle(
                             fontSize: 14,
                             color: Color(0xFF6B7280),

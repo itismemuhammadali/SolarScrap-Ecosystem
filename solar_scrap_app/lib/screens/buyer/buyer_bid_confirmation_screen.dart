@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import 'buyer_dashboard_screen.dart';
 
 class BuyerBidConfirmationScreen extends StatelessWidget {
@@ -16,6 +17,7 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -56,9 +58,9 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Title
-                const Text(
-                  'Bid Submitted!',
-                  style: TextStyle(
+                Text(
+                  l10n.bidSubmittedTitle,
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
@@ -69,9 +71,9 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 // Subtitle
-                const Text(
-                  "Your bid is now live. You'll be notified if you win.",
-                  style: TextStyle(
+                Text(
+                  l10n.bidSubmittedSubtitle,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF6B7280),
                     height: 1.4,
@@ -104,9 +106,9 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      const Text(
-                        'Reference Number',
-                        style: TextStyle(
+                      Text(
+                        l10n.referenceNumber,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF9CA3AF),
                           fontWeight: FontWeight.w500,
@@ -161,9 +163,9 @@ class BuyerBidConfirmationScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Go To My Bids',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.goToMyBids,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),

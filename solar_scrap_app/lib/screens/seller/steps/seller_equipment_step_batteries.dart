@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/listing_draft.dart';
+import '../../../utils/rtl_helper.dart';
 import '../seller_upload_images_screen.dart';
 import 'seller_equipment_step_cables.dart';
 
@@ -79,6 +81,7 @@ class _SellerEquipmentStepBatteriesState
     required List<String> options,
     required String selectedValue,
     required Function(String) onChanged,
+    String Function(String)? labelBuilder,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,6 +98,7 @@ class _SellerEquipmentStepBatteriesState
         Row(
           children: options.map((option) {
             final isSelected = selectedValue == option;
+            final displayText = labelBuilder != null ? labelBuilder(option) : option;
             return Expanded(
               child: GestureDetector(
                 onTap: () {
@@ -120,7 +124,7 @@ class _SellerEquipmentStepBatteriesState
                   ),
                   child: Center(
                     child: Text(
-                      option,
+                      displayText,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -142,6 +146,7 @@ class _SellerEquipmentStepBatteriesState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final bool isLithium = _selectedBatteryType == 'Lithium';
 
     return Scaffold(
@@ -158,8 +163,8 @@ class _SellerEquipmentStepBatteriesState
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -169,9 +174,9 @@ class _SellerEquipmentStepBatteriesState
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Equipment Details',
-          style: TextStyle(
+        title: Text(
+          l10n.equipmentDetails,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -193,8 +198,8 @@ class _SellerEquipmentStepBatteriesState
                   final int totalSteps = widget.isCompleteSolarSystem ? 7 : 6;
                   final int currentStep = widget.isCompleteSolarSystem ? 4 : 2;
                   final String stepText = widget.isCompleteSolarSystem
-                      ? 'Step 4 of $totalSteps (Batteries)'
-                      : 'Step 2 of 6';
+                      ? l10n.stepXOfYWithDetail(4, totalSteps, l10n.stepDetailBatteries)
+                      : l10n.stepXOfY(2, 6);
                   final String percentText =
                       '${((currentStep / totalSteps) * 100).round()}%';
 
@@ -266,8 +271,8 @@ class _SellerEquipmentStepBatteriesState
                     const SizedBox(width: 8),
                     Text(
                       widget.isCompleteSolarSystem
-                          ? 'Complete System · Batteries'
-                          : 'Batteries',
+                          ? l10n.completeSystemBannerBatteries
+                          : l10n.categoryBatteries,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -281,63 +286,79 @@ class _SellerEquipmentStepBatteriesState
 
                     // Battery Type
                     _buildOptionButtons(
-                      label: 'Battery Type',
+                      label: l10n.batteryType,
                       options: ['Lithium', 'Lead Acid', 'Tabular'],
                       selectedValue: _selectedBatteryType,
                       onChanged: (val) => _selectedBatteryType = val,
+                      labelBuilder: (type) {
+                        switch (type) {
+                          case 'Lithium':
+                            return l10n.batteryTypeLithium;
+                          case 'Lead Acid':
+                            return l10n.batteryTypeLeadAcid;
+                          case 'Tabular':
+                            return l10n.batteryTypeTabular;
+                          default:
+                            return type;
+                        }
+                      },
                     ),
 
                     // Number of Batteries
                     _buildTextField(
-                      label: 'Number of Batteries',
-                      hint: 'Enter Battery count',
+                      label: l10n.numberOfBatteries,
+                      hint: l10n.batteryCountHint,
                       controller: _batteryCountController,
                     ),
 
                     // Battery Capacity (kW for Lithium, Amp for Lead Acid & Tabular)
                     _buildTextField(
                       label: isLithium
-                          ? 'Battery Capacity (kW)'
-                          : 'Battery Capacity (Amp)',
-                      hint: isLithium ? 'e.g 5 kw' : 'e.g 200 amp',
+                          ? l10n.batteryCapacityKw
+                          : l10n.batteryCapacityAmp,
+                      hint: isLithium
+                          ? l10n.batteryCapacityKwHint
+                          : l10n.batteryCapacityAmpHint,
                       controller: _capacityController,
                     ),
 
                     // Manufacturer / Brand
                     _buildTextField(
-                      label: 'Manufacturer / Brand',
-                      hint: 'Enter brand name',
+                      label: l10n.manufacturerBrand,
+                      hint: l10n.brandHint,
                       controller: _brandController,
                     ),
 
                     // Price Demand (only if not Complete Solar System)
                     if (!widget.isCompleteSolarSystem)
                       _buildTextField(
-                        label: 'Price Demand',
+                        label: l10n.priceDemand,
                         hint: 'Rs 45, 000 000',
                         controller: _priceDemandController,
                       ),
 
                     // Purchase Year
                     _buildTextField(
-                      label: 'Purchase Year',
-                      hint: 'e.g. 2019',
+                      label: l10n.purchaseYear,
+                      hint: l10n.purchaseYearHint,
                       controller: _purchaseYearController,
                     ),
 
                     // No. of year used
                     _buildTextField(
-                      label: 'No. of year used',
-                      hint: 'e.g. 1 year',
+                      label: l10n.noOfYearUsed,
+                      hint: l10n.batteryYearsUsedHint,
                       controller: _yearsUsedController,
                     ),
 
               // Battery Conditions
               _buildOptionButtons(
-                label: 'Battery Conditions',
+                label: l10n.batteryConditions,
                 options: ['Working', 'Non working'],
                 selectedValue: _selectedCondition,
                 onChanged: (val) => _selectedCondition = val,
+                labelBuilder: (cond) =>
+                    cond == 'Working' ? l10n.conditionWorking : l10n.conditionNonWorking,
               ),
               const SizedBox(height: 24),
 
@@ -359,9 +380,9 @@ class _SellerEquipmentStepBatteriesState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -434,9 +455,9 @@ class _SellerEquipmentStepBatteriesState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.continueButton,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

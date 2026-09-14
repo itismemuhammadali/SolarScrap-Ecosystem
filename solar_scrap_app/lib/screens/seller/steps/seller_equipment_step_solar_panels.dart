@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/listing_draft.dart';
+import '../../../utils/rtl_helper.dart';
 import '../seller_upload_images_screen.dart';
 import 'seller_equipment_step_inverters.dart';
 
@@ -70,12 +72,12 @@ class _SellerEquipmentStepSolarPanelsState
     );
   }
 
-  Widget _buildConditionChip(String condition, {bool expand = false}) {
-    final isSelected = _selectedCondition == condition;
+  Widget _buildConditionChip(String label, String value, {bool expand = false}) {
+    final isSelected = _selectedCondition == value;
     final chip = GestureDetector(
       onTap: () {
         setState(() {
-          _selectedCondition = condition;
+          _selectedCondition = value;
         });
       },
       child: Container(
@@ -93,7 +95,7 @@ class _SellerEquipmentStepSolarPanelsState
         ),
         child: Center(
           child: Text(
-            condition,
+            label,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -113,13 +115,13 @@ class _SellerEquipmentStepSolarPanelsState
     return chip;
   }
 
-  Widget _buildConditionOptions() {
+  Widget _buildConditionOptions(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Panel Condition',
-          style: TextStyle(
+        Text(
+          l10n.panelCondition,
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: Color(0xFF18181B),
@@ -129,20 +131,20 @@ class _SellerEquipmentStepSolarPanelsState
         // Row 1: 3 buttons stretched across full width
         Row(
           children: [
-            _buildConditionChip('Scrap', expand: true),
+            _buildConditionChip(l10n.conditionScrap, 'Scrap', expand: true),
             const SizedBox(width: 8),
-            _buildConditionChip('Bullet Hit', expand: true),
+            _buildConditionChip(l10n.conditionBulletHit, 'Bullet Hit', expand: true),
             const SizedBox(width: 8),
-            _buildConditionChip('Shatter lass', expand: true),
+            _buildConditionChip(l10n.conditionShatterGlass, 'Shatter glass', expand: true),
           ],
         ),
         const SizedBox(height: 10),
         // Row 2: 2 buttons matching width of Row 1
         Row(
           children: [
-            _buildConditionChip('Good Conditions', expand: true),
+            _buildConditionChip(l10n.conditionGood, 'Good Conditions', expand: true),
             const SizedBox(width: 8),
-            _buildConditionChip('Other', expand: true),
+            _buildConditionChip(l10n.conditionOther, 'Other', expand: true),
             const SizedBox(width: 8),
             const Expanded(child: SizedBox()),
           ],
@@ -195,6 +197,8 @@ class _SellerEquipmentStepSolarPanelsState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -209,8 +213,8 @@ class _SellerEquipmentStepSolarPanelsState
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -222,8 +226,8 @@ class _SellerEquipmentStepSolarPanelsState
         centerTitle: true,
         title: Text(
           widget.isCompleteSolarSystem
-              ? 'Complete System: Panels'
-              : 'Equipment Details',
+              ? l10n.completeSystemPanelsTitle
+              : l10n.equipmentDetailsTitle,
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -243,8 +247,8 @@ class _SellerEquipmentStepSolarPanelsState
                   final int totalSteps = widget.isCompleteSolarSystem ? 7 : 6;
                   final int currentStep = 2;
                   final String stepText = widget.isCompleteSolarSystem
-                      ? 'Step 2 of $totalSteps (Panels)'
-                      : 'Step 2 of 6';
+                      ? l10n.stepXOfYWithDetail(2, totalSteps, l10n.stepDetailPanels)
+                      : l10n.stepXOfY(2, 6);
                   final String percentText = widget.isCompleteSolarSystem ? '29%' : '33%';
 
                   return Column(
@@ -319,8 +323,8 @@ class _SellerEquipmentStepSolarPanelsState
                     const SizedBox(width: 8),
                     Text(
                       widget.isCompleteSolarSystem
-                          ? 'Complete System · Solar Panels'
-                          : 'Solar Panels',
+                          ? l10n.completeSystemBannerPanels
+                          : l10n.categoryPanels,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -334,14 +338,14 @@ class _SellerEquipmentStepSolarPanelsState
 
               // Number of Panels
               _buildTextField(
-                label: 'Number of Panels',
+                label: l10n.numberOfPanels,
                 hint: 'e.g. 200',
                 controller: _panelsCountController,
               ),
 
               // Watts per Panel (W)
               _buildTextField(
-                label: 'Watts per Panel (W)',
+                label: l10n.wattsPerPanelUnit,
                 hint: 'e.g. 400',
                 controller: _wattsController,
               ),
@@ -349,13 +353,13 @@ class _SellerEquipmentStepSolarPanelsState
               // Price Demand (only for individual category)
               if (!widget.isCompleteSolarSystem)
                 _buildTextField(
-                  label: 'Price Demand',
+                  label: l10n.priceDemand,
                   hint: 'Rs 45, 000 000',
                   controller: _priceDemandController,
                 ),
 
               // Panel Condition
-              _buildConditionOptions(),
+              _buildConditionOptions(l10n),
               const SizedBox(height: 24),
 
               // Back and Continue buttons
@@ -376,9 +380,9 @@ class _SellerEquipmentStepSolarPanelsState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -413,9 +417,9 @@ class _SellerEquipmentStepSolarPanelsState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.continueButton,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

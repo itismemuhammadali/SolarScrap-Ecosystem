@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'seller/seller_onboarding_screen.dart';
 import 'buyer/buyer_onboarding_screen.dart';
+import '../l10n/app_localizations.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -17,6 +18,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -33,18 +35,18 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Header
-                      const Text(
-                        'Select Your Role',
-                        style: TextStyle(
+                      Text(
+                        l10n.selectRoleTitle,
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Choose how you want to use Solar Scrap',
-                        style: TextStyle(
+                      Text(
+                        l10n.selectRoleSubtitle,
+                        style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF64748B),
                         ),
@@ -112,10 +114,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                     Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Expanded(
+                                        Expanded(
                                           child: Text(
-                                            'Solar EPC Company /\nScrap Seller',
-                                            style: TextStyle(
+                                            l10n.sellerRoleTitle,
+                                            style: const TextStyle(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w600,
                                               color: Colors.black,
@@ -188,9 +190,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 6),
-                                    const Text(
-                                      'List and sell your solar scrap equipment',
-                                      style: TextStyle(
+                                    Text(
+                                      l10n.sellerRoleDesc,
+                                      style: const TextStyle(
                                         fontSize: 12,
                                         color: Color(0xFF64748B),
                                         height: 1.35,
@@ -266,10 +268,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                     Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Expanded(
+                                        Expanded(
                                           child: Text(
-                                            'Scrap Dealer /\nSolar Buyer',
-                                            style: TextStyle(
+                                            l10n.buyerRoleTitle,
+                                            style: const TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
                                               color: Colors.black,
@@ -342,9 +344,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 6),
-                                    const Text(
-                                      'Browse and buy solar scrap at best prices',
-                                      style: TextStyle(
+                                    Text(
+                                      l10n.buyerRoleDesc,
+                                      style: const TextStyle(
                                         fontSize: 12,
                                         color: Color(0xFF64748B),
                                         height: 1.35,
@@ -407,9 +409,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: const Text(
-                            'Continue',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.continueButton,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),

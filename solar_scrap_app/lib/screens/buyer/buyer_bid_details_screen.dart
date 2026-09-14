@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/bid.dart';
 import '../../models/listing.dart';
 import '../../services/listing_service.dart';
+import '../../utils/rtl_helper.dart';
 import 'buyer_auction_details_screen.dart';
 
 class BuyerBidDetailsScreen extends StatefulWidget {
@@ -190,36 +192,53 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
     }
   }
 
-  List<Map<String, dynamic>> get _timelineSteps {
+  String _localizedStatus(String status, AppLocalizations l10n) {
+    switch (status) {
+      case 'Won':
+        return l10n.statusWon;
+      case 'Winning':
+        return l10n.filterWinning;
+      case 'Active':
+        return l10n.filterActive;
+      case 'Outbid':
+        return l10n.filterOutbid;
+      case 'Closed':
+        return l10n.filterClosed;
+      default:
+        return status;
+    }
+  }
+
+  List<Map<String, dynamic>> _timelineSteps(AppLocalizations l10n) {
     final status = _normalizedStatus;
 
     if (status == 'Won') {
       return [
-        {'title': 'Bid Submitted', 'completed': true},
-        {'title': 'Under Seller Review', 'completed': true},
-        {'title': 'Bid Accepted by Seller', 'completed': true},
-        {'title': 'Deal Finalized', 'completed': true},
+        {'title': l10n.timelineStepBidSubmitted, 'completed': true},
+        {'title': l10n.timelineStepUnderSellerReview, 'completed': true},
+        {'title': l10n.timelineStepBidAccepted, 'completed': true},
+        {'title': l10n.timelineStepDealFinalized, 'completed': true},
       ];
     } else if (status == 'Closed') {
       return [
-        {'title': 'Bid Submitted', 'completed': true},
-        {'title': 'Auction Running', 'completed': true},
-        {'title': 'Offer Declined / Closed', 'completed': true},
-        {'title': 'Auction Closed', 'completed': true},
+        {'title': l10n.timelineStepBidSubmitted, 'completed': true},
+        {'title': l10n.timelineStepAuctionRunning, 'completed': true},
+        {'title': l10n.timelineStepOfferDeclined, 'completed': true},
+        {'title': l10n.timelineStepAuctionClosed, 'completed': true},
       ];
     } else if (status == 'Winning') {
       return [
-        {'title': 'Bid Submitted', 'completed': true},
-        {'title': 'Highest Bidder', 'completed': true},
-        {'title': 'Seller Decision', 'completed': false},
-        {'title': 'Deal Finalized', 'completed': false},
+        {'title': l10n.timelineStepBidSubmitted, 'completed': true},
+        {'title': l10n.timelineStepHighestBidder, 'completed': true},
+        {'title': l10n.timelineStepSellerDecision, 'completed': false},
+        {'title': l10n.timelineStepDealFinalized, 'completed': false},
       ];
     } else {
       return [
-        {'title': 'Bid Submitted', 'completed': true},
-        {'title': 'Under Seller Review', 'completed': true},
-        {'title': 'Seller Decision', 'completed': false},
-        {'title': 'Deal Finalized', 'completed': false},
+        {'title': l10n.timelineStepBidSubmitted, 'completed': true},
+        {'title': l10n.timelineStepUnderSellerReview, 'completed': true},
+        {'title': l10n.timelineStepSellerDecision, 'completed': false},
+        {'title': l10n.timelineStepDealFinalized, 'completed': false},
       ];
     }
   }
@@ -257,7 +276,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
     );
   }
 
-  List<Widget> _buildDynamicSpecsRows() {
+  List<Widget> _buildDynamicSpecsRows(AppLocalizations l10n) {
     final List<Widget> rows = [];
     final specs = _listing?.specs ?? {};
     final category = _bid['category']?.toString() ?? _listing?.category ?? '';
@@ -288,28 +307,28 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
       );
     }
 
-    addRow('Category', category);
+    addRow(l10n.listingCategoryLabel, category);
 
     if (category == 'Solar Panels') {
       if (specs['panels_count'] != null) addRow('Number of Panels', '${specs['panels_count']}');
       if (specs['watts_per_panel'] != null) addRow('Watts per Panel', '${specs['watts_per_panel']} W');
-      if (specs['panel_condition'] != null) addRow('Condition', '${specs['panel_condition']}');
+      if (specs['panel_condition'] != null) addRow(l10n.listingConditionLabel, '${specs['panel_condition']}');
     } else if (category == 'Batteries') {
       if (specs['battery_type'] != null) addRow('Battery Type', '${specs['battery_type']}');
-      if (specs['battery_count'] != null) addRow('Quantity', '${specs['battery_count']}');
+      if (specs['battery_count'] != null) addRow(l10n.listingQuantityLabel, '${specs['battery_count']}');
       if (specs['battery_capacity'] != null) addRow('Capacity', '${specs['battery_capacity']}');
       if (specs['battery_brand'] != null) addRow('Brand', '${specs['battery_brand']}');
-      if (specs['battery_condition'] != null) addRow('Condition', '${specs['battery_condition']}');
+      if (specs['battery_condition'] != null) addRow(l10n.listingConditionLabel, '${specs['battery_condition']}');
     } else if (category == 'Inverters') {
       if (specs['inverter_brand'] != null) addRow('Brand', '${specs['inverter_brand']}');
       if (specs['inverter_type'] != null) addRow('Type', '${specs['inverter_type']}');
       if (specs['rated_power'] != null) addRow('Rated Power', '${specs['rated_power']}');
-      if (specs['inverter_condition'] != null) addRow('Condition', '${specs['inverter_condition']}');
+      if (specs['inverter_condition'] != null) addRow(l10n.listingConditionLabel, '${specs['inverter_condition']}');
     } else if (category == 'Cables') {
       if (specs['cable_type'] != null) addRow('Cable Type', '${specs['cable_type']}');
       if (specs['cable_size'] != null) addRow('Cable Size', '${specs['cable_size']}');
-      if (specs['cable_conductor'] != null) addRow('Conductor', '${specs['cable_conductor']}');
-      if (specs['cable_condition'] != null) addRow('Condition', '${specs['cable_condition']}');
+      if (specs['cable_conductor'] != null) addRow(l10n.cableConductor, '${specs['cable_conductor']}');
+      if (specs['cable_condition'] != null) addRow(l10n.listingConditionLabel, '${specs['cable_condition']}');
     } else if (category == 'Structure') {
       if (specs['structure_type'] != null) addRow('Structure Type', '${specs['structure_type']}');
       if (specs['structure_metal'] != null) addRow('Metal Material', '${specs['structure_metal']}');
@@ -321,7 +340,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
     }
 
     if (specs['condition'] != null && rows.length <= 2) {
-      addRow('Condition', '${specs['condition']}');
+      addRow(l10n.listingConditionLabel, '${specs['condition']}');
     }
 
     return rows;
@@ -347,6 +366,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
     final contactPhone = _bid['contactPhone']?.toString() ?? '';
     final contactEmail = _bid['contactEmail']?.toString() ?? '';
     final hasContactInfo = contactName.isNotEmpty || contactPhone.isNotEmpty || contactEmail.isNotEmpty;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -371,16 +391,16 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                         color: Color(0xFFF3F4F6),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
+                      child: RTLHelper.backIcon(
+                        context,
                         color: Colors.black87,
                         size: 20,
                       ),
                     ),
                   ),
-                  const Text(
-                    'Bid Details',
-                    style: TextStyle(
+                  Text(
+                    l10n.bidDetails,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0F172A),
@@ -554,7 +574,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Auction ID: $auctionId',
+                          l10n.auctionIdPrefix(auctionId),
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF9CA3AF),
@@ -574,7 +594,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      status,
+                      _localizedStatus(status, l10n),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -603,9 +623,9 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'My Bid Amount',
-                          style: TextStyle(
+                        Text(
+                          l10n.myBidAmount,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -626,9 +646,9 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Bid Date',
-                          style: TextStyle(
+                        Text(
+                          l10n.bidDate,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -649,9 +669,9 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Current Highest',
-                          style: TextStyle(
+                        Text(
+                          l10n.currentHighest,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -680,11 +700,11 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00A63E)),
                   ),
                 ),
-              ] else if (_buildDynamicSpecsRows().isNotEmpty) ...[
+              ] else if (_buildDynamicSpecsRows(l10n).isNotEmpty) ...[
                 const SizedBox(height: 20),
-                const Text(
-                  'Equipment Specifications',
-                  style: TextStyle(
+                Text(
+                  l10n.equipmentSpecifications,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
@@ -699,7 +719,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                   ),
                   child: Column(
-                    children: _buildDynamicSpecsRows(),
+                    children: _buildDynamicSpecsRows(l10n),
                   ),
                 ),
               ],
@@ -707,9 +727,9 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
               // Dynamic Pickup Location Card
               if (locationDisplay.isNotEmpty) ...[
                 const SizedBox(height: 20),
-                const Text(
-                  'Pickup Location',
-                  style: TextStyle(
+                Text(
+                  l10n.pickupLocationTitle,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
@@ -744,7 +764,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              city.isNotEmpty ? city : 'Pickup Location',
+                              city.isNotEmpty ? city : l10n.pickupLocationTitle,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -770,9 +790,9 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
               // Seller Contact Information (Visible especially if Won/Accepted)
               if (hasContactInfo && (status == 'Won' || status == 'Winning')) ...[
                 const SizedBox(height: 20),
-                const Text(
-                  'Seller Contact Information',
-                  style: TextStyle(
+                Text(
+                  l10n.sellerContactInformation,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
@@ -862,7 +882,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                       );
                     } else if (widget.bid != null && widget.bid!.listingId.isNotEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Loading full auction details...')),
+                        SnackBar(content: Text(l10n.loadingAuctionDetails)),
                       );
                       final l = await ListingService.instance.fetchListingById(widget.bid!.listingId);
                       if (!mounted) return;
@@ -877,9 +897,9 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                     }
                   },
                   icon: const Icon(Icons.open_in_new, color: Color(0xFF00A63E), size: 18),
-                  label: const Text(
-                    'View Full Auction Listing',
-                    style: TextStyle(
+                  label: Text(
+                    l10n.viewFullAuctionListing,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF00A63E),
@@ -891,9 +911,9 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
               const SizedBox(height: 24),
 
               // Timeline Section
-              const Text(
-                'Timeline',
-                style: TextStyle(
+              Text(
+                l10n.timelineTab,
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -902,7 +922,7 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
               const SizedBox(height: 16),
 
               // Stepper List
-              _buildTimelineStepper(),
+              _buildTimelineStepper(l10n),
 
               // Contextual Status Banners
               if (status == 'Won') ...[
@@ -933,19 +953,19 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              'Your Bid Was Accepted!',
-                              style: TextStyle(
+                              l10n.bidAcceptedBannerTitle,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF00A63E),
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'The seller accepted your offer. They will coordinate payment and equipment pickup.',
-                              style: TextStyle(
+                              l10n.bidAcceptedBannerDesc,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF4B5563),
                               ),
@@ -983,19 +1003,19 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              "You're currently winning!",
-                              style: TextStyle(
+                              l10n.bidWinningBannerTitle,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF00A63E),
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Your bid is currently the highest. You will be notified when the auction closes.',
-                              style: TextStyle(
+                              l10n.bidWinningBannerDesc,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF4B5563),
                               ),
@@ -1034,19 +1054,19 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              'Bid Submitted & Active',
-                              style: TextStyle(
+                              l10n.bidActiveBannerTitle,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF1E40AF),
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Your offer has been sent to the seller. You will be notified when they review or accept.',
-                              style: TextStyle(
+                              l10n.bidActiveBannerDesc,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF4B5563),
                               ),
@@ -1085,19 +1105,19 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              'You Have Been Outbid',
-                              style: TextStyle(
+                              l10n.bidOutbidBannerTitle,
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF92400E),
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Another buyer submitted a higher offer. Return to the auction to increase your bid.',
-                              style: TextStyle(
+                              l10n.bidOutbidBannerDesc,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF4B5563),
                               ),
@@ -1118,8 +1138,8 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
     );
   }
 
-  Widget _buildTimelineStepper() {
-    final steps = _timelineSteps;
+  Widget _buildTimelineStepper(AppLocalizations l10n) {
+    final steps = _timelineSteps(l10n);
 
     return Column(
       children: List.generate(steps.length, (index) {

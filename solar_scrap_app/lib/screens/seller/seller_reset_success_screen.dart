@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 class SellerResetSuccessScreen extends StatefulWidget {
   const SellerResetSuccessScreen({super.key});
@@ -11,6 +12,8 @@ class SellerResetSuccessScreen extends StatefulWidget {
 class _SellerResetSuccessScreenState extends State<SellerResetSuccessScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -53,9 +56,9 @@ class _SellerResetSuccessScreenState extends State<SellerResetSuccessScreen> {
                 const SizedBox(height: 24),
 
                 // Title
-                const Text(
-                  'Password Reset!',
-                  style: TextStyle(
+                Text(
+                  l10n.passwordResetTitle,
+                  style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -64,9 +67,9 @@ class _SellerResetSuccessScreenState extends State<SellerResetSuccessScreen> {
                 const SizedBox(height: 8),
 
                 // Description
-                const Text(
-                  'Your password has been updated successfully.',
-                  style: TextStyle(
+                Text(
+                  l10n.passwordResetSuccessDesc,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF6B7280),
                     height: 1.4,
@@ -105,9 +108,9 @@ class _SellerResetSuccessScreenState extends State<SellerResetSuccessScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Back To Login',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.backToLogin,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),

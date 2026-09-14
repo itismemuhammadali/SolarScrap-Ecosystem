@@ -67,7 +67,13 @@ function QuotationViewContent() {
   };
 
   const handlePrint = () => {
+    const originalTitle = document.title;
+    const cleanCustomer = (currentRecord.name || "Customer").trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+    document.title = `Solar_Scrap_Quotation_${cleanCustomer}_${currentRecord.id || "Invoice"}`;
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1500);
   };
 
   const formatNumber = (num: number) => {
@@ -114,7 +120,7 @@ function QuotationViewContent() {
     <div className="min-h-screen bg-[#F5F6FA] py-8 px-4 sm:px-6 lg:px-8">
       {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-6 right-6 z-50 bg-[#009845] text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-semibold">
+        <div className="no-print fixed top-6 right-6 z-50 bg-[#009845] text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-semibold">
           <CheckCircle className="w-5 h-5" />
           <span>{toast}</span>
         </div>
@@ -122,7 +128,7 @@ function QuotationViewContent() {
 
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Navigation / Top Bar */}
-        <div className="flex items-center justify-between print:hidden">
+        <div className="no-print flex items-center justify-between print:hidden">
           <Link
             href="/quotation-history"
             className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-lg text-sm font-semibold shadow-xs transition-colors cursor-pointer"
@@ -149,7 +155,10 @@ function QuotationViewContent() {
         </div>
 
         {/* Quotation Document Card */}
-        <div className="bg-white rounded-2xl border border-gray-200/80 p-8 sm:p-10 shadow-xs space-y-8 print:border-none print:shadow-none">
+        <div
+          id="printable-quotation"
+          className="bg-white rounded-3xl border border-gray-200/80 p-6 sm:p-8 shadow-xs space-y-6 print:border-none print:shadow-none"
+        >
           {/* Header */}
           <div className="flex items-center justify-between pb-6 border-b border-gray-100">
             <Image

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 
 class BuyerPrivacyPolicyScreen extends StatelessWidget {
   const BuyerPrivacyPolicyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -22,7 +26,7 @@ class BuyerPrivacyPolicyScreen extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: GestureDetector(
                         onTap: () {
                           Navigator.pop(context);
@@ -34,18 +38,20 @@ class BuyerPrivacyPolicyScreen extends StatelessWidget {
                             color: const Color(0xFFF5F5F5),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.black,
-                            size: 20,
+                          child: Center(
+                            child: RTLHelper.backIcon(
+                              context,
+                              color: Colors.black,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    const Center(
+                    Center(
                       child: Text(
-                        'Privacy Policy',
-                        style: TextStyle(
+                        l10n.privacyPolicy,
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0F172A),
@@ -58,9 +64,9 @@ class BuyerPrivacyPolicyScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Subheader
-              const Text(
-                'Last Updated: August 5, 2026',
-                style: TextStyle(
+              Text(
+                l10n.privacyPolicyLastUpdated,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -70,33 +76,29 @@ class BuyerPrivacyPolicyScreen extends StatelessWidget {
 
               // Policy Section 1
               _buildPolicyCard(
-                title: 'Information We Collect',
-                content:
-                    'We Collect Your Name, Email, Phone Number, Pickup Address, Company Details (If Applicable), And Order Information. We May Also Collect Device, Location, And Usage Data To Improve The App.',
+                title: l10n.privacyPolicyInfoCollectTitle,
+                content: l10n.privacyPolicyInfoCollectDesc,
               ),
               const SizedBox(height: 14),
 
               // Policy Section 2
               _buildPolicyCard(
-                title: 'How We Use Your Information',
-                content:
-                    'Your Information Is Used To Create Your Account, Process Scrap Purchases, Schedule Pickups, Provide Customer Support, Send Important Notifications, And Improve Our Services.',
+                title: l10n.privacyPolicyHowUseTitle,
+                content: l10n.privacyPolicyHowUseDesc,
               ),
               const SizedBox(height: 14),
 
               // Policy Section 3
               _buildPolicyCard(
-                title: 'Data Sharing',
-                content:
-                    'We Do Not Sell Your Personal Information. We Only Share Necessary Data With Trusted Service Providers Such As Payment Processors, Logistics Partners, And Authorities When Legally Required.',
+                title: l10n.privacyPolicyDataSharingTitle,
+                content: l10n.privacyPolicyDataSharingDesc,
               ),
               const SizedBox(height: 14),
 
               // Policy Section 4
               _buildPolicyCard(
-                title: 'Location Access',
-                content:
-                    'With Your Permission, We Use Your Location To Schedule Pickups, Improve Collection Accuracy, And Provide Location-Based Services. You Can Disable Location Access Anytime In Your Device Settings.',
+                title: l10n.privacyPolicyLocationAccessTitle,
+                content: l10n.privacyPolicyLocationAccessDesc,
               ),
               const SizedBox(height: 32),
             ],

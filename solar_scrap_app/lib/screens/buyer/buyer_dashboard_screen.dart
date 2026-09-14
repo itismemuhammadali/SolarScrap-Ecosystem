@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 import '../../models/bid.dart';
 import '../../models/buyer_profile.dart';
 import '../../models/buyer_stats.dart';
@@ -219,6 +221,71 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
     'Closed',
   ];
 
+  String _getCategoryDisplay(String cat, AppLocalizations l10n) {
+    switch (cat) {
+      case 'All':
+        return l10n.filterAll;
+      case 'Solar Panels':
+        return l10n.categoryPanels;
+      case 'Batteries':
+        return l10n.categoryBatteries;
+      case 'Inverters':
+        return l10n.categoryInverters;
+      case 'Transformers':
+        return l10n.categoryTransformers;
+      case 'Cables':
+        return l10n.categoryCables;
+      case 'Structure':
+        return l10n.categoryStructure;
+      default:
+        return cat;
+    }
+  }
+
+  String _getAuctionFilterDisplay(String filter, AppLocalizations l10n) {
+    switch (filter) {
+      case 'Latest':
+        return l10n.filterLatest;
+      case 'Lowest Price':
+        return l10n.filterLowestPrice;
+      case 'Highest Price':
+        return l10n.filterHighestPrice;
+      default:
+        return filter;
+    }
+  }
+
+  String _getBidStatusDisplay(String status, AppLocalizations l10n) {
+    switch (status) {
+      case 'Active':
+        return l10n.filterActive;
+      case 'Winning':
+        return l10n.filterWinning;
+      case 'Closed':
+        return l10n.filterClosed;
+      default:
+        return status;
+    }
+  }
+
+  String _getLocalizedBidStatus(String statusDisplay, AppLocalizations l10n) {
+    switch (statusDisplay.toLowerCase()) {
+      case 'won':
+        return l10n.statusWon;
+      case 'winning':
+        return l10n.filterWinning;
+      case 'lost':
+        return l10n.statusLost;
+      case 'outbid':
+        return l10n.filterOutbid;
+      case 'pending':
+        return l10n.statusPending;
+      case 'active':
+      default:
+        return l10n.filterActive;
+    }
+  }
+
   // Filtered lists getters
   List<Listing> get _filteredHomeAuctions {
     final query = _homeSearchController.text.trim().toLowerCase();
@@ -281,10 +348,11 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
       body: SafeArea(
-        child: _buildTabContent(),
+        child: _buildTabContent(l10n),
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
@@ -304,10 +372,10 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem('assets/icons/home.svg', 'Home', 0),
-                _buildNavItem('assets/icons/auction.svg', 'Auctions', 1),
-                _buildNavItem('assets/icons/my-bid.svg', 'My Bids', 2),
-                _buildNavItem('assets/icons/person.svg', 'Profile', 3),
+                _buildNavItem('assets/icons/home.svg', l10n.homeTab, 0),
+                _buildNavItem('assets/icons/auction.svg', l10n.auctionsTab, 1),
+                _buildNavItem('assets/icons/my-bid.svg', l10n.myBidsTab, 2),
+                _buildNavItem('assets/icons/person.svg', l10n.profileTab, 3),
               ],
             ),
           ),
@@ -355,23 +423,23 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
     );
   }
 
-  Widget _buildTabContent() {
+  Widget _buildTabContent(AppLocalizations l10n) {
     switch (_selectedTabIndex) {
       case 0:
-        return _buildHomeTab();
+        return _buildHomeTab(l10n);
       case 1:
-        return _buildAuctionsTab();
+        return _buildAuctionsTab(l10n);
       case 2:
-        return _buildMyBidsTab();
+        return _buildMyBidsTab(l10n);
       case 3:
-        return _buildProfileTab();
+        return _buildProfileTab(l10n);
       default:
-        return _buildHomeTab();
+        return _buildHomeTab(l10n);
     }
   }
 
   // =================== TAB 1: HOME ===================
-  Widget _buildHomeTab() {
+  Widget _buildHomeTab(AppLocalizations l10n) {
     final homeAuctions = _filteredHomeAuctions;
     final featuredListing = _listings.isNotEmpty ? _listings.first : null;
 
@@ -384,7 +452,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildGreetingHeader(),
+            _buildGreetingHeader(l10n),
             const SizedBox(height: 16),
 
             // Search Bar
@@ -397,7 +465,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                 controller: _homeSearchController,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'Search auctions, equipment...',
+                  hintText: l10n.searchAuctionsEquipmentHint,
                   hintStyle: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF8E8E93),
@@ -460,7 +528,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          cat,
+                          _getCategoryDisplay(cat, l10n),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight:
@@ -478,7 +546,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
             const SizedBox(height: 16),
 
             // Featured Auction Hero Card
-            _buildFeaturedHeroCard(featuredListing),
+            _buildFeaturedHeroCard(featuredListing, l10n),
             const SizedBox(height: 16),
 
             // Stats Row
@@ -490,7 +558,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                     iconColor: const Color(0xFF3B82F6),
                     iconBg: const Color(0xFFEFF6FF),
                     value: '${_listings.length}',
-                    label: 'Live Auctions',
+                    label: l10n.liveAuctions,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -500,7 +568,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                     iconColor: const Color(0xFFF59E0B),
                     iconBg: const Color(0xFFFEF3C7),
                     value: '${_stats?.activeBids ?? 0}',
-                    label: 'Active Bids',
+                    label: l10n.activeBids,
                   ),
                 ),
               ],
@@ -511,9 +579,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Latest Auctions',
-                  style: TextStyle(
+                Text(
+                  l10n.latestAuctions,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -525,9 +593,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                       _selectedTabIndex = 1;
                     });
                   },
-                  child: const Text(
-                    'See All',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.seeAll,
+                    style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF00A63E),
@@ -542,12 +610,12 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
             if (_isListingsLoading)
               _buildLoadingSkeleton()
             else if (homeAuctions.isEmpty)
-              _buildEmptyState('No active auctions found in this category')
+              _buildEmptyState(l10n.noActiveAuctionsFound, l10n)
             else
               ...homeAuctions.map((auc) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildAuctionCard(auc),
+                  child: _buildAuctionCard(auc, l10n),
                 );
               }),
             const SizedBox(height: 24),
@@ -557,7 +625,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
     );
   }
 
-  Widget _buildFeaturedHeroCard(Listing? featured) {
+  Widget _buildFeaturedHeroCard(Listing? featured, AppLocalizations l10n) {
     if (featured == null) {
       return Container(
         height: 195,
@@ -581,9 +649,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                 color: Colors.white24,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                'SolarScrap Marketplace',
-                style: TextStyle(
+              child: Text(
+                l10n.marketplaceHeroTag,
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -593,18 +661,18 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Verified Solar Scrap Auctions',
-                  style: TextStyle(
+                Text(
+                  l10n.verifiedAuctionsTitle,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Explore solar panels, inverters & batteries across Pakistan.',
-                  style: TextStyle(
+                Text(
+                  l10n.exploreAuctionsSubtitle,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: Colors.white70,
                   ),
@@ -624,9 +692,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                       borderRadius: BorderRadius.circular(18),
                     ),
                   ),
-                  child: const Text(
-                    'Explore Auctions',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.exploreAuctions,
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -704,9 +772,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                       width: 0.8,
                     ),
                   ),
-                  child: const Text(
-                    'Featured Auction',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.featuredAuction,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
@@ -769,9 +837,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                             borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                        child: const Text(
-                          'View Auction',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.viewAuction,
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -847,7 +915,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
   }
 
   // =================== TAB 2: AUCTIONS ===================
-  Widget _buildAuctionsTab() {
+  Widget _buildAuctionsTab(AppLocalizations l10n) {
     final auctionsList = _filteredAuctionsTabList;
 
     return RefreshIndicator(
@@ -859,7 +927,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildGreetingHeader(),
+            _buildGreetingHeader(l10n),
             const SizedBox(height: 16),
 
             // Search Bar
@@ -872,7 +940,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                 controller: _auctionSearchController,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'Search auctions, equipment...',
+                  hintText: l10n.searchAuctionsEquipmentHint,
                   hintStyle: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF8E8E93),
@@ -935,7 +1003,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          filter,
+                          _getAuctionFilterDisplay(filter, l10n),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight:
@@ -956,12 +1024,12 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
             if (_isListingsLoading)
               _buildLoadingSkeleton()
             else if (auctionsList.isEmpty)
-              _buildEmptyState('No matching auctions found on marketplace')
+              _buildEmptyState(l10n.noMatchingAuctionsFound, l10n)
             else
               ...auctionsList.map((auc) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: _buildAuctionCard(auc),
+                  child: _buildAuctionCard(auc, l10n),
                 );
               }),
             const SizedBox(height: 24),
@@ -972,7 +1040,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
   }
 
   // =================== TAB 3: MY BIDS ===================
-  Widget _buildMyBidsTab() {
+  Widget _buildMyBidsTab(AppLocalizations l10n) {
     final bidsList = _filteredBidsList;
 
     return SingleChildScrollView(
@@ -980,7 +1048,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildGreetingHeader(),
+          _buildGreetingHeader(l10n),
           const SizedBox(height: 16),
 
           // Search Bar
@@ -993,7 +1061,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
               controller: _bidsSearchController,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                hintText: 'Search bids',
+                hintText: l10n.searchBidsHint,
                 hintStyle: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF8E8E93),
@@ -1056,7 +1124,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        status,
+                        _getBidStatusDisplay(status, l10n),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight:
@@ -1076,12 +1144,17 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
 
           // Bids Cards List
           if (bidsList.isEmpty)
-            _buildEmptyState('No bids found under $_selectedBidStatus')
+            _buildEmptyState(
+              l10n.noBidsFoundUnderStatus(
+                _getBidStatusDisplay(_selectedBidStatus, l10n),
+              ),
+              l10n,
+            )
           else
             ...bidsList.map((bid) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: _buildBidCard(bid),
+                child: _buildBidCard(bid, l10n),
               );
             }),
           const SizedBox(height: 24),
@@ -1107,23 +1180,23 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
   }
 
   // =================== TAB 4: PROFILE ===================
-  Widget _buildProfileTab() {
+  Widget _buildProfileTab(AppLocalizations l10n) {
     final profileName = _profile?.displayName.isNotEmpty == true
         ? _profile!.displayName
         : (AuthService.instance.currentUser?.displayName?.isNotEmpty == true
             ? AuthService.instance.currentUser!.displayName!
             : (AuthService.instance.currentUser?.email.isNotEmpty == true
                 ? AuthService.instance.currentUser!.email.split('@')[0]
-                : 'Buyer'));
+                : l10n.buyerRoleFallback));
     final profileEmail = _profile?.email.isNotEmpty == true
         ? _profile!.email
         : (AuthService.instance.currentUser?.email ?? 'buyer@solarscrap.com');
     final profilePhone = _profile?.phoneNumber.isNotEmpty == true
         ? _profile!.phoneNumber
-        : (AuthService.instance.currentUser?.phoneNumber ?? 'Not provided');
+        : (AuthService.instance.currentUser?.phoneNumber ?? l10n.notProvided);
     final profileLocation = _profile?.city.isNotEmpty == true
         ? '${_profile?.area.isNotEmpty == true ? '${_profile!.area}, ' : ''}${_profile!.city}'
-        : 'Not set';
+        : l10n.notSet;
 
     if (_isProfileLoading && _profile == null) {
       return const Center(
@@ -1144,9 +1217,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Profile',
-                  style: TextStyle(
+                Text(
+                  l10n.profileTab,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -1241,25 +1314,25 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                         ),
                       ),
                       const SizedBox(height: 3),
-                      const Text(
-                        'Scrap Dealer / Buyer',
-                        style: TextStyle(
+                      Text(
+                        l10n.scrapDealerBuyer,
+                        style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF8E8E93),
                         ),
                       ),
                       const SizedBox(height: 6),
                       Row(
-                        children: const [
-                          Icon(
+                        children: [
+                          const Icon(
                             Icons.check_circle_outline,
                             size: 14,
                             color: Color(0xFF00A63E),
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
-                            'Verified Buyer',
-                            style: TextStyle(
+                            l10n.verifiedBuyer,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF00A63E),
@@ -1278,15 +1351,15 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
             Row(
               children: [
                 Expanded(
-                  child: _buildProfileStatCard('${_stats?.totalBids ?? 0}', 'Total Bids'),
+                  child: _buildProfileStatCard('${_stats?.totalBids ?? 0}', l10n.totalBids),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildProfileStatCard('${_stats?.wonAuctions ?? 0}', 'Won Auctions'),
+                  child: _buildProfileStatCard('${_stats?.wonAuctions ?? 0}', l10n.wonAuctions),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildProfileStatCard('${_stats?.activeBids ?? 0}', 'Active Bids'),
+                  child: _buildProfileStatCard('${_stats?.activeBids ?? 0}', l10n.activeBids),
                 ),
               ],
             ),
@@ -1306,9 +1379,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'CONTACT INFORMATION',
-                    style: TextStyle(
+                  Text(
+                    l10n.contactInformation,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF8E8E93),
@@ -1340,7 +1413,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                 children: [
                   _buildProfileMenuRow(
                     Icons.edit_outlined,
-                    'Edit Profile',
+                    l10n.editProfile,
                     onTap: () async {
                       final result = await Navigator.push<BuyerProfile>(
                         context,
@@ -1357,7 +1430,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                   const Divider(height: 1, color: Color(0xFFF3F4F6)),
                   _buildProfileMenuRow(
                     Icons.lock_outline,
-                    'Change Password',
+                    l10n.changePassword,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -1371,7 +1444,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                   const Divider(height: 1, color: Color(0xFFF3F4F6)),
                   _buildProfileMenuRow(
                     Icons.notifications_none_outlined,
-                    'Notification Settings',
+                    l10n.notificationSettings,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -1384,7 +1457,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                   const Divider(height: 1, color: Color(0xFFF3F4F6)),
                   _buildProfileMenuRow(
                     Icons.favorite_border,
-                    'Saved Auctions',
+                    l10n.savedAuctions,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -1398,7 +1471,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                   const Divider(height: 1, color: Color(0xFFF3F4F6)),
                   _buildProfileMenuRow(
                     Icons.settings_outlined,
-                    'Settings',
+                    l10n.settingsTitle,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -1411,7 +1484,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                   const Divider(height: 1, color: Color(0xFFF3F4F6)),
                   _buildProfileMenuRow(
                     Icons.help_outline,
-                    'Help Center',
+                    l10n.helpCenter,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -1429,7 +1502,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
 
             // Sign Out Button
             InkWell(
-              onTap: _showSignOutDialog,
+              onTap: () => _showSignOutDialog(l10n),
               borderRadius: BorderRadius.circular(14),
               child: Container(
                 width: double.infinity,
@@ -1444,16 +1517,16 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(
+                  children: [
+                    const Icon(
                       Icons.logout_rounded,
                       color: Color(0xFFEF4444),
                       size: 18,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
-                      'Sign Out',
-                      style: TextStyle(
+                      l10n.signOut,
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFFEF4444),
@@ -1601,10 +1674,10 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                 ),
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
+            RTLHelper.chevronIcon(
+              context,
               size: 18,
-              color: Color(0xFF9CA3AF),
+              color: const Color(0xFF9CA3AF),
             ),
           ],
         ),
@@ -1612,17 +1685,17 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
     );
   }
 
-  void _showSignOutDialog() {
+  void _showSignOutDialog(AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to sign out of your account?'),
+        title: Text(l10n.signOut, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(l10n.signOutConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF6B7280))),
+            child: Text(l10n.cancel, style: const TextStyle(color: Color(0xFF6B7280))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -1643,7 +1716,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                 (route) => false,
               );
             },
-            child: const Text('Sign Out'),
+            child: Text(l10n.signOut),
           ),
         ],
       ),
@@ -1651,14 +1724,14 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
   }
 
   // =================== HELPER WIDGETS ===================
-  Widget _buildGreetingHeader() {
+  Widget _buildGreetingHeader(AppLocalizations l10n) {
     final String greetingName = _profile?.displayName.isNotEmpty == true
         ? _profile!.displayName
         : (AuthService.instance.currentUser?.displayName?.isNotEmpty == true
             ? AuthService.instance.currentUser!.displayName!
             : (AuthService.instance.currentUser?.email.isNotEmpty == true
                 ? AuthService.instance.currentUser!.email.split('@')[0]
-                : 'Buyer'));
+                : l10n.buyerRoleFallback));
 
     final bool hasUnread = _notifications.any((n) => !n.isRead);
 
@@ -1668,9 +1741,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Good morning,',
-              style: TextStyle(
+            Text(
+              l10n.goodMorning,
+              style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFF8E8E93),
               ),
@@ -1807,7 +1880,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
     );
   }
 
-  Widget _buildAuctionCard(Listing auc) {
+  Widget _buildAuctionCard(Listing auc, AppLocalizations l10n) {
     final String aucId = auc.id;
     final bool isFavorite = SavedAuctionsService.instance.isFavorite(aucId);
     final fullImageUrl = ListingService.instance.getFullImageUrl(auc.firstImageUrl);
@@ -1876,9 +1949,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                         color: const Color(0xFF00A63E),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        'Verified',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.verified,
+                        style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -1929,16 +2002,16 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(
+                        children: [
+                          const Icon(
                             Icons.access_time,
                             size: 12,
                             color: Colors.white,
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
-                            'Active',
-                            style: TextStyle(
+                            l10n.filterActive,
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: Colors.white,
@@ -1976,16 +2049,16 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                       const SizedBox(width: 8),
                       Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(
+                        children: [
+                          const Icon(
                             Icons.check_circle_outline,
                             size: 13,
                             color: Color(0xFF00A63E),
                           ),
-                          SizedBox(width: 3),
+                          const SizedBox(width: 3),
                           Text(
-                            'Verified',
-                            style: TextStyle(
+                            l10n.verified,
+                            style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: Color(0xFF00A63E),
@@ -2008,7 +2081,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      auc.category,
+                      _getCategoryDisplay(auc.category, l10n),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -2063,9 +2136,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Price Demand',
-                            style: TextStyle(
+                          Text(
+                            l10n.priceDemand,
+                            style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF8E8E93),
                             ),
@@ -2112,9 +2185,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                             padding: const EdgeInsets.symmetric(horizontal: 18),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text(
-                            'Bid Now',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.bidNow,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -2132,7 +2205,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
     );
   }
 
-  Widget _buildBidCard(Bid bid) {
+  Widget _buildBidCard(Bid bid, AppLocalizations l10n) {
     return GestureDetector(
       onTap: () {
         final matchedListing = _listings.cast<Listing?>().firstWhere(
@@ -2244,7 +2317,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          bid.statusDisplay,
+                          _getLocalizedBidStatus(bid.statusDisplay, l10n),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -2280,7 +2353,7 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
     );
   }
 
-  Widget _buildEmptyState(String message) {
+  Widget _buildEmptyState(String message, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
@@ -2313,9 +2386,9 @@ class _BuyerDashboardScreenState extends State<BuyerDashboardScreen>
           TextButton.icon(
             onPressed: _loadDashboardData,
             icon: const Icon(Icons.refresh, size: 18, color: Color(0xFF00A63E)),
-            label: const Text(
-              'Refresh',
-              style: TextStyle(color: Color(0xFF00A63E), fontWeight: FontWeight.w600),
+            label: Text(
+              l10n.refresh,
+              style: const TextStyle(color: Color(0xFF00A63E), fontWeight: FontWeight.w600),
             ),
           ),
         ],

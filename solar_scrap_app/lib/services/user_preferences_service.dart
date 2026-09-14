@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import 'auth_service.dart';
+import 'locale_notifier.dart';
 
 class UserPreferencesService {
   static final UserPreferencesService instance = UserPreferencesService._internal();
@@ -48,6 +49,7 @@ class UserPreferencesService {
       winningNotifications = prefs.getBool(_keyWinningNotifications) ?? true;
 
       language = prefs.getString(_keyLanguage) ?? 'English';
+      LocaleNotifier.instance.setFromPreference(language);
       _initialized = true;
 
       // Fetch latest from backend in background
@@ -156,6 +158,7 @@ class UserPreferencesService {
 
   Future<void> setLanguage(String lang) async {
     language = lang;
+    LocaleNotifier.instance.setFromPreference(lang);
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_keyLanguage, lang);

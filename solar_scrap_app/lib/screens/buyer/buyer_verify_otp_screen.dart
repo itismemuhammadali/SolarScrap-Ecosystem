@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 import 'buyer_reset_success_screen.dart';
 
 class BuyerVerifyOtpScreen extends StatefulWidget {
@@ -28,12 +30,12 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
 
   void _startTimer() {
     Future.delayed(const Duration(seconds: 1), () {
-      if (_secondsRemaining > 0) {
+      if (_secondsRemaining > 0 && mounted) {
         setState(() {
           _secondsRemaining--;
         });
         _startTimer();
-      } else {
+      } else if (mounted) {
         setState(() {
           _canResend = true;
         });
@@ -55,6 +57,8 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -68,8 +72,8 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 20,
             ),
@@ -79,9 +83,9 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Verify OTP',
-          style: TextStyle(
+        title: Text(
+          l10n.verifyOtpTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: Colors.black,
@@ -118,9 +122,9 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
               const SizedBox(height: 32),
 
               // Title
-              const Text(
-                'Verification Code',
-                style: TextStyle(
+              Text(
+                l10n.verificationCode,
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -129,25 +133,13 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
               const SizedBox(height: 12),
 
               // Description with phone number
-              RichText(
+              Text(
+                l10n.enterOtpSentToPhone(widget.phoneNumber),
                 textAlign: TextAlign.center,
-                text: TextSpan(
-                  text: 'Enter the 6-digit code sent to your mobile number\nending in ',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                    height: 1.5,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: widget.phoneNumber,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.black,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 32),
@@ -205,8 +197,8 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
                   const SizedBox(width: 4),
                   Text(
                     _canResend
-                        ? 'Resend now'
-                        : 'Resend in 00:${_secondsRemaining.toString().padLeft(2, '0')}',
+                        ? l10n.resendNow
+                        : l10n.resendInSeconds(_secondsRemaining.toString().padLeft(2, '0')),
                     style: TextStyle(
                       fontSize: 12,
                       color: _canResend ? const Color(0xFF00A63E) : Colors.grey,
@@ -244,8 +236,8 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter all 6 digits'),
+                        SnackBar(
+                          content: Text(l10n.pleaseEnterAll6Digits),
                         ),
                       );
                     }
@@ -257,9 +249,9 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
                     minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text(
-                    'Verify Account',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.verifyAccount,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -269,9 +261,9 @@ class _BuyerVerifyOtpScreenState extends State<BuyerVerifyOtpScreen> {
               const SizedBox(height: 16),
 
               // Help Text
-              const Text(
-                "Didn't receive the code? Check your spam folder or try resending.",
-                style: TextStyle(
+              Text(
+                l10n.didntReceiveCodeCheckSpam,
+                style: const TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
                   height: 1.5,

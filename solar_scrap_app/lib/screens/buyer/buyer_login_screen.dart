@@ -10,6 +10,8 @@ import 'buyer_account_created_screen.dart';
 import '../seller/seller_login_screen.dart';
 import '../role_selection_screen.dart';
 import '../../services/auth_service.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 
 class BuyerLoginScreen extends StatefulWidget {
   const BuyerLoginScreen({super.key});
@@ -251,6 +253,7 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -282,10 +285,13 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 16,
-                        color: Color(0xFF1E293B),
+                      child: Transform.scale(
+                        scaleX: RTLHelper.isRTL(context) ? -1 : 1,
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 16,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
                     ),
                   ),
@@ -334,18 +340,18 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
               const SizedBox(height: 20),
 
               // Welcome Back Text
-              const Text(
-                'Welcome Back',
-                style: TextStyle(
+              Text(
+                l10n.welcomeBack,
+                style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Sign in to your dealer account',
-                style: TextStyle(
+              Text(
+                l10n.signInToContinue,
+                style: const TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
                 ),
@@ -353,9 +359,9 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
               const SizedBox(height: 32),
 
               // Email / Phone Input
-              const Text(
-                'Email / Phone',
-                style: TextStyle(
+              Text(
+                l10n.emailLabel,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.black,
@@ -365,7 +371,7 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
               TextField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  hintText: 'Enter email or phone',
+                  hintText: l10n.emailHint,
                   hintStyle: const TextStyle(color: Colors.grey),
                   prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
                   border: OutlineInputBorder(
@@ -387,9 +393,9 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
               const SizedBox(height: 20),
 
               // Password Input
-              const Text(
-                'Password',
-                style: TextStyle(
+              Text(
+                l10n.passwordLabel,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.black,
@@ -400,7 +406,7 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
-                  hintText: 'Enter Password',
+                  hintText: l10n.passwordHint,
                   hintStyle: const TextStyle(color: Colors.grey),
                   prefixIcon: Padding(
                     padding: const EdgeInsets.all(12),
@@ -476,9 +482,9 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
                         ),
                       );
                     },
-                    child: const Text(
-                      'Forgot Password?',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.forgotPassword,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF00A63E),
                         fontWeight: FontWeight.w600,
@@ -523,9 +529,9 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
                             strokeWidth: 2.5,
                           ),
                         )
-                      : const Text(
-                          'Sign in',
-                          style: TextStyle(
+                      : Text(
+                          l10n.signIn,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -547,7 +553,7 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'or continue with',
+                      l10n.orSignInWith,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
@@ -588,7 +594,7 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Continue with Google',
+                      l10n.googleSignIn,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -617,7 +623,7 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
                       const Icon(Icons.apple, color: Colors.white, size: 24),
                       const SizedBox(width: 8),
                       Text(
-                        'Continue with Apple',
+                        l10n.appleSignIn,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -634,14 +640,14 @@ class _BuyerLoginScreenState extends State<BuyerLoginScreen> {
               Center(
                 child: RichText(
                   text: TextSpan(
-                    text: 'New to Solar Scrap? ',
+                    text: '${l10n.dontHaveAccount} ',
                     style: const TextStyle(
                       fontSize: 12,
                       color: Colors.grey,
                     ),
                     children: [
                       TextSpan(
-                        text: 'Create Account',
+                        text: l10n.signUp,
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF00A63E),

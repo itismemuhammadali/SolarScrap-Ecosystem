@@ -268,6 +268,61 @@ export default function CreateAuctionPage() {
     showToast("Photo removed.");
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resetFormDetails = () => {
+    uploadedImages.forEach((img) => {
+      if (img.previewUrl?.startsWith("blob:")) {
+        try {
+          URL.revokeObjectURL(img.previewUrl);
+        } catch (_) {}
+      }
+    });
+    setUploadedImages([]);
+    setSolarPanels({
+      panelsCount: "",
+      wattsPerPanel: "",
+      condition: "Scrap",
+      brand: "",
+      purchaseYear: "",
+    });
+    setInverters({
+      type: "Hybrid",
+      ratedPower: "",
+      brand: "",
+      condition: "Working",
+    });
+    setBatteries({
+      type: "Lithium",
+      count: "",
+      capacity: "",
+      brand: "",
+      purchaseYear: "",
+      yearsUsed: "",
+      condition: "Working",
+    });
+    setCables({
+      type: "DC",
+      conductor: "Copper",
+      insulation: "XLPE",
+      size: "",
+      comments: "",
+    });
+    setStructure({
+      type: "Elevated",
+      metal: "AL",
+      comments: "",
+    });
+    setCompleteSystem({
+      systemCapacity: "",
+      comments: "",
+    });
+    setContactInfo((prev) => ({
+      ...prev,
+      priceDemand: "",
+    }));
+  };
+
   const handleClearListing = () => {
     setContactInfo({
       fullName: "",
@@ -278,181 +333,187 @@ export default function CreateAuctionPage() {
       completeAddress: "",
       priceDemand: "",
     });
-    uploadedImages.forEach((img) => {
-      if (img.previewUrl?.startsWith("blob:")) {
-        try {
-          URL.revokeObjectURL(img.previewUrl);
-        } catch (_) {}
-      }
-    });
-    setUploadedImages([]);
+    resetFormDetails();
     showToast("Form details cleared.");
   };
 
-  const handleSubmitAuction = async () => {
-    const rawPrice = Number(contactInfo.priceDemand.replace(/[^0-9]/g, "")) || 500000;
-    const catIcons: Record<string, string> = {
-      "Solar Panels": "☀️",
-      "Inverters": "⚡",
-      "Batteries": "🔋",
-      "Cables": "⚡",
-      "Structure": "☀️",
-      "Complete Solar System": "⚡",
-    };
-
-    // Category specific specs
-    let specsObj: Record<string, any> = {};
-    if (selectedCategory === "Solar Panels") {
-      specsObj = {
-        panels_count: solarPanels.panelsCount,
-        watts_per_panel: solarPanels.wattsPerPanel,
-        condition: solarPanels.condition,
-        brand: solarPanels.brand,
-        purchase_year: solarPanels.purchaseYear,
-      };
-    } else if (selectedCategory === "Inverters") {
-      specsObj = {
-        inverter_type: inverters.type,
-        rated_power: inverters.ratedPower,
-        inverter_brand: inverters.brand,
-        condition: inverters.condition,
-      };
-    } else if (selectedCategory === "Batteries") {
-      specsObj = {
-        battery_count: batteries.count,
-        brand: batteries.brand,
-        capacity: batteries.capacity,
-        battery_type: batteries.type,
-        purchase_year: batteries.purchaseYear,
-        years_used: batteries.yearsUsed,
-        condition: batteries.condition,
-      };
-    } else if (selectedCategory === "Cables") {
-      specsObj = {
-        cable_type: cables.type,
-        conductor: cables.conductor,
-        insulation: cables.insulation,
-        size: cables.size,
-        comments: cables.comments,
-      };
-    } else if (selectedCategory === "Structure") {
-      specsObj = {
-        structure_type: structure.type,
-        metal: structure.metal,
-        comments: structure.comments,
-      };
-    } else {
-      specsObj = {
-        system_capacity: completeSystem.systemCapacity,
-        comments: completeSystem.comments,
-      };
-    }
-
-
+  const handleSubmitAuction = async (createAnother: boolean = false) => {
     if (uploadedImages.some((img) => img.isUploading)) {
       showToast("Please wait for images to finish uploading.");
       return;
     }
 
-    const uploadedServerUrls = uploadedImages
-      .map((img) => img.serverUrl)
-      .filter((url): url is string => Boolean(url));
-
-    const defaultImages: Record<string, string> = {
-      "Solar Panels": "assets/images/solar-panel.jpg",
-      "Inverters": "assets/images/inverter.png",
-      "Batteries": "assets/images/battery.jpg",
-      "Cables": "assets/images/cables.jpg",
-      "Structure": "assets/images/structure.png",
-      "Complete Solar System": "assets/images/complete-solar-system.jpg",
-    };
-
-    const finalImages =
-      uploadedServerUrls.length > 0
-        ? uploadedServerUrls
-        : [defaultImages[selectedCategory] || "assets/images/buyer-solar.jpg"];
-
-
-    let createdListingId = `auc-${Date.now()}`;
-    // 1. Post to Backend API (FastAPI -> Firestore) so buyers on mobile app receive it!
+    setIsSubmitting(true);
     try {
-      const createdRes = await createAdminListing({
-        category: selectedCategory,
-        price_demand: rawPrice,
-        specs: specsObj,
-        image_urls: finalImages,
-        pickup_city: contactInfo.city || "Karachi",
-        pickup_area: contactInfo.locality || "Industrial Area",
-        pickup_address: contactInfo.completeAddress || `${contactInfo.locality || "Industrial Area"}, ${contactInfo.city || "Karachi"}`,
-        contact_name: contactInfo.fullName || "Solar Scrap Admin",
-        contact_phone: contactInfo.phoneNumber || "+92 300 1234567",
-        contact_email: contactInfo.email || "admin@solarscrap.com",
-      });
-      if (createdRes?.id) {
-        createdListingId = createdRes.id;
+      const rawPrice = Number(contactInfo.priceDemand.replace(/[^0-9]/g, "")) || 500000;
+      const catIcons: Record<string, string> = {
+        "Solar Panels": "☀️",
+        "Inverters": "⚡",
+        "Batteries": "🔋",
+        "Cables": "⚡",
+        "Structure": "☀️",
+        "Complete Solar System": "⚡",
+      };
+
+      // Category specific specs
+      let specsObj: Record<string, any> = {};
+      if (selectedCategory === "Solar Panels") {
+        specsObj = {
+          panels_count: solarPanels.panelsCount,
+          watts_per_panel: solarPanels.wattsPerPanel,
+          condition: solarPanels.condition,
+          brand: solarPanels.brand,
+          purchase_year: solarPanels.purchaseYear,
+        };
+      } else if (selectedCategory === "Inverters") {
+        specsObj = {
+          inverter_type: inverters.type,
+          rated_power: inverters.ratedPower,
+          inverter_brand: inverters.brand,
+          condition: inverters.condition,
+        };
+      } else if (selectedCategory === "Batteries") {
+        specsObj = {
+          battery_count: batteries.count,
+          brand: batteries.brand,
+          capacity: batteries.capacity,
+          battery_type: batteries.type,
+          purchase_year: batteries.purchaseYear,
+          years_used: batteries.yearsUsed,
+          condition: batteries.condition,
+        };
+      } else if (selectedCategory === "Cables") {
+        specsObj = {
+          cable_type: cables.type,
+          conductor: cables.conductor,
+          insulation: cables.insulation,
+          size: cables.size,
+          comments: cables.comments,
+        };
+      } else if (selectedCategory === "Structure") {
+        specsObj = {
+          structure_type: structure.type,
+          metal: structure.metal,
+          comments: structure.comments,
+        };
+      } else {
+        specsObj = {
+          system_capacity: completeSystem.systemCapacity,
+          comments: completeSystem.comments,
+        };
       }
-    } catch (apiErr) {
-      console.error("Failed to post auction to backend API:", apiErr);
-    }
 
-    const newAuction = {
-      id: createdListingId,
-      auctionId: `AUC-${createdListingId.slice(0, 6).toUpperCase()}`,
-      title: getPreviewTitle(),
+      const uploadedServerUrls = uploadedImages
+        .map((img) => img.serverUrl)
+        .filter((url): url is string => Boolean(url));
 
-      icon: catIcons[selectedCategory] || "☀️",
-      category: selectedCategory as any,
-      categoryColor:
-        selectedCategory === "Solar Panels"
-          ? "bg-blue-50 text-blue-700 border-blue-200"
-          : selectedCategory === "Inverters"
-          ? "bg-amber-50 text-amber-700 border-amber-200"
-          : selectedCategory === "Batteries"
-          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-          : "bg-purple-50 text-purple-700 border-purple-200",
-      qty:
-        selectedCategory === "Solar Panels"
-          ? `${solarPanels.panelsCount || "200"} Panels`
-          : selectedCategory === "Inverters"
-          ? `${inverters.ratedPower || "1 Unit"}`
-          : selectedCategory === "Batteries"
-          ? `${batteries.count || "16"} Units`
-          : "1 Lot",
-      sellerName: contactInfo.fullName || "Solar Scrap Admin",
-      sellerCompany: contactInfo.locality || "EPC Trading Co.",
-      sellerCity: contactInfo.city || "Karachi",
-      startingPrice: rawPrice,
-      priceDemand: Math.round(rawPrice * 1.15),
-      startingBid: rawPrice,
-      currentHighBid: 0,
-      highestBidderName: "No Bids Yet",
-      highestBidderCompany: "Awaiting Verified Dealers",
-      highestBidderCity: "-",
-      totalBids: 0,
-      status: "Active" as const,
-      createdAt: "Today, Just now",
-      endsIn: "3d 00h",
-      endDate: "10 Mar 2026",
-      reservePrice: rawPrice,
-      images: finalImages,
-    };
+      const defaultImages: Record<string, string> = {
+        "Solar Panels": "assets/images/solar-panel.jpg",
+        "Inverters": "assets/images/inverter.png",
+        "Batteries": "assets/images/battery.jpg",
+        "Cables": "assets/images/cables.jpg",
+        "Structure": "assets/images/structure.png",
+        "Complete Solar System": "assets/images/complete-solar-system.jpg",
+      };
 
-    try {
-      const stored = localStorage.getItem("solar_scrap_auctions");
-      let list = [];
-      if (stored) {
-        list = JSON.parse(stored);
+      const finalImages =
+        uploadedServerUrls.length > 0
+          ? uploadedServerUrls
+          : [defaultImages[selectedCategory] || "assets/images/buyer-solar.jpg"];
+
+      let createdListingId = `auc-${Date.now()}`;
+      // 1. Post to Backend API (FastAPI -> Firestore) so buyers on mobile app receive it!
+      try {
+        const createdRes = await createAdminListing({
+          category: selectedCategory,
+          price_demand: rawPrice,
+          specs: specsObj,
+          image_urls: finalImages,
+          pickup_city: contactInfo.city || "Karachi",
+          pickup_area: contactInfo.locality || "Industrial Area",
+          pickup_address: contactInfo.completeAddress || `${contactInfo.locality || "Industrial Area"}, ${contactInfo.city || "Karachi"}`,
+          contact_name: contactInfo.fullName || "Solar Scrap Admin",
+          contact_phone: contactInfo.phoneNumber || "+92 300 1234567",
+          contact_email: contactInfo.email || "admin@solarscrap.com",
+        });
+        if (createdRes?.id) {
+          createdListingId = createdRes.id;
+        }
+      } catch (apiErr) {
+        console.error("Failed to post auction to backend API:", apiErr);
       }
-      const updated = [newAuction, ...list];
-      localStorage.setItem("solar_scrap_auctions", JSON.stringify(updated));
+
+      const newAuction = {
+        id: createdListingId,
+        auctionId: `AUC-${createdListingId.slice(0, 6).toUpperCase()}`,
+        title: getPreviewTitle(),
+        icon: catIcons[selectedCategory] || "☀️",
+        category: selectedCategory as any,
+        categoryColor:
+          selectedCategory === "Solar Panels"
+            ? "bg-blue-50 text-blue-700 border-blue-200"
+            : selectedCategory === "Inverters"
+            ? "bg-amber-50 text-amber-700 border-amber-200"
+            : selectedCategory === "Batteries"
+            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+            : "bg-purple-50 text-purple-700 border-purple-200",
+        qty:
+          selectedCategory === "Solar Panels"
+            ? `${solarPanels.panelsCount || "200"} Panels`
+            : selectedCategory === "Inverters"
+            ? `${inverters.ratedPower || "1 Unit"}`
+            : selectedCategory === "Batteries"
+            ? `${batteries.count || "16"} Units`
+            : "1 Lot",
+        sellerName: contactInfo.fullName || "Solar Scrap Admin",
+        sellerCompany: contactInfo.locality || "EPC Trading Co.",
+        sellerCity: contactInfo.city || "Karachi",
+        startingPrice: rawPrice,
+        priceDemand: Math.round(rawPrice * 1.15),
+        startingBid: rawPrice,
+        currentHighBid: 0,
+        highestBidderName: "No Bids Yet",
+        highestBidderCompany: "Awaiting Verified Dealers",
+        highestBidderCity: "-",
+        totalBids: 0,
+        status: "Active" as const,
+        createdAt: "Today, Just now",
+        endsIn: "3d 00h",
+        endDate: "10 Mar 2026",
+        reservePrice: rawPrice,
+        images: finalImages,
+      };
+
+      try {
+        const stored = localStorage.getItem("solar_scrap_auctions");
+        let list = [];
+        if (stored) {
+          list = JSON.parse(stored);
+        }
+        const updated = [newAuction, ...list];
+        localStorage.setItem("solar_scrap_auctions", JSON.stringify(updated));
+      } catch (err) {
+        console.error("Failed to save new auction to storage", err);
+      }
+
+      if (createAnother) {
+        showToast("Auction listing saved! You can now create another listing.");
+        resetFormDetails();
+        if (typeof window !== "undefined") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      } else {
+        showToast("Auction listing created & published live to marketplace!");
+        setTimeout(() => {
+          router.push("/auctions");
+        }, 1200);
+      }
     } catch (err) {
-      console.error("Failed to save new auction to storage", err);
+      console.error("Error submitting auction:", err);
+      showToast("An error occurred while saving the auction.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    showToast("Auction listing created & published live to marketplace!");
-    setTimeout(() => {
-      router.push("/auctions");
-    }, 1200);
   };
 
   const currentCategoryObj =
@@ -816,60 +877,73 @@ export default function CreateAuctionPage() {
               {/* ----------------- 2. INVERTERS SPECIFIC FIELDS ----------------- */}
               {selectedCategory === "Inverters" && (
                 <div className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Inverter Type (Hybrid vs On-Grid) */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Inverter Type
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {["Hybrid", "On-Grid"].map((type) => {
-                          const isSelected = inverters.type === type;
-                          return (
-                            <button
-                              key={type}
-                              type="button"
-                              onClick={() =>
-                                setInverters({ ...inverters, type })
-                              }
-                              className={`py-2.5 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-1 ring-[#009845]"
-                                  : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-gray-50"
-                              }`}
-                            >
-                              {type}
-                            </button>
-                          );
-                        })}
+                  {/* Options Partition Card with Vertical Divider */}
+                  <div className="bg-[#F8F9FA] rounded-2xl p-5 border border-[#EAECF0] shadow-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
+                      {/* Inverter Type (Hybrid vs On-Grid) */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Inverter Type
+                          </label>
+                          <span className="text-[11px] font-medium text-gray-400">
+                            Select Category
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {["Hybrid", "On-Grid"].map((type) => {
+                            const isSelected = inverters.type === type;
+                            return (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() =>
+                                  setInverters({ ...inverters, type })
+                                }
+                                className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs ${
+                                  isSelected
+                                    ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-2 ring-[#009845]/30"
+                                    : "border-[#D0D5DD] bg-white text-[#344054] hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {type}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Condition (Working vs Non working) */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Inverter Condition
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {inverterConditions.map((cond) => {
-                          const isSelected = inverters.condition === cond;
-                          return (
-                            <button
-                              key={cond}
-                              type="button"
-                              onClick={() =>
-                                setInverters({ ...inverters, condition: cond })
-                              }
-                              className={`py-2.5 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-1 ring-[#009845]"
-                                  : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-gray-50"
-                              }`}
-                            >
-                              {cond}
-                            </button>
-                          );
-                        })}
+                      {/* Inverter Condition with Vertical Line Separator */}
+                      <div className="relative pt-4 md:pt-0 md:pl-8 border-t md:border-t-0 md:border-l border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Inverter Condition
+                          </label>
+                          <span className="text-[11px] font-medium text-gray-400">
+                            Physical State
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {inverterConditions.map((cond) => {
+                            const isSelected = inverters.condition === cond;
+                            return (
+                              <button
+                                key={cond}
+                                type="button"
+                                onClick={() =>
+                                  setInverters({ ...inverters, condition: cond })
+                                }
+                                className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs ${
+                                  isSelected
+                                    ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-2 ring-[#009845]/30"
+                                    : "border-[#D0D5DD] bg-white text-[#344054] hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {cond}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -914,60 +988,73 @@ export default function CreateAuctionPage() {
               {/* ----------------- 3. BATTERIES SPECIFIC FIELDS ----------------- */}
               {selectedCategory === "Batteries" && (
                 <div className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Battery Chemistry Type */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Battery Chemistry Type
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {["Lithium", "Lead-Acid"].map((type) => {
-                          const isSelected = batteries.type === type;
-                          return (
-                            <button
-                              key={type}
-                              type="button"
-                              onClick={() =>
-                                setBatteries({ ...batteries, type })
-                              }
-                              className={`py-2.5 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-1 ring-[#009845]"
-                                  : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-gray-50"
-                              }`}
-                            >
-                              {type}
-                            </button>
-                          );
-                        })}
+                  {/* Options Partition Card with Vertical Divider */}
+                  <div className="bg-[#F8F9FA] rounded-2xl p-5 border border-[#EAECF0] shadow-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
+                      {/* Battery Chemistry Type */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Battery Chemistry Type
+                          </label>
+                          <span className="text-[11px] font-medium text-gray-400">
+                            Select Chemistry
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {["Lithium", "Lead-Acid"].map((type) => {
+                            const isSelected = batteries.type === type;
+                            return (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() =>
+                                  setBatteries({ ...batteries, type })
+                                }
+                                className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs ${
+                                  isSelected
+                                    ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-2 ring-[#009845]/30"
+                                    : "border-[#D0D5DD] bg-white text-[#344054] hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {type}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Condition */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Battery Condition
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {["Working", "Non working"].map((cond) => {
-                          const isSelected = batteries.condition === cond;
-                          return (
-                            <button
-                              key={cond}
-                              type="button"
-                              onClick={() =>
-                                setBatteries({ ...batteries, condition: cond })
-                              }
-                              className={`py-2.5 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-1 ring-[#009845]"
-                                  : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-gray-50"
-                              }`}
-                            >
-                              {cond}
-                            </button>
-                          );
-                        })}
+                      {/* Battery Condition with Vertical Line Separator */}
+                      <div className="relative pt-4 md:pt-0 md:pl-8 border-t md:border-t-0 md:border-l border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Battery Condition
+                          </label>
+                          <span className="text-[11px] font-medium text-gray-400">
+                            Physical State
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {["Working", "Non working"].map((cond) => {
+                            const isSelected = batteries.condition === cond;
+                            return (
+                              <button
+                                key={cond}
+                                type="button"
+                                onClick={() =>
+                                  setBatteries({ ...batteries, condition: cond })
+                                }
+                                className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs ${
+                                  isSelected
+                                    ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-2 ring-[#009845]/30"
+                                    : "border-[#D0D5DD] bg-white text-[#344054] hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {cond}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1045,77 +1132,86 @@ export default function CreateAuctionPage() {
               {/* ----------------- 4. CABLES SPECIFIC FIELDS ----------------- */}
               {selectedCategory === "Cables" && (
                 <div className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    {/* Cable Type */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Cable Current Type
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {["AC", "DC"].map((type) => {
-                          const isSelected = cables.type === type;
-                          return (
-                            <button
-                              key={type}
-                              type="button"
-                              onClick={() => setCables({ ...cables, type })}
-                              className={`py-2.5 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-1 ring-[#009845]"
-                                  : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-gray-50"
-                              }`}
-                            >
-                              {type}
-                            </button>
-                          );
-                        })}
+                  {/* Options Partition Card with Vertical Divider */}
+                  <div className="bg-[#F8F9FA] rounded-2xl p-5 border border-[#EAECF0] shadow-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-6 items-start">
+                      {/* Cable Type */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Cable Current Type
+                          </label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {["AC", "DC"].map((type) => {
+                            const isSelected = cables.type === type;
+                            return (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() => setCables({ ...cables, type })}
+                                className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs ${
+                                  isSelected
+                                    ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-2 ring-[#009845]/30"
+                                    : "border-[#D0D5DD] bg-white text-[#344054] hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {type}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Conductor Material */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Conductor Material
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {["Copper", "Aluminium"].map((mat) => {
-                          const isSelected = cables.conductor === mat;
-                          return (
-                            <button
-                              key={mat}
-                              type="button"
-                              onClick={() =>
-                                setCables({ ...cables, conductor: mat })
-                              }
-                              className={`py-2.5 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-1 ring-[#009845]"
-                                  : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-gray-50"
-                              }`}
-                            >
-                              {mat}
-                            </button>
-                          );
-                        })}
+                      {/* Conductor Material with Vertical Line Separator */}
+                      <div className="relative pt-4 md:pt-0 md:pl-6 border-t md:border-t-0 md:border-l border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Conductor Material
+                          </label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {["Copper", "Aluminium"].map((mat) => {
+                            const isSelected = cables.conductor === mat;
+                            return (
+                              <button
+                                key={mat}
+                                type="button"
+                                onClick={() =>
+                                  setCables({ ...cables, conductor: mat })
+                                }
+                                className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs ${
+                                  isSelected
+                                    ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-2 ring-[#009845]/30"
+                                    : "border-[#D0D5DD] bg-white text-[#344054] hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {mat}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Insulation Type */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Insulation Type
-                      </label>
-                      <select
-                        value={cables.insulation}
-                        onChange={(e) =>
-                          setCables({ ...cables, insulation: e.target.value })
-                        }
-                        className="w-full px-3.5 py-2.5 bg-white border border-[#D0D5DD] rounded-xl text-xs sm:text-sm text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845] transition-all"
-                      >
-                        <option value="PVC">PVC Insulation</option>
-                        <option value="XLPE">XLPE Insulation</option>
-                        <option value="Rubber">Rubber Insulation</option>
-                      </select>
+                      {/* Insulation Type with Vertical Line Separator */}
+                      <div className="relative pt-4 md:pt-0 md:pl-6 border-t md:border-t-0 md:border-l border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Insulation Type
+                          </label>
+                        </div>
+                        <select
+                          value={cables.insulation}
+                          onChange={(e) =>
+                            setCables({ ...cables, insulation: e.target.value })
+                          }
+                          className="w-full py-3 px-3.5 bg-white border border-[#D0D5DD] rounded-xl text-xs font-semibold text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845] transition-all shadow-xs"
+                        >
+                          <option value="PVC">PVC Insulation</option>
+                          <option value="XLPE">XLPE Insulation</option>
+                          <option value="Rubber">Rubber Insulation</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -1156,63 +1252,76 @@ export default function CreateAuctionPage() {
               {/* ----------------- 5. STRUCTURE SPECIFIC FIELDS ----------------- */}
               {selectedCategory === "Structure" && (
                 <div className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Structure Type */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Mounting Structure Type
-                      </label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {["Elevated", "Roof Mount", "Ground"].map((type) => {
-                          const isSelected = structure.type === type;
-                          return (
-                            <button
-                              key={type}
-                              type="button"
-                              onClick={() =>
-                                setStructure({ ...structure, type })
-                              }
-                              className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-1 ring-[#009845]"
-                                  : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-gray-50"
-                              }`}
-                            >
-                              {type}
-                            </button>
-                          );
-                        })}
+                  {/* Options Partition Card with Vertical Divider */}
+                  <div className="bg-[#F8F9FA] rounded-2xl p-5 border border-[#EAECF0] shadow-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
+                      {/* Structure Type */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Mounting Structure Type
+                          </label>
+                          <span className="text-[11px] font-medium text-gray-400">
+                            Select Type
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                          {["Elevated", "Roof Mount", "Ground"].map((type) => {
+                            const isSelected = structure.type === type;
+                            return (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() =>
+                                  setStructure({ ...structure, type })
+                                }
+                                className={`py-3 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs ${
+                                  isSelected
+                                    ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-2 ring-[#009845]/30"
+                                    : "border-[#D0D5DD] bg-white text-[#344054] hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {type}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Frame Metal */}
-                    <div>
-                      <label className="block text-xs font-semibold text-[#344054] mb-1.5">
-                        Frame Metal / Material
-                      </label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { id: "AL", label: "Aluminum (AL)" },
-                          { id: "GI", label: "Galvanized Iron (GI)" },
-                        ].map((m) => {
-                          const isSelected = structure.metal === m.id;
-                          return (
-                            <button
-                              key={m.id}
-                              type="button"
-                              onClick={() =>
-                                setStructure({ ...structure, metal: m.id })
-                              }
-                              className={`py-2.5 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                                isSelected
-                                  ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-1 ring-[#009845]"
-                                  : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-gray-50"
-                              }`}
-                            >
-                              {m.label}
-                            </button>
-                          );
-                        })}
+                      {/* Frame Metal with Vertical Line Separator */}
+                      <div className="relative pt-4 md:pt-0 md:pl-8 border-t md:border-t-0 md:border-l border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#1D2939] uppercase tracking-wider">
+                            Frame Metal / Material
+                          </label>
+                          <span className="text-[11px] font-medium text-gray-400">
+                            Material
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {[
+                            { id: "AL", label: "Aluminum (AL)" },
+                            { id: "GI", label: "Galvanized Iron (GI)" },
+                          ].map((m) => {
+                            const isSelected = structure.metal === m.id;
+                            return (
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() =>
+                                  setStructure({ ...structure, metal: m.id })
+                                }
+                                className={`py-3 px-4 rounded-xl text-xs font-bold border transition-all cursor-pointer shadow-xs ${
+                                  isSelected
+                                    ? "border-[#009845] bg-[#E6F9ED] text-[#009845] ring-2 ring-[#009845]/30"
+                                    : "border-[#D0D5DD] bg-white text-[#344054] hover:border-gray-400 hover:bg-gray-50"
+                                }`}
+                              >
+                                {m.label}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1800,20 +1909,31 @@ export default function CreateAuctionPage() {
             </div>
 
             {/* Bottom Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-[#EAECF0]">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 border-t border-[#EAECF0]">
               <Link
                 href="/auctions"
-                className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl text-xs font-bold transition-colors text-center"
+                className="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-xl text-xs font-bold transition-colors text-center cursor-pointer"
               >
                 Cancel
               </Link>
 
               <button
                 type="button"
-                onClick={handleSubmitAuction}
-                className="w-full sm:w-auto px-8 py-3 bg-[#009845] hover:bg-[#008230] text-white rounded-xl text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                disabled={isSubmitting}
+                onClick={() => handleSubmitAuction(true)}
+                className="w-full sm:w-auto px-6 py-3 border-2 border-[#009845] text-[#009845] hover:bg-[#E6F9ED] active:bg-[#d0f4dc] rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs disabled:opacity-50"
               >
-                Submit Listing
+                <Plus className="w-4 h-4 text-[#009845]" />
+                <span>Save &amp; Create Another Listing</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleSubmitAuction(false)}
+                className="w-full sm:w-auto px-8 py-3 bg-[#009845] hover:bg-[#008230] text-white rounded-xl text-xs font-bold shadow-2xs transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <span>{isSubmitting ? "Submitting..." : "Submit Listing"}</span>
               </button>
             </div>
           </div>

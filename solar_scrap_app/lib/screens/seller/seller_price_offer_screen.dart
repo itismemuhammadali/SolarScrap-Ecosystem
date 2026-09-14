@@ -1,9 +1,11 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/bid.dart';
 import '../../models/listing.dart';
 import '../../services/bid_service.dart';
+import '../../utils/rtl_helper.dart';
 
 class SellerPriceOfferScreen extends StatefulWidget {
   final Listing? listing;
@@ -44,12 +46,13 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
     return 'Rs.4,20,000';
   }
 
-  String get _askingPrice {
-    if (widget.listing != null) return 'Your asking: ${widget.listing!.formattedPrice}';
-    return 'Your asking: Rs.4,80,000';
+  String _askingPrice(AppLocalizations l10n) {
+    if (widget.listing != null) return l10n.yourAskingPrefix(widget.listing!.formattedPrice);
+    return l10n.yourAskingPrefix('Rs.4,80,000');
   }
 
   Future<void> _handleConfirmAccept() async {
+    final l10n = AppLocalizations.of(context);
     Navigator.pop(context); // Close bottom sheet
     if (widget.bid != null) {
       setState(() => _isProcessing = true);
@@ -69,25 +72,25 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
 
       if (updated != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Offer accepted successfully! Deal is closed.'),
-            backgroundColor: Color(0xFF00A63E),
+          SnackBar(
+            content: Text(l10n.offerAcceptedSuccess),
+            backgroundColor: const Color(0xFF00A63E),
           ),
         );
         Navigator.pop(context, true); // Close price offer screen and trigger refresh
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to accept offer. Please try again.'),
+            content: Text(l10n.failedToAcceptOffer),
             backgroundColor: Colors.red.shade700,
           ),
         );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Offer accepted successfully!'),
-          backgroundColor: Color(0xFF00A63E),
+        SnackBar(
+          content: Text(l10n.offerAcceptedSuccess),
+          backgroundColor: const Color(0xFF00A63E),
         ),
       );
       Navigator.pop(context, true);
@@ -95,6 +98,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
   }
 
   Future<void> _handleConfirmReject() async {
+    final l10n = AppLocalizations.of(context);
     Navigator.pop(context); // Close bottom sheet
     if (widget.bid != null) {
       setState(() => _isProcessing = true);
@@ -114,23 +118,23 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
 
       if (updated != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Offer rejected.'),
-            backgroundColor: Color(0xFFDC2626),
+          SnackBar(
+            content: Text(l10n.offerRejectedSnackbar),
+            backgroundColor: const Color(0xFFDC2626),
           ),
         );
         Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to reject offer.'),
+            content: Text(l10n.failedToRejectOffer),
             backgroundColor: Colors.red.shade700,
           ),
         );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Offer rejected successfully!')),
+        SnackBar(content: Text(l10n.offerRejectedSnackbar)),
       );
       Navigator.pop(context, true);
     }
@@ -138,6 +142,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -152,10 +157,12 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
               color: Color(0xFFE9E9E9),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.arrow_back,
-              color: Colors.black,
-              size: 18,
+            child: Center(
+              child: RTLHelper.backIcon(
+                context,
+                color: Colors.black,
+                size: 18,
+              ),
             ),
           ),
           onPressed: () {
@@ -163,9 +170,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Price Offer',
-          style: TextStyle(
+        title: Text(
+          l10n.priceOfferTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -228,7 +235,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '$_referenceNumber · Price Offered',
+                            '$_referenceNumber · ${l10n.filterPriceOffered}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF00A63E),
@@ -259,7 +266,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Ref: $_referenceNumber',
+                      l10n.refPrefix(_referenceNumber),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -275,7 +282,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Offered Price',
+                      l10n.offeredPriceLabel,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,
@@ -304,7 +311,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _askingPrice,
+                      _askingPrice(l10n),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -326,9 +333,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Bid Details',
-                      style: TextStyle(
+                    Text(
+                      l10n.bidDetails,
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
@@ -337,8 +344,8 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                     const SizedBox(height: 10),
                     Text(
                       widget.bid != null
-                          ? 'Bid placed by ${widget.bid!.buyerName} on ${widget.bid!.dateDisplay}. Confirming accept will close this deal and notify the buyer immediately.'
-                          : 'A buyer has offered $_offeredPrice for this equipment. Review the terms and select your decision below.',
+                          ? l10n.bidDetailsSubtitle(widget.bid!.buyerName, widget.bid!.dateDisplay)
+                          : l10n.buyerOfferedDesc(_offeredPrice),
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -366,9 +373,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Reject Offer',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.rejectOffer,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -399,9 +406,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Accept Offer',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.acceptOffer,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),
@@ -420,6 +427,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
   }
 
   void _showAcceptOfferBottomSheet() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -461,9 +469,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
               const SizedBox(height: 18),
 
               // Title
-              const Text(
-                'Accept this offer?',
-                style: TextStyle(
+              Text(
+                l10n.acceptOfferPrompt,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -474,7 +482,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
 
               // Description
               Text(
-                'You are accepting $_offeredPrice for $_listingTitle. This action will close the deal.',
+                l10n.acceptOfferCloseDealDesc(_offeredPrice, _listingTitle),
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade600,
@@ -500,9 +508,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.cancel,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -533,9 +541,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Confirm Accept',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.confirmAccept,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -554,6 +562,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
   }
 
   void _showRejectOfferBottomSheet() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -595,9 +604,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
               const SizedBox(height: 18),
 
               // Title
-              const Text(
-                'Reject this offer?',
-                style: TextStyle(
+              Text(
+                l10n.rejectOfferPrompt,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -608,7 +617,7 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
 
               // Description
               Text(
-                'The buyer will be notified that their bid of $_offeredPrice was declined.',
+                l10n.rejectOfferDesc(_offeredPrice),
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade600,
@@ -634,9 +643,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.cancel,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -667,9 +676,9 @@ class _SellerPriceOfferScreenState extends State<SellerPriceOfferScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Confirm Reject',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.confirmReject,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,

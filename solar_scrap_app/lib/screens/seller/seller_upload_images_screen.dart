@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/listing_draft.dart';
 import '../../services/listing_service.dart';
 import '../../utils/permission_helper.dart';
+import '../../utils/rtl_helper.dart';
 import 'seller_pickup_location_screen.dart';
 
 class SellerUploadImagesScreen extends StatefulWidget {
@@ -55,8 +57,9 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
+          SnackBar(content: Text(l10n.failedToPickImage(e.toString()))),
         );
       }
     }
@@ -94,9 +97,10 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
       }
 
       if (uploadedUrls.isEmpty && mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Image upload failed. Please check your connection and try again.'),
+          SnackBar(
+            content: Text(l10n.imageUploadFailed),
             backgroundColor: Colors.red,
           ),
         );
@@ -127,6 +131,8 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -141,8 +147,8 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -152,9 +158,9 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Upload Images',
-          style: TextStyle(
+        title: Text(
+          l10n.uploadImages,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -174,8 +180,8 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                   final int totalSteps = isComplete ? 4 : 6;
                   final int currentStep = isComplete ? 1 : 3;
                   final String stepText = isComplete
-                      ? 'Listing Details · Step 1 of 4 (Images)'
-                      : 'Step 3 of 6';
+                      ? l10n.listingDetailsStepImages(1, 4)
+                      : l10n.stepXOfY(3, 6);
                   final String percentText = isComplete ? '25%' : '50%';
 
                   return Column(
@@ -226,9 +232,9 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
               const SizedBox(height: 20),
 
               // Title and description
-              const Text(
-                'Add up to 10 photos',
-                style: TextStyle(
+              Text(
+                l10n.addUpTo10Photos,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF18181B),
@@ -264,16 +270,16 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.camera_alt_outlined,
                               color: Color(0xFF9CA3AF),
                               size: 26,
                             ),
-                            SizedBox(height: 6),
+                            const SizedBox(height: 6),
                             Text(
-                              'Add Photo',
-                              style: TextStyle(
+                              l10n.addPhoto,
+                              style: const TextStyle(
                                 fontSize: 11,
                                 color: Color(0xFF6B7280),
                                 fontWeight: FontWeight.w500,
@@ -348,16 +354,16 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.camera_alt_outlined,
                               color: Color(0xFF00A63E),
                               size: 18,
                             ),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
-                              'Camera',
-                              style: TextStyle(
+                              l10n.camera,
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF18181B),
@@ -386,16 +392,16 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.file_upload_outlined,
                               color: Color(0xFF00A63E),
                               size: 18,
                             ),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
-                              'Gallery',
-                              style: TextStyle(
+                              l10n.gallery,
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF18181B),
@@ -430,9 +436,9 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -476,9 +482,9 @@ class _SellerUploadImagesScreenState extends State<SellerUploadImagesScreen> {
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               )
-                            : const Text(
-                                'Continue',
-                                style: TextStyle(
+                            : Text(
+                                l10n.continueButton,
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),

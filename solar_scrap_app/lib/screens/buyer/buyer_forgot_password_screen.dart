@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 import 'buyer_verify_otp_screen.dart';
 
 class BuyerForgotPasswordScreen extends StatefulWidget {
@@ -21,6 +23,8 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -34,8 +38,8 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 20,
             ),
@@ -45,9 +49,9 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Forgot Password',
-          style: TextStyle(
+        title: Text(
+          l10n.forgotPasswordTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: Colors.black,
@@ -84,9 +88,9 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
               const SizedBox(height: 32),
 
               // Title
-              const Text(
-                'Reset Password',
-                style: TextStyle(
+              Text(
+                l10n.resetPasswordTitle,
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -95,9 +99,9 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
               const SizedBox(height: 12),
 
               // Description
-              const Text(
-                'Enter your email or phone to receive a reset OTP',
-                style: TextStyle(
+              Text(
+                l10n.enterEmailOrPhoneReset,
+                style: const TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
                   height: 1.5,
@@ -108,10 +112,10 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
 
               // Email / Phone Label
               Align(
-                alignment: Alignment.centerLeft,
-                child: const Text(
-                  'Email or Phone Number',
-                  style: TextStyle(
+                alignment: AlignmentDirectional.centerStart,
+                child: Text(
+                  l10n.emailOrPhoneLabel,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
@@ -166,15 +170,15 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => BuyerVerifyOtpScreen(
+                          builder: (context) => const BuyerVerifyOtpScreen(
                             phoneNumber: '•••• 3210',
                           ),
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter your email or phone'),
+                        SnackBar(
+                          content: Text(l10n.pleaseEnterEmailOrPhone),
                         ),
                       );
                     }
@@ -186,9 +190,9 @@ class _BuyerForgotPasswordScreenState extends State<BuyerForgotPasswordScreen> {
                     minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text(
-                    'Send OTP',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.sendOtp,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),

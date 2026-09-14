@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/bid.dart';
 import '../../models/listing.dart';
 import '../../services/bid_service.dart';
@@ -34,6 +35,7 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
   }
 
   Future<void> _handleConfirmAccept() async {
+    final l10n = AppLocalizations.of(context);
     if (widget.bid != null) {
       setState(() => _isProcessing = true);
       showDialog(
@@ -47,30 +49,34 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
       final updated = await BidService.instance.acceptBid(widget.bid!.id);
 
       if (!mounted) return;
-      Navigator.pop(context); // Close loading dialog
+      if (context.mounted) Navigator.pop(context); // Close loading dialog
       setState(() => _isProcessing = false);
 
       if (updated != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Offer accepted successfully! Deal is closed.'),
-            backgroundColor: Color(0xFF00A63E),
-          ),
-        );
-        Navigator.pop(context, true);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.offerAcceptedSuccess),
+              backgroundColor: const Color(0xFF00A63E),
+            ),
+          );
+          Navigator.pop(context, true);
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to accept offer. Please try again.'),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.failedToAcceptOffer),
+              backgroundColor: Colors.red.shade700,
+            ),
+          );
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Offer accepted successfully!'),
-          backgroundColor: Color(0xFF00A63E),
+        SnackBar(
+          content: Text(l10n.offerAcceptedSuccess),
+          backgroundColor: const Color(0xFF00A63E),
         ),
       );
       Navigator.pop(context, true);
@@ -79,6 +85,7 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -111,9 +118,9 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                 const SizedBox(height: 24),
 
                 // Title
-                const Text(
-                  'Accept this offer?',
-                  style: TextStyle(
+                Text(
+                  l10n.acceptOfferPrompt,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -124,7 +131,7 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
 
                 // Description
                 Text(
-                  'You are accepting $_offeredPrice for $_listingTitle. This action cannot be undone.',
+                  l10n.acceptOfferDesc(_offeredPrice, _listingTitle),
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey.shade600,
@@ -148,9 +155,9 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                           ),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.cancel,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF00A63E),
@@ -178,9 +185,9 @@ class _SellerAcceptOfferScreenState extends State<SellerAcceptOfferScreen> {
                             minimumSize: const Size(double.infinity, 48),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text(
-                            'Confirm Accept',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.confirmAccept,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),

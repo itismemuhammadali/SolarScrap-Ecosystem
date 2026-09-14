@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/notification_item.dart';
 import '../../services/notification_service.dart';
 import '../../services/push_notification_service.dart';
+import '../../utils/rtl_helper.dart';
 import 'buyer_dashboard_screen.dart';
 
 class BuyerNotificationsScreen extends StatefulWidget {
@@ -123,10 +125,11 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
     });
     await NotificationService.instance.markAllAsRead();
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All notifications marked as read'),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(l10n.allNotificationsMarkedRead),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -176,6 +179,7 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final todayList = _notifications.where((n) => _isToday(n.createdAt)).toList();
     final earlierList = _notifications.where((n) => !_isToday(n.createdAt)).toList();
 
@@ -203,10 +207,12 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
                         color: Color(0xFFF3F4F6),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.black87,
-                        size: 20,
+                      child: Center(
+                        child: RTLHelper.backIcon(
+                          context,
+                          color: Colors.black87,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -216,9 +222,9 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Notifications',
-                        style: TextStyle(
+                      Text(
+                        l10n.notificationsTitle,
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0F172A),
@@ -228,9 +234,9 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
                       if (_notifications.any((n) => !n.isRead))
                         GestureDetector(
                           onTap: _markAllAsRead,
-                          child: const Text(
-                            'Mark All Read',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.markAllRead,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF00A63E),
@@ -260,7 +266,7 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
                             physics: const AlwaysScrollableScrollPhysics(),
                             child: SizedBox(
                               height: MediaQuery.of(context).size.height * 0.6,
-                              child: _buildEmptyState(),
+                              child: _buildEmptyState(l10n),
                             ),
                           ),
                         )
@@ -272,7 +278,7 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
                             padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                             children: [
                               if (todayList.isNotEmpty) ...[
-                                _buildSectionHeader('Today'),
+                                _buildSectionHeader(l10n.todaySection),
                                 const SizedBox(height: 8),
                                 ...todayList.map((item) => Padding(
                                       padding: const EdgeInsets.only(bottom: 12),
@@ -281,7 +287,7 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
                               ],
                               if (earlierList.isNotEmpty) ...[
                                 const SizedBox(height: 8),
-                                _buildSectionHeader('Earlier'),
+                                _buildSectionHeader(l10n.earlierSection),
                                 const SizedBox(height: 8),
                                 ...earlierList.map((item) => Padding(
                                       padding: const EdgeInsets.only(bottom: 12),
@@ -381,7 +387,7 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
                         Container(
                           width: 8,
                           height: 8,
-                          margin: const EdgeInsets.only(left: 8),
+                          margin: const EdgeInsetsDirectional.only(start: 8),
                           decoration: const BoxDecoration(
                             color: Color(0xFF00A63E),
                             shape: BoxShape.circle,
@@ -416,7 +422,7 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -435,18 +441,18 @@ class _BuyerNotificationsScreenState extends State<BuyerNotificationsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'No notifications yet',
-            style: TextStyle(
+          Text(
+            l10n.noNotificationsYet,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1E293B),
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'We will notify you about your bids and new auctions.',
-            style: TextStyle(
+          Text(
+            l10n.noNotificationsDesc,
+            style: const TextStyle(
               fontSize: 13,
               color: Color(0xFF64748B),
             ),

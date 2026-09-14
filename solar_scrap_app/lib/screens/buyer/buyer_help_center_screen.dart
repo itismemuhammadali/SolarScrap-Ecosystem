@@ -1,23 +1,34 @@
 import 'package:flutter/material.dart';
-import 'buyer_terms_conditions_screen.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 import 'buyer_privacy_policy_screen.dart';
+import 'buyer_terms_conditions_screen.dart';
+
+class _HelpTopicItem {
+  final String id;
+  final String Function(AppLocalizations) getTitle;
+
+  const _HelpTopicItem(this.id, this.getTitle);
+}
 
 class BuyerHelpCenterScreen extends StatelessWidget {
   const BuyerHelpCenterScreen({super.key});
 
-  final List<String> _helpTopics = const [
-    'Account & Login',
-    'Selling Solar Scrap',
-    'Pickup & Orders',
-    'Notifications',
-    'Privacy & Security',
-    'Report a Problem',
-    'FAQs',
-    'Contact Support',
+  static final List<_HelpTopicItem> _helpTopics = [
+    _HelpTopicItem('account_login', (l) => l.helpTopicAccountLogin),
+    _HelpTopicItem('selling_scrap', (l) => l.helpTopicSellingScrap),
+    _HelpTopicItem('pickup_orders', (l) => l.helpTopicPickupOrders),
+    _HelpTopicItem('notifications', (l) => l.notificationsTitle),
+    _HelpTopicItem('privacy_security', (l) => l.helpTopicPrivacySecurity),
+    _HelpTopicItem('report_problem', (l) => l.helpTopicReportProblem),
+    _HelpTopicItem('faqs', (l) => l.helpTopicFaqs),
+    _HelpTopicItem('contact_support', (l) => l.contactSupport),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
       body: SafeArea(
@@ -47,9 +58,9 @@ class BuyerHelpCenterScreen extends StatelessWidget {
                         color: Color(0xFFF3F4F6),
                         shape: BoxShape.circle,
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.arrow_back,
+                      child: Center(
+                        child: RTLHelper.backIcon(
+                          context,
                           color: Colors.black,
                           size: 18,
                         ),
@@ -59,9 +70,9 @@ class BuyerHelpCenterScreen extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Title
-                  const Text(
-                    'Help Center',
-                    style: TextStyle(
+                  Text(
+                    l10n.helpCenter,
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0F172A),
@@ -96,14 +107,15 @@ class BuyerHelpCenterScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         child: Column(
                           children: List.generate(_helpTopics.length, (index) {
-                            final topic = _helpTopics[index];
+                            final topicItem = _helpTopics[index];
+                            final topicTitle = topicItem.getTitle(l10n);
                             final isLast = index == _helpTopics.length - 1;
 
                             return Column(
                               children: [
                                 InkWell(
                                   onTap: () {
-                                    _handleTopicTap(context, topic);
+                                    _handleTopicTap(context, topicItem.id, topicTitle, l10n);
                                   },
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -115,17 +127,17 @@ class BuyerHelpCenterScreen extends StatelessWidget {
                                           MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                          topic,
+                                          topicTitle,
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                             color: Color(0xFF1E293B),
                                           ),
                                         ),
-                                        const Icon(
-                                          Icons.chevron_right,
+                                        RTLHelper.chevronIcon(
+                                          context,
                                           size: 20,
-                                          color: Color(0xFF9CA3AF),
+                                          color: const Color(0xFF9CA3AF),
                                         ),
                                       ],
                                     ),
@@ -154,15 +166,15 @@ class BuyerHelpCenterScreen extends StatelessWidget {
     );
   }
 
-  void _handleTopicTap(BuildContext context, String topic) {
-    if (topic == 'Privacy & Security') {
+  void _handleTopicTap(BuildContext context, String topicId, String topicTitle, AppLocalizations l10n) {
+    if (topicId == 'privacy_security') {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => const BuyerPrivacyPolicyScreen(),
         ),
       );
-    } else if (topic == 'Terms & Conditions') {
+    } else if (topicId == 'terms_conditions') {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -172,7 +184,7 @@ class BuyerHelpCenterScreen extends StatelessWidget {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$topic details coming soon!'),
+          content: Text(l10n.detailsComingSoon(topicTitle)),
           duration: const Duration(seconds: 2),
         ),
       );

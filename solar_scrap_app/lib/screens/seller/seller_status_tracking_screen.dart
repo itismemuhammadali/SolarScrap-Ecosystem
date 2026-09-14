@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/bid.dart';
 import '../../models/listing.dart';
 import '../../services/bid_service.dart';
 import '../../services/push_notification_service.dart';
+import '../../utils/rtl_helper.dart';
 import 'seller_price_offer_screen.dart';
 
 class SellerStatusTrackingScreen extends StatefulWidget {
@@ -108,46 +110,53 @@ class _SellerStatusTrackingScreenState
     return widget.currentStatus;
   }
 
-  List<Map<String, dynamic>> get _statusFlow {
+  String _getEffectiveStatus(AppLocalizations l10n) {
+    if (_bids.any((b) => b.status == 'accepted')) return l10n.dealClosed;
+    if (_bids.isNotEmpty) return l10n.filterPriceOffered;
+    if (widget.currentStatus == 'Price Offered') return l10n.filterPriceOffered;
+    return widget.currentStatus;
+  }
+
+  List<Map<String, dynamic>> _getStatusFlow(AppLocalizations l10n) {
     final status = _effectiveStatus;
     final isClosed = status == 'Deal Closed';
     final hasOffers = _bids.isNotEmpty || status == 'Price Offered';
 
     return [
       {
-        'title': 'Submitted',
+        'title': l10n.filterSubmitted,
         'subtitle': widget.listing?.createdFormatted ?? 'Dec 18, 09:30 AM',
         'isCompleted': true,
         'isActive': false,
       },
       {
-        'title': 'Active on Market',
-        'subtitle': 'Accepting bids from buyers',
+        'title': l10n.activeOnMarket,
+        'subtitle': l10n.acceptingBidsFromBuyers,
         'isCompleted': true,
         'isActive': false,
       },
       {
-        'title': 'Price Offered',
+        'title': l10n.filterPriceOffered,
         'subtitle': hasOffers
-            ? '${_bids.length} bid(s) received'
-            : 'Awaiting buyer bids',
-        'badge': hasOffers && !isClosed ? 'Action Required' : null,
+            ? l10n.bidsReceivedCount(_bids.length)
+            : l10n.awaitingBuyerBids,
+        'badge': hasOffers && !isClosed ? l10n.actionRequired : null,
         'isCompleted': isClosed,
         'isActive': hasOffers && !isClosed,
       },
       {
-        'title': 'Negotiation / Review',
+        'title': l10n.negotiationReview,
         'subtitle': isClosed
-            ? 'Completed'
+            ? l10n.statusCompleted
             : (_bids.isNotEmpty
-                ? 'Reviewing ${_bids.length} offer(s)'
-                : 'Awaiting buyer offers'),
+                ? l10n.reviewingOffersCount(_bids.length)
+                : l10n.awaitingBuyerOffers),
         'isCompleted': isClosed,
         'isActive': false,
       },
       {
-        'title': 'Deal Closed',
-        'subtitle': isClosed ? 'Offer accepted' : 'Pending agreement',
+        'title': l10n.dealClosed,
+        'subtitle': isClosed ? l10n.offerAccepted : l10n.pendingAgreement,
         'isCompleted': isClosed,
         'isActive': isClosed,
       },
@@ -156,18 +165,21 @@ class _SellerStatusTrackingScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final statusFlow = _getStatusFlow(l10n);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: RTLHelper.backIcon(context, color: Colors.black, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Status Tracking',
-          style: TextStyle(
+        title: Text(
+          l10n.statusTrackingTitle,
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -237,7 +249,7 @@ class _SellerStatusTrackingScreenState
                                   color: Color(0xFF6B7280),
                                 ),
                                 children: [
-                                  TextSpan(text: '$_displayRef · Currently: '),
+                                  TextSpan(text: '$_displayRef · ${l10n.currentlyLabel}'),
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.middle,
                                     child: ShaderMask(
@@ -245,7 +257,7 @@ class _SellerStatusTrackingScreenState
                                       shaderCallback: (bounds) =>
                                           primaryGreenGradient.createShader(bounds),
                                       child: Text(
-                                        _effectiveStatus,
+                                        _getEffectiveStatus(l10n),
                                         style: const TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
@@ -266,10 +278,10 @@ class _SellerStatusTrackingScreenState
               const SizedBox(height: 28),
 
               // Status Timeline List
-              ..._statusFlow.asMap().entries.map((entry) {
+              ...statusFlow.asMap().entries.map((entry) {
                 int index = entry.key;
                 Map<String, dynamic> status = entry.value;
-                bool isLast = index == _statusFlow.length - 1;
+                bool isLast = index == statusFlow.length - 1;
 
                 return _buildStatusItem(
                   status: status,
@@ -285,9 +297,9 @@ class _SellerStatusTrackingScreenState
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Bids Received',
-                    style: TextStyle(
+                  Text(
+                    l10n.bidsReceived,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
@@ -301,7 +313,7 @@ class _SellerStatusTrackingScreenState
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${_bids.length} Total',
+                        l10n.totalBadge(_bids.length),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -334,9 +346,9 @@ class _SellerStatusTrackingScreenState
                     children: [
                       Icon(Icons.gavel_outlined, size: 32, color: Colors.grey.shade400),
                       const SizedBox(height: 8),
-                      const Text(
-                        'No bids placed yet',
-                        style: TextStyle(
+                      Text(
+                        l10n.noBidsPlacedYet,
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF374151),
@@ -344,7 +356,7 @@ class _SellerStatusTrackingScreenState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Bids from buyers will appear here in real-time.',
+                        l10n.bidsWillAppearRealtime,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 11,
@@ -355,7 +367,7 @@ class _SellerStatusTrackingScreenState
                   ),
                 )
               else
-                ..._bids.map((bid) => _buildBidCard(bid)),
+                ..._bids.map((bid) => _buildBidCard(bid, l10n)),
 
               const SizedBox(height: 32),
             ],
@@ -366,7 +378,7 @@ class _SellerStatusTrackingScreenState
     );
   }
 
-  Widget _buildBidCard(Bid bid) {
+  Widget _buildBidCard(Bid bid, AppLocalizations l10n) {
     final isAccepted = bid.status.toLowerCase() == 'accepted';
     final isRejected = bid.status.toLowerCase() == 'rejected';
 
@@ -445,10 +457,10 @@ class _SellerStatusTrackingScreenState
                 ),
                 child: Text(
                   isAccepted
-                      ? 'Accepted'
+                      ? l10n.statusAccepted
                       : isRejected
-                          ? 'Declined'
-                          : 'Pending Offer',
+                          ? l10n.statusDeclined
+                          : l10n.statusPendingOffer,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -469,9 +481,9 @@ class _SellerStatusTrackingScreenState
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Offered Amount',
-                    style: TextStyle(
+                  Text(
+                    l10n.offerAmount,
+                    style: const TextStyle(
                       fontSize: 11,
                       color: Color(0xFF9CA3AF),
                     ),
@@ -498,9 +510,9 @@ class _SellerStatusTrackingScreenState
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Review Offer',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  child: Text(
+                    l10n.reviewOffer,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
             ],

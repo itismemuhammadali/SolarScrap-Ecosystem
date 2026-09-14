@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/listing.dart';
 import '../../services/listing_service.dart';
+import '../../utils/rtl_helper.dart';
 import '../../widgets/listing_map_preview_widget.dart';
 import 'seller_status_tracking_screen.dart';
 
@@ -44,27 +46,113 @@ class _SellerListingDetailsScreenState
     );
   }
 
-  String _getDisplayTitle() {
-    final l = _listing;
-    if (l.category == 'Solar Panels' && l.specs['panels_count'] != null) {
-      return '${l.specs['panels_count']}x Solar Panels ${l.specs['watts_per_panel'] ?? ''}W';
-    } else if (l.category == 'Batteries' && l.specs['battery_count'] != null) {
-      return '${l.specs['battery_count']}x ${l.specs['battery_type'] ?? ''} Batteries';
-    } else if (l.category == 'Inverters' && l.specs['rated_power'] != null) {
-      return '${l.specs['inverter_brand'] ?? ''} ${l.specs['inverter_type'] ?? ''} Inverter';
-    } else if (l.category == 'Cables') {
-      return '${l.specs['cable_type'] ?? ''} Cables ${l.specs['cable_size'] ?? ''}';
-    } else if (l.category == 'Structure') {
-      return '${l.specs['structure_type'] ?? ''} (${l.specs['structure_metal'] ?? ''}) Structure';
+  String _getCategoryDisplayName(String name, AppLocalizations l10n) {
+    switch (name) {
+      case 'Solar Panels':
+        return l10n.categoryPanels;
+      case 'Batteries':
+        return l10n.categoryBatteries;
+      case 'Inverters':
+        return l10n.categoryInverters;
+      case 'Cables':
+        return l10n.categoryCables;
+      case 'Structure':
+        return l10n.categoryStructure;
+      case 'Complete Solar System':
+        return l10n.completeSolarSystem;
+      default:
+        return name;
     }
-    return l.category.isNotEmpty ? l.category : 'Equipment Listing';
   }
 
-  String _formatPrice(double price) {
+  String _getDisplayTitle(AppLocalizations l10n) {
+    final l = _listing;
+    if (l.category == 'Solar Panels' && l.specs['panels_count'] != null) {
+      return '${l.specs['panels_count']}x ${l10n.categoryPanels} ${l.specs['watts_per_panel'] ?? ''}W';
+    } else if (l.category == 'Batteries' && l.specs['battery_count'] != null) {
+      return '${l.specs['battery_count']}x ${l.specs['battery_type'] ?? ''} ${l10n.categoryBatteries}';
+    } else if (l.category == 'Inverters' && l.specs['rated_power'] != null) {
+      return '${l.specs['inverter_brand'] ?? ''} ${l.specs['inverter_type'] ?? ''} ${l10n.inverter}';
+    } else if (l.category == 'Cables') {
+      return '${l.specs['cable_type'] ?? ''} ${l10n.categoryCables} ${l.specs['cable_size'] ?? ''}';
+    } else if (l.category == 'Structure') {
+      return '${l.specs['structure_type'] ?? ''} (${l.specs['structure_metal'] ?? ''}) ${l10n.structure}';
+    }
+    return l.category.isNotEmpty ? _getCategoryDisplayName(l.category, l10n) : l10n.equipmentDetailsTitle;
+  }
+
+  String _formatPrice(double price, AppLocalizations l10n) {
     if (price >= 100000) {
-      return 'Rs. ${(price / 100000).toStringAsFixed(1)} Lakh';
+      return 'Rs. ${(price / 100000).toStringAsFixed(1)} ${l10n.lakhUnit}';
     }
     return 'Rs. ${price.toStringAsFixed(0)}';
+  }
+
+  String _localizeCondition(String condition, AppLocalizations l10n) {
+    switch (condition.toLowerCase()) {
+      case 'scrap':
+        return l10n.conditionScrap;
+      case 'bullet hit':
+        return l10n.conditionBulletHit;
+      case 'shatter glass':
+      case 'shatter lass':
+        return l10n.conditionShatterGlass;
+      case 'good':
+      case 'good conditions':
+        return l10n.conditionGood;
+      case 'working':
+        return l10n.conditionWorking;
+      case 'non working':
+      case 'non-working':
+        return l10n.conditionNonWorking;
+      case 'other':
+        return l10n.conditionOther;
+      default:
+        return condition;
+    }
+  }
+
+  String _localizeSpecKey(String key, AppLocalizations l10n) {
+    switch (key) {
+      case 'panels_count':
+        return l10n.numberOfPanels;
+      case 'watts_per_panel':
+        return l10n.wattsPerPanel;
+      case 'panel_condition':
+      case 'battery_condition':
+      case 'inverter_condition':
+        return l10n.listingConditionLabel;
+      case 'battery_type':
+        return l10n.batteryType;
+      case 'battery_count':
+        return l10n.listingQuantityLabel;
+      case 'battery_capacity':
+        return l10n.capacity;
+      case 'battery_brand':
+      case 'inverter_brand':
+        return l10n.brand;
+      case 'inverter_type':
+        return l10n.inverterType;
+      case 'rated_power':
+        return l10n.ratedPower;
+      case 'cable_type':
+        return l10n.cableType;
+      case 'cable_conductor':
+        return l10n.conductor;
+      case 'insulation_type':
+        return l10n.insulation;
+      case 'cable_size':
+        return l10n.cableSize;
+      case 'structure_type':
+        return l10n.structureType;
+      case 'structure_metal':
+        return l10n.metal;
+      default:
+        return key
+            .split('_')
+            .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+            .join(' ');
+    }
   }
 
   String _getFallbackAsset() {
@@ -135,9 +223,12 @@ class _SellerListingDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final l = _listing;
     final displayId = l.id.length > 12 ? l.id.substring(0, 12).toUpperCase() : l.id.toUpperCase();
-    final statusLabel = l.status == 'active' ? 'Active' : (l.status == 'under_review' ? 'Under Review' : l.status);
+    final statusLabel = l.status == 'active'
+        ? l10n.filterActive
+        : (l.status == 'under_review' ? l10n.statusUnderReview : l.status);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -153,8 +244,8 @@ class _SellerListingDetailsScreenState
               color: Color(0xFFE9E9E9),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -164,9 +255,9 @@ class _SellerListingDetailsScreenState
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Listing Details',
-          style: TextStyle(
+        title: Text(
+          l10n.listingDetailsTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -215,7 +306,7 @@ class _SellerListingDetailsScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _getDisplayTitle(),
+                          _getDisplayTitle(l10n),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -224,7 +315,7 @@ class _SellerListingDetailsScreenState
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '$displayId · ${l.category}',
+                          '$displayId · ${_getCategoryDisplayName(l.category, l10n)}',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade600,
@@ -269,7 +360,7 @@ class _SellerListingDetailsScreenState
                   Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                 ),
                 child: Text(
-                  _formatPrice(l.priceDemand),
+                  _formatPrice(l.priceDemand, l10n),
                   style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
@@ -296,7 +387,7 @@ class _SellerListingDetailsScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Equipment Details',
+                      l10n.equipmentDetailsTitle,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -305,20 +396,21 @@ class _SellerListingDetailsScreenState
                     ),
                     const SizedBox(height: 8),
 
-                    _buildDetailRow('Category', l.category),
+                    _buildDetailRow(l10n.listingCategoryLabel, _getCategoryDisplayName(l.category, l10n)),
                     ...l.specs.entries.map((e) {
-                      final keyFormatted = e.key
-                          .split('_')
-                          .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
-                          .join(' ');
-                      return _buildDetailRow(keyFormatted, e.value.toString());
+                      final localizedKey = _localizeSpecKey(e.key, l10n);
+                      final valStr = e.value.toString();
+                      final localizedVal = (e.key.contains('condition'))
+                          ? _localizeCondition(valStr, l10n)
+                          : valStr;
+                      return _buildDetailRow(localizedKey, localizedVal);
                     }),
-                    _buildDetailRow('Pickup City', l.pickupCity),
+                    _buildDetailRow(l10n.pickupCity, l.pickupCity),
                     if (l.pickupArea != null && l.pickupArea!.isNotEmpty)
-                      _buildDetailRow('Pickup Area', l.pickupArea!),
-                    _buildDetailRow('Address', l.pickupAddress),
-                    _buildDetailRow('Contact Person', l.contactName),
-                    _buildDetailRow('Contact Phone', l.contactPhone, showDivider: false),
+                      _buildDetailRow(l10n.pickupArea, l.pickupArea!),
+                    _buildDetailRow(l10n.addressLabel, l.pickupAddress),
+                    _buildDetailRow(l10n.contactPerson, l.contactName),
+                    _buildDetailRow(l10n.contactPhoneLabel, l.contactPhone, showDivider: false),
                   ],
                 ),
               ),
@@ -365,16 +457,16 @@ class _SellerListingDetailsScreenState
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Track Status',
+                        l10n.trackStatus,
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF18181B),
                         ),
                       ),
-                      const Icon(
-                        Icons.chevron_right,
-                        color: Color(0xFF00A63E),
+                      RTLHelper.chevronIcon(
+                        context,
+                        color: const Color(0xFF00A63E),
                         size: 22,
                       ),
                     ],

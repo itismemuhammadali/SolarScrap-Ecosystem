@@ -212,7 +212,13 @@ export default function CreateQuotationPage() {
   };
 
   const handlePrintPdf = () => {
+    const originalTitle = document.title;
+    const cleanCustomer = (customerName || "Customer").trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+    document.title = `Solar_Scrap_Quotation_${cleanCustomer}_Qt-2024-005`;
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1500);
   };
 
   return (
@@ -533,183 +539,190 @@ export default function CreateQuotationPage() {
           </div>
 
           {/* Right Column: Live Quotation Document & Actions (Exact as Screenshot 3) */}
-          <div className="lg:col-span-6 space-y-6">
-            {/* The Document Card */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-xs space-y-6">
-              {/* Document Header */}
-              <div className="flex items-center justify-between">
-                <Image
-                  src="/images/solar-scrap-img.png"
-                  alt="Solar Scrap Logo"
-                  width={130}
-                  height={67}
-                  className="w-[120px] sm:w-[130px] h-auto object-contain"
-                  priority
-                />
+          <div className="lg:col-span-6 space-y-4">
+            {/* The Isolated Printable Slip matching Screenshot Exactly */}
+            <div
+              id="printable-quotation"
+              className="bg-white rounded-3xl border border-gray-200/70 p-4 sm:p-5 shadow-sm flex flex-col gap-3 select-none"
+            >
+              {/* ===================== BOX 1: HEADER & RECIPIENT METADATA ===================== */}
+              <div className="print-card bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/60">
+                {/* Logo & Quotation Heading */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center">
+                    <Image
+                      src="/images/solar-scrap-img.png"
+                      alt="Solar Scrap"
+                      width={120}
+                      height={55}
+                      className="w-[110px] sm:w-[120px] h-auto object-contain"
+                      priority
+                    />
+                  </div>
 
-                <div className="text-right">
-                  <h3 className="text-xl font-black text-gray-900 tracking-tight">
-                    Quotation
-                  </h3>
-                  <span className="text-xs font-semibold text-gray-400">
-                    #Qt-2024-005
-                  </span>
+                  <div className="text-right">
+                    <h2 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
+                      Quotation
+                    </h2>
+                    <p className="text-[11px] font-mono text-gray-500 mt-0.5">
+                      #Qt-2024-005
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="border-t border-gray-100 pt-6">
-                <div className="flex justify-between items-start gap-4">
-                  {/* To Block */}
+                <div className="border-t border-gray-200/70 my-3" />
+
+                {/* Details Row */}
+                <div className="flex justify-between items-start gap-4 text-xs">
                   <div>
-                    <p className="text-xs font-bold text-gray-900 mb-1">
-                      To,
-                    </p>
-                    <h4 className="text-base font-bold text-gray-900">
+                    <p className="text-xs font-bold text-gray-900">To,</p>
+                    <p className="text-xs font-bold text-gray-900 mt-0.5">
                       {customerName || "Ahmed Raza"}
-                    </h4>
-                    <p className="text-xs text-gray-600 mt-1">{phone || "+92 345 9990000"}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{location || "Rawalpindi, Bahria Town"}</p>
+                    </p>
+                    <p className="text-[11px] text-gray-600 mt-0.5">
+                      {phone || "+92 345 9990000"}
+                    </p>
+                    <p className="text-[11px] text-gray-600">
+                      {location || "Rawalpindi, Bahria Town"}
+                    </p>
                   </div>
 
-                  {/* Metadata Block */}
-                  <div className="text-right space-y-1 text-xs">
-                    <p className="text-gray-700">
-                      <span className="font-semibold text-gray-500 mr-2">
-                        Date:
-                      </span>
-                      {date || "03 Dec 2024"}
+                  <div className="space-y-1 text-right text-[11px]">
+                    <p className="flex justify-end gap-2">
+                      <span className="font-bold text-gray-900">Date:</span>
+                      <span className="text-gray-700 font-medium">{date || "03 Dec 2024"}</span>
                     </p>
-                    <p className="text-gray-700">
-                      <span className="font-semibold text-gray-500 mr-2">
-                        Valid Till:
-                      </span>
-                      {validTill || "10 Dec 2024"}
+                    <p className="flex justify-end gap-2">
+                      <span className="font-bold text-gray-900">Valid Till:</span>
+                      <span className="text-gray-700 font-medium">{validTill || "10 Dec 2024"}</span>
                     </p>
-                    <p className="text-gray-700">
-                      <span className="font-semibold text-gray-500 mr-2">
-                        From:
-                      </span>
-                      {companyName || "Solar scrap"}
+                    <p className="flex justify-end gap-2">
+                      <span className="font-bold text-gray-900">From:</span>
+                      <span className="text-gray-700 font-medium">{companyName || "Solar Scrap Official"}</span>
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Items Table Card */}
-              <div className="bg-[#F9FAFB] rounded-xl p-4 sm:p-5 space-y-3 border border-gray-100">
-                <div className="grid grid-cols-12 text-[11px] font-bold text-gray-500 border-b border-gray-200/80 pb-2">
+              {/* ===================== BOX 2: ITEMS TABLE, TOTALS & TERMS ===================== */}
+              <div className="print-card bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/60 space-y-3">
+                {/* Table Headers */}
+                <div className="grid grid-cols-12 text-[11px] font-bold text-gray-800 pb-2 border-b border-gray-200/70">
                   <div className="col-span-6">Items</div>
                   <div className="col-span-2 text-center">QTY</div>
-                  <div className="col-span-2 text-right">Rate ( PKR )</div>
+                  <div className="col-span-2 text-center">Rate ( PKR )</div>
                   <div className="col-span-2 text-right">Amount ( PKR )</div>
                 </div>
 
-                <div className="space-y-2 py-1">
+                {/* Item Rows */}
+                <div className="space-y-2 text-xs text-gray-800">
                   {items.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="grid grid-cols-12 text-xs text-gray-800 items-center"
+                      className="grid grid-cols-12 items-center text-[11px] pb-2 border-b border-gray-200/60"
                     >
-                      <div className="col-span-6 font-medium text-gray-900 truncate pr-2">
+                      <div className="col-span-6 text-gray-800 font-medium truncate pr-1">
                         {idx + 1}.{item.name}
                       </div>
-                      <div className="col-span-2 text-center text-gray-600">
+                      <div className="col-span-2 text-center text-gray-700">
                         {item.qty}
                       </div>
-                      <div className="col-span-2 text-right text-gray-600">
+                      <div className="col-span-2 text-center text-gray-700">
                         {formatNumber(item.rate)}
                       </div>
-                      <div className="col-span-2 text-right font-semibold text-gray-900">
+                      <div className="col-span-2 text-right font-bold text-gray-900">
                         {formatNumber(item.qty * item.rate)}
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Subtotals */}
-                <div className="border-t border-gray-200/80 pt-3 space-y-1 text-xs">
-                  <div className="flex justify-between items-center text-gray-700">
-                    <span className="font-bold">Sub total</span>
-                    <span className="font-bold">{formatNumber(subTotal)}</span>
+                {/* Subtotal & Adjustment */}
+                <div className="pt-1 space-y-1 text-xs">
+                  <div className="flex justify-between items-center text-gray-900 font-bold text-[11px]">
+                    <span>Sub total</span>
+                    <span>{formatNumber(subTotal)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-gray-500">
+                  <div className="flex justify-between items-center text-gray-900 font-bold text-[11px]">
                     <span>Adjustment</span>
                     <span>{adjustment === 0 ? "00" : formatNumber(adjustment)}</span>
                   </div>
                 </div>
 
-                {/* Green Total Offer Banner */}
-                <div className="bg-[#009845] text-white rounded-lg px-4 py-2.5 flex justify-between items-center font-bold text-sm shadow-xs mt-2">
+                {/* Solid Green Total Offer Bar */}
+                <div className="print-highlight bg-[#009845] text-white rounded-xl px-4 py-2.5 flex justify-between items-center font-bold text-xs shadow-xs mt-1">
                   <span>Total Offer ( PKR )</span>
                   <span>{formatNumber(totalOffer)}</span>
                 </div>
-              </div>
 
-              {/* Terms & Conditions */}
-              <div className="space-y-1.5 pt-1 text-xs text-gray-600">
-                <h5 className="font-bold text-gray-900">Terms & Conditions</h5>
-                <p className="text-[11px] text-gray-500">
-                  • This is an estimated offer and valid for the mentioned date only.
-                </p>
-                <p className="text-[11px] text-gray-500">
-                  • Final price may vary after physical inspection
-                </p>
-                <p className="font-semibold text-gray-800 pt-1 text-xs">Thank you</p>
-              </div>
+                <div className="border-t border-gray-200/70 pt-2" />
 
-              {/* Quotation Actions Panel (Inside Document Card matching Screenshot 3) */}
-              <div className="pt-5 border-t border-gray-100 space-y-3">
-                <h4 className="text-xs font-bold text-gray-900">
-                  Quotation Actions
-                </h4>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={handleWhatsAppShare}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#009845] hover:bg-[#00823b] text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
-                  >
-                    <Image
-                      src="/icons/whatsapp.svg"
-                      alt="WhatsApp"
-                      width={16}
-                      height={16}
-                      className="object-contain"
-                    />
-                    <span>Send to what&apos;sapp</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const mailto = `mailto:?subject=Solar Scrap Quotation - ${customerName}&body=Please find the estimated quotation total of PKR ${formatNumber(totalOffer)}`;
-                      window.location.href = mailto;
-                    }}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0070F3] hover:bg-[#0060df] text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
-                  >
-                    <Mail className="w-4 h-4" />
-                    <span>Send Via Email</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handlePrintPdf}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5 text-gray-500" />
-                    <span>Download pdf</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleSaveAndIssue}
-                    disabled={isSaving}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer disabled:opacity-60"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-gray-500" />
-                    <span>{isSaving ? "Saving..." : "Convert to Invoice"}</span>
-                  </button>
+                {/* Terms & Conditions */}
+                <div className="space-y-1 text-[11px] text-gray-600">
+                  <p className="font-bold text-gray-900">Terms &amp; Conditions</p>
+                  <p className="text-[10px] text-gray-500">
+                    • This is an estimated offer and valid for the mentioned date only.
+                  </p>
+                  <p className="text-[10px] text-gray-500">
+                    • Final price may vary after physical inspection
+                  </p>
+                  <p className="font-bold text-gray-900 pt-1 text-[11px]">Thank you</p>
                 </div>
+              </div>
+            </div>
+
+            {/* ===================== BOX 3: QUOTATION ACTIONS (NO PRINT) ===================== */}
+            <div className="no-print bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/60 space-y-3">
+              <h4 className="text-xs font-bold text-gray-900">
+                Quotation Actions
+              </h4>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={handleWhatsAppShare}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#009845] hover:bg-[#00823b] text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                >
+                  <Image
+                    src="/icons/whatsapp.svg"
+                    alt="WhatsApp"
+                    width={16}
+                    height={16}
+                    className="object-contain"
+                  />
+                  <span>Send to what&apos;sapp</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const mailto = `mailto:?subject=Solar Scrap Quotation - ${customerName}&body=Please find the estimated quotation total of PKR ${formatNumber(totalOffer)}`;
+                    window.location.href = mailto;
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0070F3] hover:bg-[#0060df] text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>Send Via Email</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrintPdf}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Download pdf</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSaveAndIssue}
+                  disabled={isSaving}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold shadow-2xs transition-colors cursor-pointer disabled:opacity-60"
+                >
+                  <FileText className="w-3.5 h-3.5 text-gray-500" />
+                  <span>{isSaving ? "Saving..." : "Convert to Invoice"}</span>
+                </button>
               </div>
             </div>
           </div>

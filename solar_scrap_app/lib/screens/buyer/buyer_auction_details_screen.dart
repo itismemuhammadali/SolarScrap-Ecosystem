@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/listing.dart';
 import '../../services/listing_service.dart';
 import '../../services/saved_auctions_service.dart';
+import '../../utils/rtl_helper.dart';
 import '../../widgets/listing_map_preview_widget.dart';
 import 'buyer_place_bid_screen.dart';
 
@@ -243,6 +245,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final title = _auction['title'] ?? 'Solar Equipment';
     final category = _auction['category'] ?? 'Solar Panels';
     final startingBid = _auction['startingBid'] ?? 'PKR 0';
@@ -331,8 +334,8 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                                   color: Colors.black.withValues(alpha: 0.4),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
-                                  Icons.arrow_back,
+                                child: RTLHelper.backIcon(
+                                  context,
                                   color: Colors.white,
                                   size: 20,
                                 ),
@@ -394,16 +397,16 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Icon(
+                                    children: [
+                                      const Icon(
                                         Icons.check_circle_outline,
                                         color: Colors.white,
                                         size: 14,
                                       ),
-                                      SizedBox(width: 4),
+                                      const SizedBox(width: 4),
                                       Text(
-                                        'Verified Seller',
-                                        style: TextStyle(
+                                        l10n.verifiedSeller,
+                                        style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -519,9 +522,9 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                const Text(
-                                  'Price Demand',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.priceDemand,
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF9CA3AF),
                                     fontWeight: FontWeight.w500,
@@ -548,7 +551,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                             Expanded(
                               child: _buildMetricCard(
                                 icon: Icons.inventory_2_outlined,
-                                label: 'Quantity',
+                                label: l10n.listingQuantityLabel,
                                 value: quantity,
                               ),
                             ),
@@ -556,7 +559,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                             Expanded(
                               child: _buildMetricCard(
                                 icon: Icons.verified_outlined,
-                                label: 'Condition',
+                                label: l10n.listingConditionLabel,
                                 value: condition,
                               ),
                             ),
@@ -564,7 +567,7 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                             Expanded(
                               child: _buildMetricCard(
                                 icon: Icons.location_on_outlined,
-                                label: 'Location',
+                                label: l10n.location,
                                 value: location,
                               ),
                             ),
@@ -588,9 +591,9 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'SELLER / CONTACT DETAILS',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.sellerContactDetailsTitle,
+                                  style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     color: Color(0xFF8E8E93),
@@ -662,15 +665,15 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                             children: [
                               _buildSegmentTab(
                                 index: 0,
-                                label: 'Details',
+                                label: l10n.detailsTab,
                               ),
                               _buildSegmentTab(
                                 index: 1,
-                                label: 'Specs',
+                                label: l10n.specsTab,
                               ),
                               _buildSegmentTab(
                                 index: 2,
-                                label: 'Timeline',
+                                label: l10n.timelineTab,
                               ),
                             ],
                           ),
@@ -716,9 +719,9 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Price Demand',
-                            style: TextStyle(
+                          Text(
+                            l10n.priceDemand,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF9CA3AF),
                             ),
@@ -737,9 +740,9 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text(
-                            'Listing ID',
-                            style: TextStyle(
+                          Text(
+                            l10n.listingIdLabel,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF9CA3AF),
                             ),
@@ -799,9 +802,9 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text(
-                          'Place Bid',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.placeBid,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),

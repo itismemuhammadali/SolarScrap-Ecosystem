@@ -10,6 +10,8 @@ import 'seller_account_created_screen.dart';
 import '../buyer/buyer_login_screen.dart';
 import '../role_selection_screen.dart';
 import '../../services/auth_service.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 
 class SellerLoginScreen extends StatefulWidget {
   const SellerLoginScreen({super.key});
@@ -227,6 +229,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -258,10 +261,13 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        size: 16,
-                        color: Color(0xFF1E293B),
+                      child: Transform.scale(
+                        scaleX: RTLHelper.isRTL(context) ? -1 : 1,
+                        child: const Icon(
+                          Icons.arrow_back_ios_new_rounded,
+                          size: 16,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
                     ),
                   ),
@@ -309,9 +315,9 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Welcome Back Text (Matching Figma: Poppins 700, 24px, line-height 40px, #151516)
+              // Welcome Back Text
               Text(
-                'Welcome Back',
+                l10n.welcomeBack,
                 style: GoogleFonts.poppins(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
@@ -320,9 +326,9 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                   letterSpacing: 0,
                 ),
               ),
-              // Subtitle (Matching Figma: Poppins 400, 14px, line-height 24px, #151516)
+              // Subtitle
               Text(
-                'Sign in to manage your listings',
+                l10n.signInToContinue,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
@@ -335,7 +341,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
 
               // Email / Phone Input
               Text(
-                'Email / Phone',
+                l10n.emailLabel,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -350,7 +356,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                   color: const Color(0xFF151516),
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Enter email or phone',
+                  hintText: l10n.emailHint,
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 14,
                     color: const Color(0xFF9CA3AF),
@@ -377,7 +383,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
 
               // Password Input
               Text(
-                'Password',
+                l10n.passwordLabel,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -393,7 +399,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                   color: const Color(0xFF151516),
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Enter Password',
+                  hintText: l10n.passwordHint,
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 14,
                     color: const Color(0xFF9CA3AF),
@@ -485,7 +491,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                       );
                     },
                     child: Text(
-                      'Forgot Password?',
+                      l10n.forgotPassword,
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         color: const Color(0xFF00A63E),
@@ -497,7 +503,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Sign In Button (Matching Figma: Linear Gradient #00A63E to #007D2E, Radius 16px, Height 56px)
+              // Sign In Button
               Container(
                 width: double.infinity,
                 height: 56,
@@ -533,7 +539,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                           ),
                         )
                       : Text(
-                          'Sign in',
+                          l10n.signIn,
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -557,7 +563,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'or continue with',
+                      l10n.orSignInWith,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
@@ -596,7 +602,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Continue with Google',
+                      l10n.googleSignIn,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -623,7 +629,7 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
                       const Icon(Icons.apple, color: Colors.white, size: 24),
                       const SizedBox(width: 8),
                       Text(
-                        'Continue with Apple',
+                        l10n.appleSignIn,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
@@ -640,14 +646,14 @@ class _SellerLoginScreenState extends State<SellerLoginScreen> {
               Center(
                 child: RichText(
                   text: TextSpan(
-                    text: 'New to Solar Scrap? ',
+                    text: '${l10n.dontHaveAccount} ',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: const Color(0xFF6B7280),
                     ),
                     children: [
                       TextSpan(
-                        text: 'Create Account',
+                        text: l10n.signUp,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           color: const Color(0xFF00A63E),

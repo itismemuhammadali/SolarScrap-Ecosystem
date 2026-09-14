@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/listing_draft.dart';
+import '../../../utils/rtl_helper.dart';
 import '../seller_upload_images_screen.dart';
 import 'seller_equipment_step_batteries.dart';
 import 'seller_equipment_step_cables.dart';
@@ -79,6 +81,7 @@ class _SellerEquipmentStepInvertersState
     required List<String> options,
     required String selectedValue,
     required Function(String) onChanged,
+    String Function(String)? labelBuilder,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,6 +98,7 @@ class _SellerEquipmentStepInvertersState
         Row(
           children: options.map((option) {
             final isSelected = selectedValue == option;
+            final displayText = labelBuilder != null ? labelBuilder(option) : option;
             return Expanded(
               child: GestureDetector(
                 onTap: () {
@@ -120,7 +124,7 @@ class _SellerEquipmentStepInvertersState
                   ),
                   child: Center(
                     child: Text(
-                      option,
+                      displayText,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -142,6 +146,8 @@ class _SellerEquipmentStepInvertersState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -156,8 +162,8 @@ class _SellerEquipmentStepInvertersState
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -167,9 +173,11 @@ class _SellerEquipmentStepInvertersState
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Equipment Details',
-          style: TextStyle(
+        title: Text(
+          widget.isCompleteSolarSystem
+              ? l10n.completeSystemInvertersTitle
+              : l10n.equipmentDetailsTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -192,8 +200,8 @@ class _SellerEquipmentStepInvertersState
                   final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 7 : 6) : 6;
                   final int currentStep = widget.isCompleteSolarSystem ? 3 : 2;
                   final String stepText = widget.isCompleteSolarSystem
-                      ? 'Step 3 of $totalSteps (Inverters)'
-                      : 'Step 2 of 6';
+                      ? l10n.stepXOfYWithDetail(3, totalSteps, l10n.stepDetailInverters)
+                      : l10n.stepXOfY(2, 6);
                   final String percentText =
                       '${((currentStep / totalSteps) * 100).round()}%';
 
@@ -264,8 +272,8 @@ class _SellerEquipmentStepInvertersState
                     const SizedBox(width: 8),
                     Text(
                       widget.isCompleteSolarSystem
-                          ? 'Complete System · Inverters'
-                          : 'Inverters',
+                          ? l10n.completeSystemBannerInverter
+                          : l10n.categoryInverters,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -279,40 +287,42 @@ class _SellerEquipmentStepInvertersState
 
               // Inverter Type
               _buildOptionButtons(
-                label: 'Inverter Type',
+                label: l10n.inverterType,
                 options: ['Hybrid', 'On Grid'],
                 selectedValue: _selectedInverterType,
                 onChanged: (val) => _selectedInverterType = val,
+                labelBuilder: (type) => type == 'Hybrid' ? l10n.inverterTypeHybrid : l10n.inverterTypeOnGrid,
               ),
 
-                    // Rated Power
-                    _buildTextField(
-                      label: 'Rated Power',
-                      hint: '200 kW',
-                      controller: _ratedPowerController,
-                    ),
+              // Rated Power
+              _buildTextField(
+                label: l10n.ratedPower,
+                hint: '200 kW',
+                controller: _ratedPowerController,
+              ),
 
-                    // Brand
-                    _buildTextField(
-                      label: 'Brand',
-                      hint: 'Enter Brand name',
-                      controller: _brandController,
-                    ),
+              // Brand
+              _buildTextField(
+                label: l10n.brand,
+                hint: l10n.brandHint,
+                controller: _brandController,
+              ),
 
-                    // Price Demand (only if not Complete Solar System)
-                    if (!widget.isCompleteSolarSystem)
-                      _buildTextField(
-                        label: 'Price Demand',
-                        hint: 'Rs, 64,00000',
-                        controller: _priceDemandController,
-                      ),
+              // Price Demand (only if not Complete Solar System)
+              if (!widget.isCompleteSolarSystem)
+                _buildTextField(
+                  label: l10n.priceDemand,
+                  hint: 'Rs, 64,00000',
+                  controller: _priceDemandController,
+                ),
 
               // Condition
               _buildOptionButtons(
-                label: 'Condition',
+                label: l10n.listingConditionLabel,
                 options: _conditions,
                 selectedValue: _selectedCondition,
                 onChanged: (val) => _selectedCondition = val,
+                labelBuilder: (cond) => cond == 'Working' ? l10n.conditionWorking : l10n.conditionNonWorking,
               ),
               const SizedBox(height: 24),
 
@@ -334,9 +344,9 @@ class _SellerEquipmentStepInvertersState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -426,9 +436,9 @@ class _SellerEquipmentStepInvertersState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.continueButton,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 import '../../models/listing.dart';
 import '../../models/notification_item.dart';
 import '../../models/seller_profile.dart';
@@ -32,6 +34,23 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   int _selectedIndex = 0;
   String _selectedFilter = 'All';
   String _searchQuery = '';
+
+  String _getSellerFilterDisplay(String filter, AppLocalizations l10n) {
+    switch (filter) {
+      case 'All':
+        return l10n.filterAll;
+      case 'Active':
+        return l10n.filterActive;
+      case 'Submitted':
+        return l10n.filterSubmitted;
+      case 'Under Review':
+        return l10n.filterUnderReview;
+      case 'Price Offered':
+        return l10n.filterPriceOffered;
+      default:
+        return filter;
+    }
+  }
 
   SellerProfile? _profile;
   SellerStats? _stats;
@@ -322,14 +341,15 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF9F9F9),
       body: SafeArea(
-        child: _buildCurrentView(),
+        child: _buildCurrentView(l10n),
       ),
       floatingActionButton: _buildCenterAddButton(),
       floatingActionButtonLocation: const _CustomCenterDockedLocation(offsetY: -4),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: _buildBottomNavBar(l10n),
     );
   }
 
@@ -379,7 +399,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
-  Widget _buildBottomNavBar() {
+  Widget _buildBottomNavBar(AppLocalizations l10n) {
     return CustomPaint(
       size: Size(MediaQuery.of(context).size.width, 68 + MediaQuery.of(context).padding.bottom),
       painter: const NotchedBottomBarPainter(),
@@ -391,11 +411,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             padding: const EdgeInsets.only(top: 8),
             child: Row(
               children: [
-                Expanded(child: _buildNavItem('assets/icons/home.svg', 'Home', 0)),
-                Expanded(child: _buildNavItem('assets/icons/listing.svg', 'Listing', 1)),
+                Expanded(child: _buildNavItem('assets/icons/home.svg', l10n.homeTab, 0)),
+                Expanded(child: _buildNavItem('assets/icons/listing.svg', l10n.listingTab, 1)),
                 const SizedBox(width: 80), // Space for center notch
-                Expanded(child: _buildNavItem('assets/icons/bell.svg', 'Alerts', 2)),
-                Expanded(child: _buildNavItem('assets/icons/person.svg', 'Profile', 3)),
+                Expanded(child: _buildNavItem('assets/icons/bell.svg', l10n.alertsTab, 2)),
+                Expanded(child: _buildNavItem('assets/icons/person.svg', l10n.profileTab, 3)),
               ],
             ),
           ),
@@ -404,23 +424,23 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
-  Widget _buildCurrentView() {
+  Widget _buildCurrentView(AppLocalizations l10n) {
     switch (_selectedIndex) {
       case 0:
-        return _buildHomeView();
+        return _buildHomeView(l10n);
       case 1:
-        return _buildListingView();
+        return _buildListingView(l10n);
       case 2:
-        return _buildAlertsView();
+        return _buildAlertsView(l10n);
       case 3:
-        return _buildProfileView();
+        return _buildProfileView(l10n);
       default:
-        return _buildHomeView();
+        return _buildHomeView(l10n);
     }
   }
 
   // Common Header Widget
-  Widget _buildHeader({Widget? rightWidget}) {
+  Widget _buildHeader(AppLocalizations l10n, {Widget? rightWidget}) {
     bool hasUnreadAlerts = _notifications.any((a) => !a.isRead);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -428,9 +448,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Good morning,',
-              style: TextStyle(
+            Text(
+              l10n.goodMorning,
+              style: const TextStyle(
                 fontSize: 14,
                 color: Colors.grey,
               ),
@@ -438,7 +458,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             Text(
               _profile?.displayName.isNotEmpty == true
                   ? _profile!.displayName
-                  : 'Seller',
+                  : l10n.sellerRoleFallback,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -493,7 +513,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
   }
 
   // Home Screen View
-  Widget _buildHomeView() {
+  Widget _buildHomeView(AppLocalizations l10n) {
     final totalListingsCount = _myListings.isNotEmpty ? _myListings.length : (_stats?.listingsCount ?? 0);
     final activeListingsCount = _myListings.where((l) => l.status == 'active').length;
 
@@ -506,7 +526,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            _buildHeader(l10n),
             const SizedBox(height: 24),
 
             // Ready to Sell Card
@@ -556,7 +576,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Ready to Sell?',
+                          l10n.readyToSell,
                           style: GoogleFonts.poppins(
                             fontSize: 24,
                             fontWeight: FontWeight.w700,
@@ -565,7 +585,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Post your solar scrap and get competitive offers',
+                          l10n.readyToSellDesc,
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             color: Colors.white70,
@@ -602,7 +622,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Sell Solar Scrap',
+                                l10n.sellSolarScrap,
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -660,8 +680,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                                   ),
                                 ),
                               ),
-                              Icon(
-                                Icons.chevron_right,
+                              RTLHelper.chevronIcon(
+                                context,
                                 color: Colors.grey.shade400,
                                 size: 20,
                               ),
@@ -677,9 +697,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Total Listings',
-                            style: TextStyle(
+                          Text(
+                            l10n.totalListings,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Colors.grey,
                             ),
@@ -727,8 +747,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                                   ),
                                 ),
                               ),
-                              Icon(
-                                Icons.chevron_right,
+                              RTLHelper.chevronIcon(
+                                context,
                                 color: Colors.grey.shade400,
                                 size: 20,
                               ),
@@ -744,9 +764,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Active Listings',
-                            style: TextStyle(
+                          Text(
+                            l10n.activeListings,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Colors.grey,
                             ),
@@ -764,9 +784,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Recent Listings',
-                  style: TextStyle(
+                Text(
+                  l10n.recentListings,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -778,9 +798,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       _selectedIndex = 1;
                     });
                   },
-                  child: const Text(
-                    'View All',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.viewAll,
+                    style: const TextStyle(
                       fontSize: 13,
                       color: Color(0xFF00A63E),
                       fontWeight: FontWeight.w600,
@@ -805,9 +825,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   children: [
                     Icon(Icons.inventory_2_outlined, size: 40, color: Colors.grey.shade400),
                     const SizedBox(height: 12),
-                    const Text(
-                      'No listings yet',
-                      style: TextStyle(
+                    Text(
+                      l10n.noListingsYet,
+                      style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
@@ -815,7 +835,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Tap "Sell Solar Scrap" above to add your first listing!',
+                      l10n.tapSellSolarScrapToAdd,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
@@ -895,7 +915,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  'Under Review',
+                                  l10n.filterUnderReview,
                                   style: GoogleFonts.poppins(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
@@ -925,7 +945,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                               Rect.fromLTWH(0, 0, bounds.width, bounds.height),
                             ),
                             child: Text(
-                              'Asking price',
+                              l10n.askingPrice,
                               textAlign: TextAlign.right,
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
@@ -964,7 +984,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 }
 
   // Listing Screen View
-  Widget _buildListingView() {
+  Widget _buildListingView(AppLocalizations l10n) {
     final filteredListings = _allListings.where((listing) {
       bool matchesFilter = true;
       if (_selectedFilter == 'Submitted') {
@@ -994,7 +1014,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            _buildHeader(l10n),
             const SizedBox(height: 24),
 
             // Search Bar & Filter Icon Row
@@ -1018,12 +1038,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                                 _searchQuery = val;
                               });
                             },
-                            decoration: const InputDecoration(
-                              hintText: 'Search listings...',
-                              hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: l10n.searchListingsHint,
+                              hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
                               border: InputBorder.none,
                               isDense: true,
-                              contentPadding: EdgeInsets.symmetric(vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
                         ),
@@ -1073,7 +1093,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          filter,
+                          _getSellerFilterDisplay(filter, l10n),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
@@ -1104,8 +1124,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     const SizedBox(height: 12),
                     Text(
                       _searchQuery.isNotEmpty || _selectedFilter != 'All'
-                          ? 'No matching listings'
-                          : 'No listings created yet',
+                          ? l10n.noMatchingListings
+                          : l10n.noListingsCreatedYet,
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -1115,8 +1135,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                     const SizedBox(height: 4),
                     Text(
                       _searchQuery.isNotEmpty || _selectedFilter != 'All'
-                          ? 'Try changing the search keyword or filter'
-                          : 'Tap the + button below to create your first listing',
+                          ? l10n.tryChangingSearchFilter
+                          : l10n.tapPlusToCreateListing,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
@@ -1128,144 +1148,144 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               )
             else
               ...filteredListings.map((listing) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SellerListingDetailsScreen(
-                          listing: _getListingFromItem(listing),
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFF0F0F0)),
-                    ),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: _buildThumbnailWidget(
-                            listing['image'] as String,
-                            isRemote: listing['isRemote'] == true,
-                            isLocalFile: listing['isLocalFile'] == true,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SellerListingDetailsScreen(
+                            listing: _getListingFromItem(listing),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                listing['title'] as String,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF151516),
-                                  height: 20 / 14,
-                                  letterSpacing: 0,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                '${listing['id']} · ${listing['time']}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: const Color(0xFF9CA3AF),
-                                ),
-                              ),
-                              if (listing['status'] == 'Under Review') ...[
-                                const SizedBox(height: 5),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFF0F0F0)),
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: _buildThumbnailWidget(
+                              listing['image'] as String,
+                              isRemote: listing['isRemote'] == true,
+                              isLocalFile: listing['isLocalFile'] == true,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  listing['title'] as String,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF151516),
+                                    height: 20 / 14,
+                                    letterSpacing: 0,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFEFCE8),
-                                    borderRadius: BorderRadius.circular(4),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  '${listing['id']} · ${listing['time']}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: const Color(0xFF9CA3AF),
                                   ),
-                                  child: Text(
-                                    'Under Review',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFFD08700),
+                                ),
+                                if (listing['status'] == 'Under Review') ...[
+                                  const SizedBox(height: 5),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEFCE8),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      l10n.filterUnderReview,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFFD08700),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ShaderMask(
-                              blendMode: BlendMode.srcIn,
-                              shaderCallback: (bounds) => const LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Color(0xFF00A63E),
-                                  Color(0xFF007D2E),
                                 ],
-                              ).createShader(
-                                Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ShaderMask(
+                                blendMode: BlendMode.srcIn,
+                                shaderCallback: (bounds) => const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Color(0xFF00A63E),
+                                    Color(0xFF007D2E),
+                                  ],
+                                ).createShader(
+                                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                                ),
+                                child: Text(
+                                  l10n.askingPrice,
+                                  textAlign: TextAlign.right,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    height: 20 / 14,
+                                    letterSpacing: 0,
+                                  ),
+                                ),
                               ),
-                              child: Text(
-                                'Asking price',
+                              const SizedBox(height: 2),
+                              Text(
+                                listing['price'] as String,
                                 textAlign: TextAlign.right,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  height: 20 / 14,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF999999), // #999999 Grey
+                                  height: 20 / 12,
                                   letterSpacing: 0,
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              listing['price'] as String,
-                              textAlign: TextAlign.right,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF999999), // #999999 Grey
-                                height: 20 / 12,
-                                letterSpacing: 0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
-          const SizedBox(height: 80),
-        ],
+                );
+              }),
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // Alerts Screen View
-  Widget _buildAlertsView() {
+  Widget _buildAlertsView(AppLocalizations l10n) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       child: Column(
@@ -1273,6 +1293,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         children: [
           // Header with Mark all read
           _buildHeader(
+            l10n,
             rightWidget: GestureDetector(
               onTap: () async {
                 await NotificationService.instance.markAllAsRead();
@@ -1291,11 +1312,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   });
                 }
               },
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'Mark all read',
-                  style: TextStyle(
+                  l10n.markAllAsRead,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF00A63E),
@@ -1308,12 +1329,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
 
           // Alert Cards
           if (_notifications.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 60),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 60),
               child: Center(
                 child: Text(
-                  'No notifications yet',
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                  l10n.noNotificationsYet,
+                  style: const TextStyle(color: Colors.grey, fontSize: 14),
                 ),
               ),
             )
@@ -1459,8 +1480,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
         ],
       ),
     );
-  }  // Profile Screen View
-  Widget _buildProfileView() {
+  }
+
+  // Profile Screen View
+  Widget _buildProfileView(AppLocalizations l10n) {
     if (_isProfileLoading && _profile == null) {
       return const Center(
         child: CircularProgressIndicator(
@@ -1472,7 +1495,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     final fullImageUrl = ProfileService.instance.getFullImageUrl(_profile?.profilePhotoUrl);
     final displayName = _profile?.displayName.isNotEmpty == true
         ? _profile!.displayName
-        : 'Seller';
+        : l10n.sellerRoleFallback;
     final companyName = _profile?.companyName.isNotEmpty == true
         ? _profile!.companyName
         : 'SunTech Solar Pvt. Ltd.';
@@ -1626,9 +1649,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           color: const Color(0xFFDCFCE7),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
-                          'Verified Seller',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.verifiedSeller,
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF00A63E),
@@ -1664,9 +1687,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Listings',
-                          style: TextStyle(
+                        Text(
+                          l10n.listingsTitle,
+                          style: const TextStyle(
                             fontSize: 12,
                             color: Colors.grey,
                           ),
@@ -1691,9 +1714,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Deals',
-                          style: TextStyle(
+                        Text(
+                          l10n.dealsTitle,
+                          style: const TextStyle(
                             fontSize: 12,
                             color: Colors.grey,
                           ),
@@ -1718,9 +1741,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Earnings',
-                          style: TextStyle(
+                        Text(
+                          l10n.earningsTitle,
+                          style: const TextStyle(
                             fontSize: 12,
                             color: Colors.grey,
                           ),
@@ -1744,20 +1767,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Personal Information',
-                    style: TextStyle(
+                  Text(
+                    l10n.personalInformation,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
                   ),
                   Divider(height: 24, color: Colors.grey.shade100),
-                  _buildInfoRow('Full Name', displayName),
+                  _buildInfoRow(l10n.fullNameLabel, displayName),
                   Divider(height: 24, color: Colors.grey.shade100),
-                  _buildInfoRow('Email', email),
+                  _buildInfoRow(l10n.emailLabel, email),
                   Divider(height: 24, color: Colors.grey.shade100),
-                  _buildInfoRow('Phone', phone),
+                  _buildInfoRow(l10n.phoneLabel, phone),
                 ],
               ),
             ),
@@ -1774,20 +1797,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Company Information',
-                    style: TextStyle(
+                  Text(
+                    l10n.companyInformation,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
                   ),
                   Divider(height: 24, color: Colors.grey.shade100),
-                  _buildInfoRow('Company', companyName),
+                  _buildInfoRow(l10n.companyLabel, companyName),
                   Divider(height: 24, color: Colors.grey.shade100),
-                  _buildInfoRow('GST', gst),
+                  _buildInfoRow(l10n.gstLabel, gst),
                   Divider(height: 24, color: Colors.grey.shade100),
-                  _buildInfoRow('Type', companyType),
+                  _buildInfoRow(l10n.typeLabel, companyType),
                 ],
               ),
             ),
@@ -1804,7 +1827,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 children: [
                   _buildActionRow(
                     icon: 'assets/icons/edit.svg',
-                    label: 'Edit Profile',
+                    label: l10n.editProfile,
                     onTap: () async {
                       final updated = await Navigator.push<bool>(
                         context,
@@ -1821,7 +1844,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                   Divider(height: 1, color: Colors.grey.shade100),
                   _buildActionRow(
                     icon: 'assets/icons/setting.svg',
-                    label: 'Settings',
+                    label: l10n.settingsTitle,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -1839,10 +1862,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                       color: Color(0xFFEF4444),
                       size: 20,
                     ),
-                    label: 'Logout',
+                    label: l10n.logout,
                     textColor: const Color(0xFFEF4444),
                     onTap: () {
-                      _showLogoutDialog();
+                      _showLogoutDialog(l10n);
                     },
                   ),
                 ],
@@ -1855,17 +1878,17 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
     );
   }
 
-  void _showLogoutDialog() {
+  void _showLogoutDialog(AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(l10n.logout),
+        content: Text(l10n.logoutConfirm),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -1886,7 +1909,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
                 );
               }
             },
-            child: const Text('Logout'),
+            child: Text(l10n.logout),
           ),
         ],
       ),
@@ -1943,8 +1966,8 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen>
           color: textColor,
         ),
       ),
-      trailing: Icon(
-        Icons.chevron_right,
+      trailing: RTLHelper.chevronIcon(
+        context,
         color: Colors.grey.shade400,
         size: 20,
       ),

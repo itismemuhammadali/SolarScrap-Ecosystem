@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 import 'buyer_onboarding_screen_2.dart';
 import 'buyer_onboarding_screen_3.dart';
 import 'buyer_login_screen.dart';
@@ -39,6 +41,8 @@ class _BuyerOnboardingScreenState extends State<BuyerOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -52,32 +56,29 @@ class _BuyerOnboardingScreenState extends State<BuyerOnboardingScreen> {
             children: [
               BuyerOnboardingPageWidget(
                 image: 'assets/images/buyer_discover_auctions_bg.jpg',
-                title: 'Buy Quality Solar Scrap',
-                description:
-                    'Buy quality solar scrap through a trusted\nmarketplace built for verified dealers.',
+                title: l10n.onboardingBuyerTitle1,
+                description: l10n.onboardingBuyerDesc1,
                 onNext: _nextPage,
                 currentPage: 0,
                 totalPages: 3,
               ),
               BuyerOnboardingPage2Widget(
                 image: 'assets/images/buyer_place_bids_bg.jpg',
-                title: 'Discover Live Auctions',
-                description:
-                    'Browse active auctions for solar panels,\nbatteries, inverters, transformers, and more.',
+                title: l10n.onboardingBuyerTitle2,
+                description: l10n.onboardingBuyerDesc2,
                 onNext: _nextPage,
               ),
               BuyerOnboardingPage3Widget(
                 image: 'assets/images/buyer_secure_transactions_bg.jpg',
-                title: 'Bid Smart, Win More',
-                description:
-                    'Place competitive bids, track your auctions, and\nsecure the best solar scrap deals.',
+                title: l10n.onboardingBuyerTitle3,
+                description: l10n.onboardingBuyerDesc3,
                 onNext: _nextPage,
               ),
             ],
           ),
-          Positioned(
+          PositionedDirectional(
             top: MediaQuery.of(context).padding.top + 8,
-            left: 16,
+            start: 16,
             child: GestureDetector(
               onTap: () {
                 Navigator.of(context).pushReplacement(
@@ -91,10 +92,12 @@ class _BuyerOnboardingScreenState extends State<BuyerOnboardingScreen> {
                   color: Colors.black.withValues(alpha: 0.4),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Colors.white,
-                  size: 16,
+                child: Center(
+                  child: RTLHelper.backIcon(
+                    context,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
               ),
             ),
@@ -257,21 +260,21 @@ class BuyerOnboardingPageWidget extends StatelessWidget {
                           ),
                           elevation: 0,
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Next',
-                              style: TextStyle(
+                              AppLocalizations.of(context).next,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.chevron_right,
+                            const SizedBox(width: 4),
+                            RTLHelper.chevronIcon(
+                              context,
                               size: 20,
                               color: Colors.white,
                             ),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/listing.dart';
 import '../../services/bid_service.dart';
+import '../../utils/rtl_helper.dart';
 import 'buyer_bid_confirmation_screen.dart';
 
 class BuyerPlaceBidScreen extends StatefulWidget {
@@ -136,11 +138,12 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
   }
 
   void _onSubmitBid() {
+    final l10n = AppLocalizations.of(context);
     if (_currentBidAmount < _minimumBidAmount) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Minimum bid is ${_formatPrice(_minimumBidAmount)}',
+            l10n.minimumBidIs(_formatPrice(_minimumBidAmount)),
           ),
           backgroundColor: Colors.red.shade700,
         ),
@@ -151,6 +154,7 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
   }
 
   void _showConfirmBidBottomSheet() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -171,9 +175,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Title
-              const Text(
-                'Confirm Your Bid',
-                style: TextStyle(
+              Text(
+                l10n.confirmBidTitle,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -182,9 +186,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
               const SizedBox(height: 4),
 
               // Subtitle
-              const Text(
-                'Please review your bid before submitting.',
-                style: TextStyle(
+              Text(
+                l10n.reviewBidBeforeSubmitting,
+                style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF6B7280),
                 ),
@@ -212,9 +216,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Auction',
-                          style: TextStyle(
+                        Text(
+                          l10n.auctionLabel,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -239,9 +243,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Your Bid',
-                          style: TextStyle(
+                        Text(
+                          l10n.yourBid,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -262,9 +266,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Auction ID',
-                          style: TextStyle(
+                        Text(
+                          l10n.listingIdLabel,
+                          style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
                           ),
@@ -303,9 +307,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                           ),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.cancel,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -343,9 +347,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text(
-                            'Submit Bid',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.submitBid,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -388,9 +392,10 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
       setState(() => _isSubmitting = false);
 
       if (bidResult == null) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to place bid. Please try again.'),
+            content: Text(l10n.failedToPlaceBid),
             backgroundColor: Colors.red.shade700,
           ),
         );
@@ -425,6 +430,7 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final preset1 = _minimumBidAmount;
     final preset2 = _minimumBidAmount + 5000;
     final preset3 = _minimumBidAmount + 10000;
@@ -458,8 +464,8 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                             color: Color(0xFFF3F4F6),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.arrow_back,
+                          child: RTLHelper.backIcon(
+                            context,
                             color: Colors.black87,
                             size: 20,
                           ),
@@ -468,9 +474,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                       const SizedBox(height: 20),
 
                       // Header Title & Subtitle
-                      const Text(
-                        'Place Your Bid',
-                        style: TextStyle(
+                      Text(
+                        l10n.placeYourBid,
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0F172A),
@@ -505,9 +511,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                               mainAxisAlignment:
                                   MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Starting Price',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.startingPrice,
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF6B7280),
                                   ),
@@ -529,9 +535,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                               mainAxisAlignment:
                                   MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Current Highest Bid',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.currentHighestBid,
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF6B7280),
                                   ),
@@ -558,9 +564,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                               mainAxisAlignment:
                                   MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Minimum Bid',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.minimumBid,
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF6B7280),
                                   ),
@@ -581,9 +587,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                       const SizedBox(height: 28),
 
                       // Your Bid Amount (PKR) Section
-                      const Text(
-                        'Your Bid Amount (PKR)',
-                        style: TextStyle(
+                      Text(
+                        l10n.yourBidAmountPkr,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0F172A),
@@ -739,9 +745,9 @@ class _BuyerPlaceBidScreenState extends State<BuyerPlaceBidScreen> {
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            child: const Text(
-                              'Submit',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.submit,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,

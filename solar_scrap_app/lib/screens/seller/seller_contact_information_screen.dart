@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/listing_draft.dart';
 import '../../services/profile_service.dart';
+import '../../utils/rtl_helper.dart';
 import 'seller_listing_preview_screen.dart';
 
 class SellerContactInformationScreen extends StatefulWidget {
@@ -126,6 +128,8 @@ class _SellerContactInformationScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -140,8 +144,8 @@ class _SellerContactInformationScreenState
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -151,9 +155,9 @@ class _SellerContactInformationScreenState
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Contact Information',
-          style: TextStyle(
+        title: Text(
+          l10n.contactInformation,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -173,8 +177,8 @@ class _SellerContactInformationScreenState
                   final int totalSteps = isComplete ? 4 : 6;
                   final int currentStep = isComplete ? 3 : 5;
                   final String stepText = isComplete
-                      ? 'Listing Details · Step 3 of 4 (Contact)'
-                      : 'Step 5 of 6';
+                      ? l10n.listingDetailsStepContact(3, 4)
+                      : l10n.stepXOfY(5, 6);
                   final String percentText = isComplete ? '75%' : '83%';
 
                   return Column(
@@ -235,17 +239,17 @@ class _SellerContactInformationScreenState
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
-                  children: const [
-                    Icon(
+                  children: [
+                    const Icon(
                       Icons.info_outline,
                       color: Color(0xFF2563EB),
                       size: 18,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Pre-filled from your profile. Edit if needed.',
-                        style: TextStyle(
+                        l10n.prefilledFromProfile,
+                        style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF2563EB),
                           fontWeight: FontWeight.w500,
@@ -259,7 +263,7 @@ class _SellerContactInformationScreenState
 
               // Full Name
               _buildTextField(
-                label: 'Full Name',
+                label: l10n.fullNameLabel,
                 hint: 'Abdul Samad',
                 controller: _nameController,
                 icon: Icons.person_outline,
@@ -267,7 +271,7 @@ class _SellerContactInformationScreenState
 
               // Phone Number
               _buildTextField(
-                label: 'Phone Number',
+                label: l10n.phoneLabel,
                 hint: '+92 3012345678',
                 controller: _phoneController,
                 icon: Icons.phone_outlined,
@@ -275,7 +279,7 @@ class _SellerContactInformationScreenState
 
               // Email address
               _buildTextField(
-                label: 'Email address',
+                label: l10n.emailLabel,
                 hint: 'abdul@suntech.com',
                 controller: _emailController,
                 icon: Icons.email_outlined,
@@ -300,9 +304,9 @@ class _SellerContactInformationScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -337,9 +341,9 @@ class _SellerContactInformationScreenState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.continueButton,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/buyer_profile_service.dart';
+import '../../utils/rtl_helper.dart';
 
 class BuyerChangePasswordScreen extends StatefulWidget {
   const BuyerChangePasswordScreen({super.key});
@@ -45,21 +47,22 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
   }
 
   Future<void> _handleResetPassword() async {
+    final l10n = AppLocalizations.of(context);
     final currentPass = _currentPasswordController.text.trim();
     final newPass = _newPasswordController.text.trim();
     final confirmPass = _confirmPasswordController.text.trim();
 
     if (currentPass.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your current password')),
+        SnackBar(content: Text(l10n.enterCurrentPasswordPrompt)),
       );
       return;
     }
 
     if (newPass.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('New password must be at least 6 characters long'),
+        SnackBar(
+          content: Text(l10n.passwordMinLength),
         ),
       );
       return;
@@ -67,8 +70,8 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
 
     if (newPass != confirmPass) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('New passwords do not match'),
+        SnackBar(
+          content: Text(l10n.passwordsDoNotMatch),
         ),
       );
       return;
@@ -86,18 +89,18 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password updated successfully!'),
-          backgroundColor: Color(0xFF00A63E),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(l10n.passwordChangedSuccess),
+          backgroundColor: const Color(0xFF00A63E),
+          duration: const Duration(seconds: 2),
         ),
       );
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update password. Please check your current password.'),
-          backgroundColor: Color(0xFFEF4444),
+        SnackBar(
+          content: Text(l10n.failedToUpdatePassword),
+          backgroundColor: const Color(0xFFEF4444),
         ),
       );
     }
@@ -105,6 +108,7 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -139,18 +143,20 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
                                     color: const Color(0xFFF5F5F5),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: const Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.black87,
-                                    size: 20,
+                                  child: Center(
+                                    child: RTLHelper.backIcon(
+                                      context,
+                                      color: Colors.black87,
+                                      size: 20,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                            const Center(
+                            Center(
                               child: Text(
-                                'Change Password',
-                                style: TextStyle(
+                                l10n.changePassword,
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black,
@@ -185,9 +191,9 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
                       const SizedBox(height: 20),
 
                       // Title
-                      const Text(
-                        'Create New Password',
-                        style: TextStyle(
+                      Text(
+                        l10n.createNewPassword,
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0F172A),
@@ -197,9 +203,9 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
                       const SizedBox(height: 8),
 
                       // Subtitle
-                      const Text(
-                        'Your new password must be different from previously used passwords.',
-                        style: TextStyle(
+                      Text(
+                        l10n.passwordDifferenceNotice,
+                        style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF6B7280),
                           height: 1.4,
@@ -209,9 +215,9 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
 
                       // Current Password Field
                       _buildPasswordField(
-                        label: 'Current Password',
+                        label: l10n.currentPasswordLabel,
                         controller: _currentPasswordController,
-                        hintText: 'Enter current password',
+                        hintText: l10n.enterCurrentPassword,
                         obscureText: _obscureCurrentPassword,
                         onToggleVisibility: () {
                           setState(() {
@@ -223,9 +229,9 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
 
                       // New Password Field
                       _buildPasswordField(
-                        label: 'New Password',
+                        label: l10n.newPasswordLabel,
                         controller: _newPasswordController,
-                        hintText: 'Enter new password',
+                        hintText: l10n.newPasswordHint,
                         obscureText: _obscureNewPassword,
                         onToggleVisibility: () {
                           setState(() {
@@ -237,9 +243,9 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
 
                       // Confirm Password Field
                       _buildPasswordField(
-                        label: 'Confirm Password',
+                        label: l10n.confirmPasswordLabel,
                         controller: _confirmPasswordController,
-                        hintText: 'Re-enter new password',
+                        hintText: l10n.reenterNewPassword,
                         obscureText: _obscureConfirmPassword,
                         onToggleVisibility: () {
                           setState(() {
@@ -288,9 +294,9 @@ class _BuyerChangePasswordScreenState extends State<BuyerChangePasswordScreen> {
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text(
-                                    'Update Password',
-                                    style: TextStyle(
+                                : Text(
+                                    l10n.updatePassword,
+                                    style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,

@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../models/listing_draft.dart';
 import '../../services/listing_service.dart';
+import '../../utils/rtl_helper.dart';
+import '../../l10n/app_localizations.dart';
 import 'seller_listing_submitted_screen.dart';
 import 'seller_new_listing_screen.dart';
 
@@ -48,8 +50,8 @@ class _SellerListingPreviewScreenState
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to submit listing. Please try again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).failedToSubmitListing),
             backgroundColor: Colors.red,
           ),
         );
@@ -57,45 +59,102 @@ class _SellerListingPreviewScreenState
     }
   }
 
-  List<Widget> _buildDynamicDetails(ListingDraft draft) {
+  String _localizeCondition(String condition, AppLocalizations l10n) {
+    switch (condition.toLowerCase()) {
+      case 'scrap':
+        return l10n.conditionScrap;
+      case 'bullet hit':
+        return l10n.conditionBulletHit;
+      case 'shatter glass':
+      case 'shatter lass':
+        return l10n.conditionShatterGlass;
+      case 'good':
+      case 'good conditions':
+        return l10n.conditionGood;
+      case 'working':
+        return l10n.conditionWorking;
+      case 'non working':
+      case 'non-working':
+        return l10n.conditionNonWorking;
+      case 'other':
+        return l10n.conditionOther;
+      default:
+        return condition;
+    }
+  }
+
+  String _getLocalizedTitle(ListingDraft draft, AppLocalizations l10n) {
+    if (draft.category == 'Solar Panels') {
+      final count = draft.specs['panels_count'] ?? '';
+      final watts = draft.specs['watts_per_panel'] ?? '';
+      if (count.toString().isNotEmpty && watts.toString().isNotEmpty) {
+        return '${count}x ${l10n.categoryPanels} ${watts}W';
+      }
+      return l10n.categoryPanels;
+    } else if (draft.category == 'Batteries') {
+      final type = draft.specs['battery_type'] ?? '';
+      final count = draft.specs['battery_count'] ?? '';
+      final brand = draft.specs['battery_brand'] ?? '';
+      if (type.toString().isNotEmpty && count.toString().isNotEmpty) {
+        return '${count}x ${brand.toString().isNotEmpty ? '$brand ' : ''}$type';
+      }
+      return l10n.categoryBatteries;
+    } else if (draft.category == 'Inverters') {
+      final brand = draft.specs['inverter_brand'] ?? '';
+      final power = draft.specs['rated_power'] ?? '';
+      if (brand.toString().isNotEmpty || power.toString().isNotEmpty) {
+        return '$brand $power'.trim();
+      }
+      return l10n.categoryInverters;
+    } else if (draft.category == 'Cables') {
+      return l10n.categoryCables;
+    } else if (draft.category == 'Structure') {
+      return l10n.categoryStructure;
+    } else if (draft.category == 'Complete Solar System') {
+      return l10n.completeSolarSystem;
+    }
+    return draft.displayTitle;
+  }
+
+  List<Widget> _buildDynamicDetails(ListingDraft draft, AppLocalizations l10n) {
     final List<Widget> rows = [];
     final specs = draft.specs;
 
     if (draft.category == 'Solar Panels') {
-      if (specs['panels_count'] != null) rows.add(_buildDetailRow('Number of Panels', '${specs['panels_count']}'));
-      if (specs['watts_per_panel'] != null) rows.add(_buildDetailRow('Watts per Panel', '${specs['watts_per_panel']} W'));
-      if (specs['panel_condition'] != null) rows.add(_buildDetailRow('Condition', '${specs['panel_condition']}'));
+      if (specs['panels_count'] != null) rows.add(_buildDetailRow(l10n.numberOfPanels, '${specs['panels_count']}'));
+      if (specs['watts_per_panel'] != null) rows.add(_buildDetailRow(l10n.wattsPerPanel, '${specs['watts_per_panel']} W'));
+      if (specs['panel_condition'] != null) rows.add(_buildDetailRow(l10n.listingConditionLabel, _localizeCondition(specs['panel_condition']?.toString() ?? '', l10n)));
     } else if (draft.category == 'Batteries') {
-      if (specs['battery_type'] != null) rows.add(_buildDetailRow('Battery Type', '${specs['battery_type']}'));
-      if (specs['battery_count'] != null) rows.add(_buildDetailRow('Quantity', '${specs['battery_count']}'));
-      if (specs['battery_capacity'] != null) rows.add(_buildDetailRow('Capacity', '${specs['battery_capacity']}'));
-      if (specs['battery_brand'] != null) rows.add(_buildDetailRow('Brand', '${specs['battery_brand']}'));
-      if (specs['battery_condition'] != null) rows.add(_buildDetailRow('Condition', '${specs['battery_condition']}'));
+      if (specs['battery_type'] != null) rows.add(_buildDetailRow(l10n.batteryType, '${specs['battery_type']}'));
+      if (specs['battery_count'] != null) rows.add(_buildDetailRow(l10n.listingQuantityLabel, '${specs['battery_count']}'));
+      if (specs['battery_capacity'] != null) rows.add(_buildDetailRow(l10n.capacity, '${specs['battery_capacity']}'));
+      if (specs['battery_brand'] != null) rows.add(_buildDetailRow(l10n.brand, '${specs['battery_brand']}'));
+      if (specs['battery_condition'] != null) rows.add(_buildDetailRow(l10n.listingConditionLabel, _localizeCondition(specs['battery_condition']?.toString() ?? '', l10n)));
     } else if (draft.category == 'Inverters') {
-      if (specs['inverter_type'] != null) rows.add(_buildDetailRow('Inverter Type', '${specs['inverter_type']}'));
-      if (specs['rated_power'] != null) rows.add(_buildDetailRow('Rated Power', '${specs['rated_power']}'));
-      if (specs['inverter_brand'] != null) rows.add(_buildDetailRow('Brand', '${specs['inverter_brand']}'));
-      if (specs['inverter_condition'] != null) rows.add(_buildDetailRow('Condition', '${specs['inverter_condition']}'));
+      if (specs['inverter_type'] != null) rows.add(_buildDetailRow(l10n.inverterType, '${specs['inverter_type']}'));
+      if (specs['rated_power'] != null) rows.add(_buildDetailRow(l10n.ratedPower, '${specs['rated_power']}'));
+      if (specs['inverter_brand'] != null) rows.add(_buildDetailRow(l10n.brand, '${specs['inverter_brand']}'));
+      if (specs['inverter_condition'] != null) rows.add(_buildDetailRow(l10n.listingConditionLabel, _localizeCondition(specs['inverter_condition']?.toString() ?? '', l10n)));
     } else if (draft.category == 'Cables') {
-      if (specs['cable_type'] != null) rows.add(_buildDetailRow('Cable Type', '${specs['cable_type']}'));
-      if (specs['cable_conductor'] != null) rows.add(_buildDetailRow('Conductor', '${specs['cable_conductor']}'));
-      if (specs['insulation_type'] != null) rows.add(_buildDetailRow('Insulation', '${specs['insulation_type']}'));
-      if (specs['cable_size'] != null) rows.add(_buildDetailRow('Cable Size', '${specs['cable_size']}'));
+      if (specs['cable_type'] != null) rows.add(_buildDetailRow(l10n.cableType, '${specs['cable_type']}'));
+      if (specs['cable_conductor'] != null) rows.add(_buildDetailRow(l10n.conductor, '${specs['cable_conductor']}'));
+      if (specs['insulation_type'] != null) rows.add(_buildDetailRow(l10n.insulation, '${specs['insulation_type']}'));
+      if (specs['cable_size'] != null) rows.add(_buildDetailRow(l10n.cableSize, '${specs['cable_size']}'));
     } else if (draft.category == 'Structure') {
-      if (specs['structure_type'] != null) rows.add(_buildDetailRow('Structure Type', '${specs['structure_type']}'));
-      if (specs['structure_metal'] != null) rows.add(_buildDetailRow('Metal', '${specs['structure_metal']}'));
+      if (specs['structure_type'] != null) rows.add(_buildDetailRow(l10n.structureType, '${specs['structure_type']}'));
+      if (specs['structure_metal'] != null) rows.add(_buildDetailRow(l10n.metal, '${specs['structure_metal']}'));
     } else if (draft.category == 'Complete Solar System') {
-      if (specs['panels_count'] != null) rows.add(_buildDetailRow('Panels', '${specs['panels_count']}x (${specs['watts_per_panel']}W)'));
-      if (specs['battery_type'] != null) rows.add(_buildDetailRow('Batteries', '${specs['battery_count']}x ${specs['battery_type']}'));
-      if (specs['inverter_type'] != null) rows.add(_buildDetailRow('Inverter', '${specs['inverter_type']} ${specs['rated_power'] ?? ''}'));
-      if (specs['structure_type'] != null) rows.add(_buildDetailRow('Structure', '${specs['structure_type']} (${specs['structure_metal'] ?? ''})'));
+      if (specs['panels_count'] != null) rows.add(_buildDetailRow(l10n.panels, '${specs['panels_count']}x (${specs['watts_per_panel']}W)'));
+      if (specs['battery_type'] != null) rows.add(_buildDetailRow(l10n.categoryBatteries, '${specs['battery_count']}x ${specs['battery_type']}'));
+      if (specs['inverter_type'] != null) rows.add(_buildDetailRow(l10n.inverter, '${specs['inverter_type']} ${specs['rated_power'] ?? ''}'));
+      if (specs['structure_type'] != null) rows.add(_buildDetailRow(l10n.structure, '${specs['structure_type']} (${specs['structure_metal'] ?? ''})'));
     }
 
     if (draft.priceDemand != null && draft.priceDemand! > 0) {
       final formattedPrice = draft.priceDemand! >= 100000
-          ? 'Rs. ${(draft.priceDemand! / 100000).toStringAsFixed(1)}L (${draft.priceDemand!.toStringAsFixed(0)})'
+          ? 'Rs. ${(draft.priceDemand! / 100000).toStringAsFixed(1)}${l10n.lakhUnit} (${draft.priceDemand!.toStringAsFixed(0)})'
           : 'Rs. ${draft.priceDemand!.toStringAsFixed(0)}';
-      rows.add(_buildDetailRow('Price Demand', formattedPrice));
+      rows.add(_buildDetailRow(l10n.priceDemand, formattedPrice));
     }
 
     return rows;
@@ -156,6 +215,7 @@ class _SellerListingPreviewScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final draft = widget.draft ?? ListingDraft();
 
     return Scaffold(
@@ -172,8 +232,8 @@ class _SellerListingPreviewScreenState
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -183,9 +243,9 @@ class _SellerListingPreviewScreenState
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Listing Preview',
-          style: TextStyle(
+        title: Text(
+          l10n.listingPreviewTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -207,8 +267,8 @@ class _SellerListingPreviewScreenState
                         final bool isComplete = widget.draft?.category == 'Complete Solar System';
                         final int totalSteps = isComplete ? 4 : 6;
                         final String stepText = isComplete
-                            ? 'Listing Details · Step 4 of 4 (Preview)'
-                            : 'Step 6 of 6';
+                            ? l10n.listingDetailsStepPreview(4, 4)
+                            : l10n.stepXOfY(6, 6);
 
                         return Column(
                           children: [
@@ -279,7 +339,7 @@ class _SellerListingPreviewScreenState
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      draft.displayTitle,
+                                      _getLocalizedTitle(draft, l10n),
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -306,9 +366,9 @@ class _SellerListingPreviewScreenState
                                   color: const Color(0xFFEFF6FF),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Text(
-                                  'Preview',
-                                  style: TextStyle(
+                                child: Text(
+                                  l10n.previewBadge,
+                                  style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF2563EB),
@@ -322,12 +382,12 @@ class _SellerListingPreviewScreenState
                           const SizedBox(height: 12),
 
                           // Dynamic Details
-                          ..._buildDynamicDetails(draft),
+                          ..._buildDynamicDetails(draft, l10n),
                           const SizedBox(height: 16),
 
                           // Images section
                           Text(
-                            'Images (${draft.imageUrls.length})',
+                            l10n.imagesCountLabel(draft.imageUrls.length),
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -347,16 +407,16 @@ class _SellerListingPreviewScreenState
                               }).toList(),
                             )
                           else
-                            const Text(
-                              'No photos uploaded',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            Text(
+                              l10n.noPhotosUploaded,
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                           const SizedBox(height: 16),
 
                           // Location & Contact
-                          const Text(
-                            'Location & Contact',
-                            style: TextStyle(
+                          Text(
+                            l10n.locationAndContact,
+                            style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF18181B),
@@ -375,7 +435,7 @@ class _SellerListingPreviewScreenState
                                 child: Text(
                                   draft.pickupAddress != null && draft.pickupAddress!.isNotEmpty
                                       ? '${draft.pickupAddress}, ${draft.pickupCity ?? ''}'
-                                      : '${draft.pickupArea != null ? '${draft.pickupArea}, ' : ''}${draft.pickupCity ?? 'Not specified'}',
+                                      : '${draft.pickupArea != null ? '${draft.pickupArea}, ' : ''}${draft.pickupCity ?? l10n.notSpecified}',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xFF374151),
@@ -394,7 +454,7 @@ class _SellerListingPreviewScreenState
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '${draft.contactName ?? 'Seller'} (${draft.contactPhone ?? 'No phone'})',
+                                '${draft.contactName ?? l10n.sellerRoleFallback} (${draft.contactPhone ?? l10n.noPhone})',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF374151),
@@ -441,9 +501,9 @@ class _SellerListingPreviewScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Start Over',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.startOver,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -475,16 +535,16 @@ class _SellerListingPreviewScreenState
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(
+                            children: [
+                              const Icon(
                                 Icons.edit_outlined,
                                 size: 18,
                                 color: Color(0xFF00A63E),
                               ),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
-                                'Edit',
-                                style: TextStyle(
+                                l10n.editButton,
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: Color(0xFF00A63E),
@@ -528,9 +588,9 @@ class _SellerListingPreviewScreenState
                                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                     ),
                                   )
-                                : const Text(
-                                    'Submit Listing',
-                                    style: TextStyle(
+                                : Text(
+                                    l10n.submitListing,
+                                    style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
                                     ),

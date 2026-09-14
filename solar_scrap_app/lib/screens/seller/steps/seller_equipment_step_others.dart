@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/listing_draft.dart';
+import '../../../utils/rtl_helper.dart';
 import '../seller_upload_images_screen.dart';
 
 class SellerEquipmentStepOthers extends StatefulWidget {
@@ -90,6 +92,8 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -104,8 +108,8 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -115,9 +119,9 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Others Components',
-          style: TextStyle(
+        title: Text(
+          l10n.othersComponentsTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -138,7 +142,7 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
                 builder: (context) {
                   final bool isHybrid = (widget.draft?.specs['inverter_type'] as String?)?.trim().toLowerCase() != 'on-grid';
                   final int totalSteps = isHybrid ? 7 : 6;
-                  final String stepText = 'Step $totalSteps of $totalSteps (Final Details)';
+                  final String stepText = l10n.stepXOfYWithDetail(totalSteps, totalSteps, l10n.stepFinalDetails);
 
                   return Column(
                     children: [
@@ -186,23 +190,23 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
 
               // Comments (optional)
               _buildTextField(
-                label: 'Comments (optional)',
-                hint: 'e.g communications devices, switch gears ...',
+                label: l10n.commentsOptional,
+                hint: l10n.othersCommentsHint,
                 controller: _commentsController,
                 isMultiline: true,
               ),
 
               // Price Demand
               _buildTextField(
-                label: 'Price Demand',
+                label: l10n.priceDemand,
                 hint: 'Rs, 64,00000',
                 controller: _priceDemandController,
               ),
 
               // Total Price Demand
-              const Text(
-                'Total Price Demand',
-                style: TextStyle(
+              Text(
+                l10n.totalPriceDemand,
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF18181B),
@@ -248,9 +252,9 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -301,9 +305,9 @@ class _SellerEquipmentStepOthersState extends State<SellerEquipmentStepOthers> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.continueButton,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

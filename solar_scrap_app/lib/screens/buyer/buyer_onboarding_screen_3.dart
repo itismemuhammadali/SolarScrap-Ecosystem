@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 
 class BuyerOnboardingScreen3 extends StatefulWidget {
   const BuyerOnboardingScreen3({super.key});
@@ -11,12 +13,12 @@ class BuyerOnboardingScreen3 extends StatefulWidget {
 class _BuyerOnboardingScreen3State extends State<BuyerOnboardingScreen3> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: BuyerOnboardingPage3Widget(
         image: 'assets/images/buyer_secure_transactions_bg.jpg',
-        title: 'Bid Smart, Win More',
-        description:
-            'Place competitive bids, track your auctions, and\nsecure the best solar scrap deals.',
+        title: l10n.onboardingBuyerTitle3,
+        description: l10n.onboardingBuyerDesc3,
         onNext: () {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Onboarding Complete!')),
@@ -190,21 +192,21 @@ class BuyerOnboardingPage3Widget extends StatelessWidget {
                           ),
                           elevation: 0,
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Get Started',
-                              style: TextStyle(
+                              AppLocalizations.of(context).getStarted,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.chevron_right,
+                            const SizedBox(width: 4),
+                            RTLHelper.chevronIcon(
+                              context,
                               size: 20,
                               color: Colors.white,
                             ),

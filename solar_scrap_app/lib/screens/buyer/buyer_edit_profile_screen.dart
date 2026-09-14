@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/buyer_profile.dart';
 import '../../services/auth_service.dart';
 import '../../services/buyer_profile_service.dart';
+import '../../utils/rtl_helper.dart';
 
 class BuyerEditProfileScreen extends StatefulWidget {
   final BuyerProfile? profile;
@@ -75,6 +77,7 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
   }
 
   Future<void> _pickAndUploadPhoto() async {
+    final l10n = AppLocalizations.of(context);
     try {
       final picker = ImagePicker();
       final picked = await picker.pickImage(
@@ -105,17 +108,18 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
       if (mounted) {
         setState(() => _isUploadingPhoto = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not pick photo: $e')),
+          SnackBar(content: Text(l10n.couldNotPickPhoto(e.toString()))),
         );
       }
     }
   }
 
   Future<void> _handleSave() async {
+    final l10n = AppLocalizations.of(context);
     final name = _fullNameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your full name')),
+        SnackBar(content: Text(l10n.pleaseEnterFullName)),
       );
       return;
     }
@@ -157,10 +161,10 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
             ));
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile updated successfully!'),
-        backgroundColor: Color(0xFF00A63E),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(l10n.profileUpdatedSuccess),
+        backgroundColor: const Color(0xFF00A63E),
+        duration: const Duration(seconds: 2),
       ),
     );
 
@@ -169,6 +173,7 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -196,19 +201,21 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
                             color: Color(0xFFF3F4F6),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.black87,
-                            size: 20,
+                          child: Center(
+                            child: RTLHelper.backIcon(
+                              context,
+                              color: Colors.black87,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // Title
-                      const Text(
-                        'Edit Profile',
-                        style: TextStyle(
+                      Text(
+                        l10n.editProfile,
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0F172A),
@@ -276,9 +283,9 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            const Text(
-                              'Tap to change photo',
-                              style: TextStyle(
+                            Text(
+                              l10n.tapPhotoToChange,
+                              style: const TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF9CA3AF),
                                 fontWeight: FontWeight.w400,
@@ -291,34 +298,34 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
 
                       // Full Name Field
                       _buildInputField(
-                        label: 'Full Name',
+                        label: l10n.fullNameLabel,
                         controller: _fullNameController,
-                        hintText: 'Enter your full name',
+                        hintText: l10n.enterFullNameHint,
                       ),
                       const SizedBox(height: 18),
 
                       // Phone Number Field
                       _buildInputField(
-                        label: 'Phone Number',
+                        label: l10n.phoneLabel,
                         controller: _phoneController,
-                        hintText: 'e.g. +92 300 1234567',
+                        hintText: l10n.phoneHintBuyer,
                         keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 18),
 
                       // City Field
                       _buildInputField(
-                        label: 'City',
+                        label: l10n.cityLabel,
                         controller: _cityController,
-                        hintText: 'e.g. Karachi, Lahore, Islamabad',
+                        hintText: l10n.cityHintBuyer,
                       ),
                       const SizedBox(height: 18),
 
                       // Area Field
                       _buildInputField(
-                        label: 'Area / Street Address',
+                        label: l10n.areaStreetAddress,
                         controller: _areaController,
-                        hintText: 'e.g. SITE Area, Gulberg',
+                        hintText: l10n.areaStreetHint,
                       ),
 
                       const Spacer(),
@@ -356,9 +363,9 @@ class _BuyerEditProfileScreenState extends State<BuyerEditProfileScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text(
-                                  'Save Changes',
-                                  style: TextStyle(
+                              : Text(
+                                  l10n.saveChanges,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.white,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/listing_draft.dart';
+import '../../utils/rtl_helper.dart';
 import '../../widgets/app_button.dart';
 import 'steps/seller_equipment_step_solar_panels.dart';
 import 'steps/seller_equipment_step_batteries.dart';
@@ -44,8 +46,29 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
     },
   ];
 
+  String _getCategoryDisplayName(String name, AppLocalizations l10n) {
+    switch (name) {
+      case 'Solar Panels':
+        return l10n.categoryPanels;
+      case 'Batteries':
+        return l10n.categoryBatteries;
+      case 'Inverters':
+        return l10n.categoryInverters;
+      case 'Cables':
+        return l10n.categoryCables;
+      case 'Structure':
+        return l10n.categoryStructure;
+      case 'Complete Solar System':
+        return l10n.completeSolarSystem;
+      default:
+        return name;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -60,8 +83,8 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -71,9 +94,9 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'New Listing',
-          style: TextStyle(
+        title: Text(
+          l10n.newListingTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -96,12 +119,12 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                         final int totalSteps = isComplete ? 7 : 6;
                         final String percent = isComplete ? '14%' : '17%';
                         return Column(
-                          children: [
+                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Step 1 of $totalSteps',
+                                  l10n.stepXOfY(1, totalSteps),
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: Color(0xFF71717A),
@@ -142,18 +165,18 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
                     const SizedBox(height: 20),
 
                     // Title
-                    const Text(
-                      'Equipment Category',
-                      style: TextStyle(
+                    Text(
+                      l10n.equipmentCategory,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF18181B),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'What type of equipment are you selling?',
-                      style: TextStyle(
+                    Text(
+                      l10n.whatTypeOfEquipment,
+                      style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF71717A),
                       ),
@@ -228,7 +251,7 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
 
                                 // Category Name
                                 Text(
-                                  category['name']!,
+                                  _getCategoryDisplayName(category['name']!, l10n),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 13,
@@ -268,7 +291,7 @@ class _SellerNewListingScreenState extends State<SellerNewListingScreen> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: AppButton(
-                text: 'Continue',
+                text: l10n.continueButton,
                 isEnabled: _selectedCategory != null,
                 onPressed: _selectedCategory != null
                     ? () {

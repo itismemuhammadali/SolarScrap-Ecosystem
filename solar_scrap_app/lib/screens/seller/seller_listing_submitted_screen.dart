@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import 'seller_dashboard_screen.dart';
 
 class SellerListingSubmittedScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _SellerListingSubmittedScreenState
     extends State<SellerListingSubmittedScreen> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final displayId = widget.listingId.length > 12
         ? widget.listingId.substring(0, 12).toUpperCase()
         : widget.listingId.toUpperCase();
@@ -55,9 +57,9 @@ class _SellerListingSubmittedScreenState
                 const SizedBox(height: 32),
 
                 // Title
-                const Text(
-                  'Listing Submitted for Review',
-                  style: TextStyle(
+                Text(
+                  l10n.listingSubmittedReviewTitle,
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -68,7 +70,7 @@ class _SellerListingSubmittedScreenState
 
                 // Description
                 Text(
-                  'Your listing has been submitted for admin approval. It will go live on the marketplace once accepted.',
+                  l10n.listingSubmittedReviewDesc,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade600,
@@ -93,7 +95,7 @@ class _SellerListingSubmittedScreenState
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Listing ID',
+                            l10n.listingIdLabel,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade600,
@@ -123,7 +125,7 @@ class _SellerListingSubmittedScreenState
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Status',
+                            l10n.statusLabel,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade600,
@@ -139,9 +141,9 @@ class _SellerListingSubmittedScreenState
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(color: const Color(0xFFFDE68A)),
                             ),
-                            child: const Text(
-                              'Pending Approval',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.pendingApproval,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFFD97706),
@@ -189,9 +191,9 @@ class _SellerListingSubmittedScreenState
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'Go to Dashboard',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.goToDashboard,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),

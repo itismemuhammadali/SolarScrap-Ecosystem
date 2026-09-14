@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
+import '../../utils/rtl_helper.dart';
 import '../role_selection_screen.dart';
 import 'buyer_dashboard_screen.dart';
 
@@ -69,17 +71,18 @@ class _BuyerAccountCreatedScreenState
       if (status == 'approved') {
         _pollTimer?.cancel();
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           setState(() {
             _isApproved = true;
             _isChecking = false;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🎉 Account Verified! Admin has approved your buyer account.'),
-              backgroundColor: Color(0xFF00A63E),
+            SnackBar(
+              content: Text(l10n.accountVerifiedBuyerSuccess),
+              backgroundColor: const Color(0xFF00A63E),
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ),
           );
 
@@ -92,12 +95,13 @@ class _BuyerAccountCreatedScreenState
         }
         return;
       } else if (!silent && mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Status: Pending Admin Approval. Please approve from the web portal.'),
-            backgroundColor: Color(0xFFD97706),
+          SnackBar(
+            content: Text(l10n.statusPendingApprovalDesc),
+            backgroundColor: const Color(0xFFD97706),
             behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -123,6 +127,7 @@ class _BuyerAccountCreatedScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final displayName = widget.companyName.trim().isEmpty
         ? 'SunTech Solar Pvt. Ltd.'
         : widget.companyName;
@@ -193,8 +198,8 @@ class _BuyerAccountCreatedScreenState
                 // Title
                 Text(
                   _isApproved
-                      ? 'Buyer Account Approved!'
-                      : 'Account Request Submitted',
+                      ? l10n.buyerAccountApprovedTitle
+                      : l10n.accountRequestSubmittedTitle,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -207,8 +212,8 @@ class _BuyerAccountCreatedScreenState
                 // Description
                 Text(
                   _isApproved
-                      ? 'Your dealer registration has been verified and approved by the admin team. You can now browse auctions and place bids.'
-                      : 'Your dealer registration request has been submitted for admin review. Once verified and approved by the admin team, your account will unlock automatically.',
+                      ? l10n.buyerApprovedDesc
+                      : l10n.accountPendingReviewDesc,
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF6B7280),
@@ -245,8 +250,8 @@ class _BuyerAccountCreatedScreenState
                       const SizedBox(width: 6),
                       Text(
                         _isApproved
-                            ? 'Status: Approved & Verified'
-                            : 'Status: Pending Admin Approval',
+                            ? l10n.statusApprovedVerified
+                            : l10n.statusPendingAdminApproval,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -302,8 +307,8 @@ class _BuyerAccountCreatedScreenState
                             const SizedBox(height: 3),
                             Text(
                               _isApproved
-                                  ? 'Verified Buyer Account · $displayLocation'
-                                  : 'Pending Verification · $displayLocation',
+                                  ? l10n.verifiedBuyerAccountAt(displayLocation)
+                                  : l10n.pendingVerificationAt(displayLocation),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _isApproved
@@ -357,18 +362,18 @@ class _BuyerAccountCreatedScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Go To Dashboard',
-                            style: TextStyle(
+                            l10n.goToDashboard,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded, size: 20),
+                          const SizedBox(width: 8),
+                          RTLHelper.forwardIcon(context, size: 20, color: Colors.white),
                         ],
                       ),
                     ),
@@ -409,14 +414,14 @@ class _BuyerAccountCreatedScreenState
                                 strokeWidth: 2.5,
                               ),
                             )
-                          : const Row(
+                          : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.refresh_rounded, size: 20),
-                                SizedBox(width: 8),
+                                const Icon(Icons.refresh_rounded, size: 20),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Check Approval Status',
-                                  style: TextStyle(
+                                  l10n.checkApprovalStatus,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -435,18 +440,18 @@ class _BuyerAccountCreatedScreenState
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.info_outline_rounded,
                           size: 18,
                           color: Color(0xFF6B7280),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'App is actively monitoring for admin approval. Once approved on the web portal, access unlocks automatically.',
-                            style: TextStyle(
+                            l10n.monitoringAdminApprovalDesc,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF6B7280),
                               height: 1.3,
@@ -475,9 +480,9 @@ class _BuyerAccountCreatedScreenState
                       size: 18,
                       color: Color(0xFF6B7280),
                     ),
-                    label: const Text(
-                      'Switch Account / Return to Sign In',
-                      style: TextStyle(
+                    label: Text(
+                      l10n.switchAccountReturnSignIn,
+                      style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
                         fontWeight: FontWeight.w500,

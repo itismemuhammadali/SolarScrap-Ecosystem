@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/listing.dart';
 import '../../services/listing_service.dart';
 import '../../services/saved_auctions_service.dart';
+import '../../utils/rtl_helper.dart';
 import 'buyer_auction_details_screen.dart';
 
 class BuyerSavedAuctionsScreen extends StatefulWidget {
@@ -92,6 +94,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
   }
 
   void _showBidBottomSheet(Map<String, dynamic> auc) {
+    final l10n = AppLocalizations.of(context);
     final TextEditingController bidAmountController =
         TextEditingController(text: '${((auc['price'] ?? 75000) as num).toInt() + 1000}');
 
@@ -126,7 +129,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Place Bid on ${auc['title']}',
+                l10n.placeBidOnAuction(auc['title']?.toString() ?? ''),
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
@@ -135,7 +138,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Current Demand: ${auc['priceStr']}',
+                l10n.currentDemand(auc['priceStr']?.toString() ?? ''),
                 style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF6B7280),
@@ -146,7 +149,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                 controller: bidAmountController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: 'Your Bid Amount (PKR)',
+                  labelText: l10n.yourBidAmountPkr,
                   labelStyle: const TextStyle(color: Color(0xFF00A63E)),
                   prefixText: 'PKR ',
                   border: OutlineInputBorder(
@@ -179,7 +182,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Bid of PKR ${bidAmountController.text} placed successfully!',
+                          l10n.bidPlacedSuccess('PKR ${bidAmountController.text}'),
                         ),
                         backgroundColor: const Color(0xFF00A63E),
                       ),
@@ -191,9 +194,9 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text(
-                    'Submit Bid',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.submitBid,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -209,6 +212,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final filtered = _filteredAuctions;
 
     return Scaffold(
@@ -234,8 +238,8 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                         color: Color(0xFFF3F4F6),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
+                      child: RTLHelper.backIcon(
+                        context,
                         color: Colors.black87,
                         size: 20,
                       ),
@@ -244,9 +248,9 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                   const SizedBox(height: 16),
 
                   // Title
-                  const Text(
-                    'Saved Auctions',
-                    style: TextStyle(
+                  Text(
+                    l10n.savedAuctions,
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0F172A),
@@ -269,19 +273,19 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                         fontSize: 14,
                         color: Color(0xFF111827),
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Search saved...',
-                        hintStyle: TextStyle(
+                      decoration: InputDecoration(
+                        hintText: l10n.searchSavedAuctionsHint,
+                        hintStyle: const TextStyle(
                           color: Color(0xFF9CA3AF),
                           fontSize: 14,
                         ),
-                        prefixIcon: Icon(
+                        prefixIcon: const Icon(
                           Icons.search,
                           color: Color(0xFF9CA3AF),
                           size: 20,
                         ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
@@ -303,18 +307,18 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                             color: Colors.grey.shade300,
                           ),
                           const SizedBox(height: 12),
-                          const Text(
-                            'No saved auctions found',
-                            style: TextStyle(
+                          Text(
+                            l10n.noSavedAuctions,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF6B7280),
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
-                            'Heart items in Home or Auctions tab to save them here.',
-                            style: TextStyle(
+                          Text(
+                            l10n.tapHeartToSaveAuctions,
+                            style: const TextStyle(
                               fontSize: 13,
                               color: Color(0xFF9CA3AF),
                             ),
@@ -330,7 +334,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                           const SizedBox(height: 16),
                       itemBuilder: (context, index) {
                         final auc = filtered[index];
-                        return _buildSavedAuctionCard(auc);
+                        return _buildSavedAuctionCard(auc, l10n);
                       },
                     ),
             ),
@@ -340,7 +344,7 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
     );
   }
 
-  Widget _buildSavedAuctionCard(Map<String, dynamic> auc) {
+  Widget _buildSavedAuctionCard(Map<String, dynamic> auc, AppLocalizations l10n) {
     final String aucId = auc['id'] ?? '';
     final bool isFavorite = SavedAuctionsService.instance.isFavorite(aucId);
     final String imagePath = auc['image']?.toString() ?? 'assets/images/buyer-solar.jpg';
@@ -415,9 +419,9 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                           color: const Color(0xFF00A63E),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          'Featured',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.featuredBadge,
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -513,16 +517,16 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                       if (auc['verified'] == true)
                         Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.check_circle_outline,
                               size: 13,
                               color: Color(0xFF00A63E),
                             ),
-                            SizedBox(width: 3),
+                            const SizedBox(width: 3),
                             Text(
-                              'Verified',
-                              style: TextStyle(
+                              l10n.verified,
+                              style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                                 color: Color(0xFF00A63E),
@@ -597,9 +601,9 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Price Demand',
-                            style: TextStyle(
+                          Text(
+                            l10n.priceDemand,
+                            style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF8E8E93),
                             ),
@@ -637,9 +641,9 @@ class _BuyerSavedAuctionsScreenState extends State<BuyerSavedAuctionsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 18),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text(
-                            'Bid Now',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.bidNow,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),

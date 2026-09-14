@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/listing_draft.dart';
 import '../../services/profile_service.dart';
+import '../../utils/rtl_helper.dart';
 import '../../widgets/location_picker_widget.dart';
 import 'seller_contact_information_screen.dart';
 
@@ -137,6 +139,8 @@ class _SellerPickupLocationScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -151,8 +155,8 @@ class _SellerPickupLocationScreenState
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -162,9 +166,9 @@ class _SellerPickupLocationScreenState
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Pickup Location',
-          style: TextStyle(
+        title: Text(
+          l10n.pickupLocationTitle,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -184,8 +188,8 @@ class _SellerPickupLocationScreenState
                   final int totalSteps = isComplete ? 4 : 6;
                   final int currentStep = isComplete ? 2 : 4;
                   final String stepText = isComplete
-                      ? 'Listing Details · Step 2 of 4 (Location)'
-                      : 'Step 4 of 6';
+                      ? l10n.listingDetailsStepLocation(2, 4)
+                      : l10n.stepXOfY(4, 6);
                   final String percentText = isComplete ? '50%' : '67%';
 
                   return Column(
@@ -260,24 +264,24 @@ class _SellerPickupLocationScreenState
 
               // City
               _buildTextField(
-                label: 'City',
-                hint: 'Karachi',
+                label: l10n.cityLabel,
+                hint: l10n.cityHint,
                 controller: _cityController,
                 icon: Icons.location_on_outlined,
               ),
 
               // Area / Locality
               _buildTextField(
-                label: 'Area / Locality (optional)',
-                hint: 'DHA Phase 7, karachi',
+                label: l10n.areaLocalityOptional,
+                hint: l10n.areaHint,
                 controller: _areaController,
                 icon: Icons.location_on_outlined,
               ),
 
               // Complete Address
               _buildTextField(
-                label: 'Complete Address',
-                hint: 'Street, building, area details...',
+                label: l10n.completeAddress,
+                hint: l10n.completeAddressHint,
                 controller: _addressController,
                 icon: Icons.location_on_outlined,
                 isMultiline: true,
@@ -302,9 +306,9 @@ class _SellerPickupLocationScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -339,9 +343,9 @@ class _SellerPickupLocationScreenState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.continueButton,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

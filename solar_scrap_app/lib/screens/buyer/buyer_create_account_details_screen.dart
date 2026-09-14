@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/registration_data.dart';
 import '../../utils/permission_helper.dart';
+import '../../utils/rtl_helper.dart';
 import '../../widgets/location_picker_widget.dart';
 import 'buyer_create_account_verify_otp_screen.dart';
 
@@ -43,6 +45,26 @@ class _BuyerCreateAccountDetailsScreenState
     'Manufacturer',
     'Other Business',
   ];
+
+  String _getBusinessTypeName(BuildContext context, String type) {
+    final l10n = AppLocalizations.of(context);
+    switch (type) {
+      case 'Scrap Dealer':
+        return l10n.businessTypeScrapDealer;
+      case 'Recycler':
+        return l10n.businessTypeRecycler;
+      case 'Trader / Broker':
+        return l10n.businessTypeTraderBroker;
+      case 'Solar EPC Contractor':
+        return l10n.businessTypeSolarEpc;
+      case 'Manufacturer':
+        return l10n.businessTypeManufacturer;
+      case 'Other Business':
+        return l10n.businessTypeOtherBusiness;
+      default:
+        return type;
+    }
+  }
 
   @override
   void initState() {
@@ -116,6 +138,8 @@ class _BuyerCreateAccountDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -138,14 +162,13 @@ class _BuyerCreateAccountDetailsScreenState
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back,
-                            color: Colors.black, size: 20),
+                        icon: RTLHelper.backIcon(context, color: Colors.black, size: 20),
                         onPressed: () => Navigator.pop(context),
                         padding: EdgeInsets.zero,
                       ),
                     ),
                     Text(
-                      'Business & Location',
+                      l10n.businessAndLocation,
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -162,7 +185,7 @@ class _BuyerCreateAccountDetailsScreenState
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Step 2 of 3 · Business Details',
+                      l10n.step2Of3BusinessDetails,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -278,8 +301,8 @@ class _BuyerCreateAccountDetailsScreenState
                       const SizedBox(height: 8),
                       Text(
                         _profileImage != null
-                            ? 'Change Photo'
-                            : 'Upload Profile / Logo (Optional)',
+                            ? l10n.changePhoto
+                            : l10n.uploadProfileLogo,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -293,7 +316,7 @@ class _BuyerCreateAccountDetailsScreenState
 
                 // Full Name
                 Text(
-                  'Contact Person / Full Name *',
+                  l10n.contactPersonRequired,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -309,13 +332,13 @@ class _BuyerCreateAccountDetailsScreenState
                     icon: Icons.person_outline,
                   ),
                   validator: (val) =>
-                      val == null || val.trim().isEmpty ? 'Enter your name' : null,
+                      val == null || val.trim().isEmpty ? l10n.enterNameError : null,
                 ),
                 const SizedBox(height: 16),
 
                 // Company Name
                 Text(
-                  'Company / Yard Name *',
+                  l10n.companyYardNameRequired,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -331,14 +354,14 @@ class _BuyerCreateAccountDetailsScreenState
                     icon: Icons.storefront_outlined,
                   ),
                   validator: (val) => val == null || val.trim().isEmpty
-                      ? 'Enter your company or business name'
+                      ? l10n.enterCompanyNameError
                       : null,
                 ),
                 const SizedBox(height: 16),
 
                 // Business Type Dropdown
                 Text(
-                  'Business Type *',
+                  l10n.businessTypeRequired,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -352,7 +375,7 @@ class _BuyerCreateAccountDetailsScreenState
                       .map(
                         (type) => DropdownMenuItem(
                           value: type,
-                          child: Text(type,
+                          child: Text(_getBusinessTypeName(context, type),
                               style: GoogleFonts.poppins(fontSize: 14)),
                         ),
                       )
@@ -360,7 +383,7 @@ class _BuyerCreateAccountDetailsScreenState
                   onChanged: (val) =>
                       setState(() => _companyType = val ?? 'Scrap Dealer'),
                   decoration: _inputDecoration(
-                    hint: 'Select business type',
+                    hint: l10n.selectBusinessType,
                     icon: Icons.category_outlined,
                   ),
                 ),
@@ -368,7 +391,7 @@ class _BuyerCreateAccountDetailsScreenState
 
                 // GST / Tax ID (Optional)
                 Text(
-                  'GST / NTN Number (Optional)',
+                  l10n.gstNtnOptional,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -391,7 +414,7 @@ class _BuyerCreateAccountDetailsScreenState
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Business / Warehouse Location *',
+                      l10n.businessLocationRequired,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -399,7 +422,7 @@ class _BuyerCreateAccountDetailsScreenState
                       ),
                     ),
                     Text(
-                      'Pin on Map',
+                      l10n.pinOnMap,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -426,7 +449,7 @@ class _BuyerCreateAccountDetailsScreenState
 
                 // Address Line
                 Text(
-                  'Street Address *',
+                  l10n.streetAddressRequired,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -442,7 +465,7 @@ class _BuyerCreateAccountDetailsScreenState
                     icon: Icons.location_on_outlined,
                   ),
                   validator: (val) => val == null || val.trim().isEmpty
-                      ? 'Please enter street address'
+                      ? l10n.enterStreetAddressError
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -455,7 +478,7 @@ class _BuyerCreateAccountDetailsScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'City *',
+                            l10n.cityRequired,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -472,7 +495,7 @@ class _BuyerCreateAccountDetailsScreenState
                             ),
                             validator: (val) =>
                                 val == null || val.trim().isEmpty
-                                    ? 'Enter city'
+                                    ? l10n.enterCityError
                                     : null,
                           ),
                         ],
@@ -484,7 +507,7 @@ class _BuyerCreateAccountDetailsScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Area / District',
+                            l10n.areaDistrictLabel,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -522,7 +545,7 @@ class _BuyerCreateAccountDetailsScreenState
                       ),
                     ),
                     child: Text(
-                      'Continue to Mobile Verification',
+                      l10n.continueToMobileVerification,
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

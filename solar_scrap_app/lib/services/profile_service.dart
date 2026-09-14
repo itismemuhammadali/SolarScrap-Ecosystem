@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../config/api_config.dart';
@@ -42,7 +43,7 @@ class ProfileService {
         return SellerProfile.fromJson(data);
       }
     } catch (e) {
-      print('[ProfileService] fetchProfile error: $e');
+      debugPrint('[ProfileService] fetchProfile error: $e');
     }
     return null;
   }
@@ -59,7 +60,7 @@ class ProfileService {
         return SellerStats.fromJson(data);
       }
     } catch (e) {
-      print('[ProfileService] fetchStats error: $e');
+      debugPrint('[ProfileService] fetchStats error: $e');
     }
     return null;
   }
@@ -77,7 +78,7 @@ class ProfileService {
         return SellerProfile.fromJson(data);
       }
     } catch (e) {
-      print('[ProfileService] updateProfile error: $e');
+      debugPrint('[ProfileService] updateProfile error: $e');
     }
     return null;
   }
@@ -111,10 +112,10 @@ class ProfileService {
         final data = jsonDecode(response.body);
         return data['profile_photo_url'];
       } else {
-        print('[ProfileService] uploadProfilePhoto failed: ${response.body}');
+        debugPrint('[ProfileService] uploadProfilePhoto failed: ${response.body}');
       }
     } catch (e) {
-      print('[ProfileService] uploadProfilePhoto error: $e');
+      debugPrint('[ProfileService] uploadProfilePhoto error: $e');
     }
     return null;
   }

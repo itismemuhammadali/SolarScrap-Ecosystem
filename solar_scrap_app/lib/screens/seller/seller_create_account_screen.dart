@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/registration_data.dart';
 import '../../services/auth_service.dart';
+import '../../utils/rtl_helper.dart';
 import 'seller_create_account_details_screen.dart';
 import 'seller_login_screen.dart';
 import '../buyer/buyer_create_account_screen.dart';
@@ -140,12 +142,13 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
   }
 
   void _handleEmailContinue() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
 
     if (!_hasMinLength || !_hasUpperLower || !_hasNumberOrSymbol) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please meet all password security requirements.'),
+        SnackBar(
+          content: Text(l10n.passwordRequirementsError),
           backgroundColor: Colors.red,
         ),
       );
@@ -154,8 +157,8 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
 
     if (!_passwordsMatch) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Passwords do not match.'),
+        SnackBar(
+          content: Text(l10n.passwordsDoNotMatch),
           backgroundColor: Colors.red,
         ),
       );
@@ -164,8 +167,8 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
 
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please accept the Terms & Conditions and Privacy Policy.'),
+        SnackBar(
+          content: Text(l10n.acceptTermsError),
           backgroundColor: Colors.red,
         ),
       );
@@ -196,6 +199,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
   }
 
   void _showEmailVerificationPopup(RegistrationData regData) {
+    final l10n = AppLocalizations.of(context);
     bool isChecking = false;
 
     showDialog(
@@ -228,7 +232,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'Verify Your Email',
+                      l10n.verifyYourEmail,
                       style: GoogleFonts.poppins(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -245,8 +249,8 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                           height: 1.5,
                         ),
                         children: [
-                          const TextSpan(
-                            text: 'We sent a verification link to\n',
+                          TextSpan(
+                            text: l10n.weSentVerificationLinkTo,
                           ),
                           TextSpan(
                             text: regData.email,
@@ -255,9 +259,8 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                               color: const Color(0xFF0F172A),
                             ),
                           ),
-                          const TextSpan(
-                            text:
-                                '.\nPlease tap the link in your inbox to verify your address.',
+                          TextSpan(
+                            text: l10n.tapLinkToVerify,
                           ),
                         ],
                       ),
@@ -277,27 +280,30 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                                     .checkEmailVerified();
                                 setDialogState(() => isChecking = false);
 
+                                if (!context.mounted) return;
                                 if (isVerified) {
                                   regData.emailVerified = true;
-                                  Navigator.pop(dialogCtx);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          SellerCreateAccountDetailsScreen(
-                                        data: regData,
+                                  if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                                  if (context.mounted) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            SellerCreateAccountDetailsScreen(
+                                          data: regData,
+                                        ),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  }
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Email not verified yet. Please check your inbox or spam.',
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(l10n.emailNotVerifiedYet),
+                                        backgroundColor: Colors.orange,
                                       ),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
+                                    );
+                                  }
                                 }
                               },
                         style: ElevatedButton.styleFrom(
@@ -318,7 +324,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                                 ),
                               )
                             : Text(
-                                'I Have Verified Link',
+                                l10n.iHaveVerifiedLink,
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
@@ -338,15 +344,17 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                               email: regData.email,
                               password: regData.password ?? '',
                             );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Verification link re-sent!'),
-                                backgroundColor: Color(0xFF00A63E),
-                              ),
-                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(l10n.verificationLinkResent),
+                                  backgroundColor: const Color(0xFF00A63E),
+                                ),
+                              );
+                            }
                           },
                           child: Text(
-                            'Resend Link',
+                            l10n.resendLink,
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: const Color(0xFF00A63E),
@@ -369,7 +377,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                             );
                           },
                           child: Text(
-                            'Skip (Dev Mode)',
+                            l10n.skipDevMode,
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: const Color(0xFF94A3B8),
@@ -390,6 +398,8 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -412,14 +422,13 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back,
-                            color: Colors.black, size: 20),
+                        icon: RTLHelper.backIcon(context, color: Colors.black, size: 20),
                         onPressed: () => Navigator.pop(context),
                         padding: EdgeInsets.zero,
                       ),
                     ),
                     Text(
-                      'Seller Sign Up',
+                      l10n.sellerSignUp,
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -444,7 +453,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                           border: Border.all(color: const Color(0xFFBBF7D0)),
                         ),
                         child: Text(
-                          'Buyer?',
+                          l10n.buyerQuestion,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -462,7 +471,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Step 1 of 3 · Credentials',
+                      l10n.step1Of3Credentials,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -538,7 +547,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          'Continue with Google',
+                          l10n.googleSignIn,
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -570,7 +579,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                           const Icon(Icons.apple, color: Colors.white, size: 24),
                           const SizedBox(width: 10),
                           Text(
-                            'Continue with Apple',
+                            l10n.appleSignIn,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -591,7 +600,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'OR Continue with Email',
+                        l10n.orContinueWithEmail,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: const Color(0xFF94A3B8),
@@ -606,7 +615,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
 
                 // Email Address Field
                 Text(
-                  'Email Address *',
+                  l10n.emailAddressRequired,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -639,10 +648,10 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
-                      return 'Please enter your email address.';
+                      return l10n.enterEmail;
                     }
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(val.trim())) {
-                      return 'Please enter a valid email address.';
+                      return l10n.enterValidEmail;
                     }
                     return null;
                   },
@@ -651,7 +660,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
 
                 // Password Field
                 Text(
-                  'Password *',
+                  l10n.passwordRequired,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -665,7 +674,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                   onChanged: (_) => setState(() {}),
                   style: GoogleFonts.poppins(fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'Create a secure password',
+                    hintText: l10n.createSecurePasswordHint,
                     prefixIcon: const Icon(Icons.lock_outline,
                         color: Color(0xFF94A3B8), size: 20),
                     suffixIcon: IconButton(
@@ -699,7 +708,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
 
                 // Confirm Password Field
                 Text(
-                  'Confirm Password *',
+                  l10n.confirmPasswordRequired,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -713,7 +722,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                   onChanged: (_) => setState(() {}),
                   style: GoogleFonts.poppins(fontSize: 14),
                   decoration: InputDecoration(
-                    hintText: 'Re-enter your password',
+                    hintText: l10n.confirmPasswordHint,
                     prefixIcon: const Icon(Icons.lock_reset_outlined,
                         color: Color(0xFF94A3B8), size: 20),
                     suffixIcon: IconButton(
@@ -756,15 +765,15 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                   child: Column(
                     children: [
                       _buildChecklistRow(
-                          'At least 8 characters', _hasMinLength),
+                          l10n.pwdRuleMinLength, _hasMinLength),
                       const SizedBox(height: 6),
                       _buildChecklistRow(
-                          'Uppercase and lowercase letters', _hasUpperLower),
+                          l10n.pwdRuleUpperLower, _hasUpperLower),
                       const SizedBox(height: 6),
                       _buildChecklistRow(
-                          'At least one number or symbol', _hasNumberOrSymbol),
+                          l10n.pwdRuleNumberSymbol, _hasNumberOrSymbol),
                       const SizedBox(height: 6),
-                      _buildChecklistRow('Passwords match', _passwordsMatch),
+                      _buildChecklistRow(l10n.pwdRuleMatch, _passwordsMatch),
                     ],
                   ),
                 ),
@@ -792,7 +801,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                       child: Wrap(
                         children: [
                           Text(
-                            'I agree to the ',
+                            l10n.agreeToThe,
                             style: GoogleFonts.poppins(
                                 fontSize: 13, color: const Color(0xFF475569)),
                           ),
@@ -805,7 +814,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                               ),
                             ),
                             child: Text(
-                              'Terms & Conditions',
+                              l10n.termsConditions,
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -814,7 +823,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                             ),
                           ),
                           Text(
-                            ' and acknowledge the ',
+                            l10n.andAcknowledgeThe,
                             style: GoogleFonts.poppins(
                                 fontSize: 13, color: const Color(0xFF475569)),
                           ),
@@ -827,7 +836,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                               ),
                             ),
                             child: Text(
-                              'Privacy Policy',
+                              l10n.privacyPolicy,
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -862,7 +871,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Receive notifications about quotations and offers on your solar listings (Optional)',
+                        l10n.sellerNotificationCheckbox,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: const Color(0xFF64748B),
@@ -897,7 +906,7 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                             ),
                           )
                         : Text(
-                            'Continue to Details',
+                            l10n.continueToDetails,
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -920,14 +929,14 @@ class _SellerCreateAccountScreenState extends State<SellerCreateAccountScreen> {
                     },
                     child: RichText(
                       text: TextSpan(
-                        text: 'Already have an account? ',
+                        text: '${l10n.alreadyHaveAccount} ',
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           color: const Color(0xFF64748B),
                         ),
                         children: [
                           TextSpan(
-                            text: 'Sign In',
+                            text: l10n.signIn,
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

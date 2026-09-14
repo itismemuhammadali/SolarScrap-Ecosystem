@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 import 'seller_verify_otp_screen.dart';
 
 class SellerForgotPasswordScreen extends StatefulWidget {
@@ -22,6 +24,8 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -35,9 +39,9 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.arrow_back,
-              color: Color(0xFF151516),
+            child: RTLHelper.backIcon(
+              context,
+              color: const Color(0xFF151516),
               size: 20,
             ),
           ),
@@ -47,7 +51,7 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
         ),
         centerTitle: true,
         title: Text(
-          'Forgot Password',
+          l10n.forgotPasswordTitle,
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -86,7 +90,7 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
 
               // Title
               Text(
-                'Reset Password',
+                l10n.resetPasswordTitle,
                 style: GoogleFonts.poppins(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -97,7 +101,7 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
 
               // Description
               Text(
-                'Enter your email or phone to receive a reset OTP',
+                l10n.enterEmailOrPhoneReset,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   color: const Color(0xFF6B7280),
@@ -109,9 +113,9 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
 
               // Email / Phone Label
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: Text(
-                  'Email or Phone Number',
+                  l10n.emailOrPhoneLabel,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -175,15 +179,15 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => SellerVerifyOtpScreen(
+                          builder: (context) => const SellerVerifyOtpScreen(
                             phoneNumber: '•••• 3210',
                           ),
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter your email or phone'),
+                        SnackBar(
+                          content: Text(l10n.pleaseEnterEmailOrPhone),
                         ),
                       );
                     }
@@ -197,7 +201,7 @@ class _SellerForgotPasswordScreenState extends State<SellerForgotPasswordScreen>
                     ),
                   ),
                   child: Text(
-                    'Send OTP',
+                    l10n.sendOtp,
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

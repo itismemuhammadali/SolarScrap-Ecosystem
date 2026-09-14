@@ -58,26 +58,34 @@ export default function QuotationModal({
   const totalOffer = data.totalOffer ?? (subTotal - adjustment);
 
   const handlePrintPdf = () => {
+    const originalTitle = document.title;
+    const cleanCustomer = (data?.customerName || "Customer").trim().replace(/[^a-zA-Z0-9_-]/g, "_");
+    document.title = `Solar_Scrap_Quotation_${cleanCustomer}_${data?.quotationId?.replace("#", "") || "INV"}`;
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1500);
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       {/* Super White Outer Modal Container with 3 Distinct Light-Gray Cards */}
-      <div className="bg-white rounded-3xl max-w-[500px] w-full p-3 sm:p-4 shadow-2xl relative border border-gray-100 flex flex-col gap-2.5 animate-scale-up select-none">
-        
+      <div
+        id="printable-quotation"
+        className="bg-white rounded-3xl max-w-[500px] w-full p-3 sm:p-4 shadow-2xl relative border border-gray-100 flex flex-col gap-2.5 animate-scale-up select-none"
+      >
         {/* Floating Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute -top-3 -right-3 sm:-top-2 sm:-right-2 w-8 h-8 rounded-full bg-white text-gray-500 hover:text-gray-800 shadow-md border border-gray-200 flex items-center justify-center transition-all cursor-pointer z-20 hover:scale-105"
+          className="no-print absolute -top-3 -right-3 sm:-top-2 sm:-right-2 w-8 h-8 rounded-full bg-white text-gray-500 hover:text-gray-800 shadow-md border border-gray-200 flex items-center justify-center transition-all cursor-pointer z-20 hover:scale-105"
           aria-label="Close"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* ===================== BOX 1: HEADER & RECIPIENT METADATA ===================== */}
-        <div className="bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/50">
+        <div className="print-card bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/50">
           {/* Logo & Quotation Heading */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center">
@@ -136,7 +144,7 @@ export default function QuotationModal({
         </div>
 
         {/* ===================== BOX 2: ITEMS TABLE, TOTALS & TERMS ===================== */}
-        <div className="bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/50 space-y-2.5">
+        <div className="print-card bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/50 space-y-2.5">
           {/* Table Headers */}
           <div className="grid grid-cols-12 text-[11px] font-bold text-gray-800 pb-1.5 border-b border-gray-200/70">
             <div className="col-span-6">Items</div>
@@ -178,7 +186,7 @@ export default function QuotationModal({
           </div>
 
           {/* Solid Green Total Offer Bar */}
-          <div className="bg-[#009845] text-white rounded-xl px-4 py-2 flex justify-between items-center font-bold text-xs shadow-xs mt-1">
+          <div className="print-highlight bg-[#009845] text-white rounded-xl px-4 py-2 flex justify-between items-center font-bold text-xs shadow-xs mt-1">
             <span>Total Offer ( PKR )</span>
             <span>{formatNumber(totalOffer)}</span>
           </div>
@@ -199,7 +207,7 @@ export default function QuotationModal({
         </div>
 
         {/* ===================== BOX 3: QUOTATION ACTIONS ===================== */}
-        <div className="bg-[#F4F6F8] rounded-2xl p-4 border border-gray-200/50 space-y-2.5">
+        <div className="no-print bg-[#F4F6F8] rounded-2xl p-4 border border-gray-200/50 space-y-2.5">
           <p className="text-xs font-bold text-gray-900">Quotation Actions</p>
           <div className="grid grid-cols-2 gap-3">
             <button

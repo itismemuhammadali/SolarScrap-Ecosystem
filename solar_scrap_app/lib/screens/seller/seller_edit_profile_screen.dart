@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/seller_profile.dart';
 import '../../services/profile_service.dart';
+import '../../utils/rtl_helper.dart';
 
 class SellerEditProfileScreen extends StatefulWidget {
   final SellerProfile? profile;
@@ -64,6 +66,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    final l10n = AppLocalizations.of(context);
     try {
       final picker = ImagePicker();
       final picked = await picker.pickImage(
@@ -94,15 +97,15 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
 
       if (uploadedUrl != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile photo updated successfully!'),
-            backgroundColor: Color(0xFF00A63E),
+          SnackBar(
+            content: Text(l10n.profilePhotoUpdated),
+            backgroundColor: const Color(0xFF00A63E),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to upload photo. Please check backend connection.'),
+          SnackBar(
+            content: Text(l10n.failedToUploadPhoto),
             backgroundColor: Colors.red,
           ),
         );
@@ -112,7 +115,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
       setState(() => _isUploadingPhoto = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error selecting image: $e'),
+          content: Text(l10n.errorSelectingImage(e.toString())),
           backgroundColor: Colors.red,
         ),
       );
@@ -120,6 +123,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
   }
 
   void _showPhotoOptions() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -133,7 +137,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Change Profile Photo',
+                l10n.changeProfilePhoto,
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -151,7 +155,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
                   child: const Icon(Icons.camera_alt, color: Color(0xFF00A63E), size: 20),
                 ),
                 title: Text(
-                  'Take Photo (Camera)',
+                  l10n.takePhotoCamera,
                   style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 onTap: () {
@@ -169,7 +173,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
                   child: const Icon(Icons.photo_library, color: Color(0xFF00A63E), size: 20),
                 ),
                 title: Text(
-                  'Choose from Gallery',
+                  l10n.chooseFromGallery,
                   style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 onTap: () {
@@ -185,11 +189,12 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
   }
 
   Future<void> _handleSave() async {
+    final l10n = AppLocalizations.of(context);
     final name = _fullNameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Full Name cannot be empty'),
+        SnackBar(
+          content: Text(l10n.fullNameEmpty),
           backgroundColor: Colors.red,
         ),
       );
@@ -215,16 +220,16 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
 
     if (result != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully!'),
-          backgroundColor: Color(0xFF00A63E),
+        SnackBar(
+          content: Text(l10n.profileUpdatedSuccess),
+          backgroundColor: const Color(0xFF00A63E),
         ),
       );
       Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update profile. Ensure backend is running.'),
+        SnackBar(
+          content: Text(l10n.failedToUpdateProfile),
           backgroundColor: Colors.red,
         ),
       );
@@ -233,6 +238,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final fullImageUrl = ProfileService.instance.getFullImageUrl(_currentPhotoUrl);
 
     return Scaffold(
@@ -248,10 +254,12 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Colors.black,
-              size: 18,
+            icon: Center(
+              child: RTLHelper.backIcon(
+                context,
+                color: Colors.black,
+                size: 18,
+              ),
             ),
             onPressed: () {
               Navigator.pop(context);
@@ -259,9 +267,9 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
           ),
         ),
         centerTitle: true,
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
+        title: Text(
+          l10n.editProfile,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -378,7 +386,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Tap photo to change',
+                l10n.tapPhotoToChange,
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,
@@ -388,16 +396,16 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
 
               // Full Name Field
               _buildInputField(
-                label: 'Full Name',
+                label: l10n.fullNameLabel,
                 controller: _fullNameController,
-                placeholder: 'Your Full Name',
+                placeholder: l10n.fullNamePlaceholder,
                 iconAsset: 'assets/icons/person.svg',
               ),
               const SizedBox(height: 16),
 
               // Phone Number Field
               _buildInputField(
-                label: 'Phone Number',
+                label: l10n.phoneLabel,
                 controller: _phoneController,
                 placeholder: '+92 300 0000000',
                 iconAsset: 'assets/icons/phone_call.svg',
@@ -406,7 +414,7 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
 
               // Email Address Field (Read-only)
               _buildInputField(
-                label: 'Email address',
+                label: l10n.emailAddressLabel,
                 controller: _emailController,
                 placeholder: 'email@example.com',
                 iconAsset: 'assets/icons/email.svg',
@@ -416,25 +424,25 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
 
               // Company Name Field
               _buildInputField(
-                label: 'Company Name',
+                label: l10n.companyNameLabel,
                 controller: _companyController,
-                placeholder: 'Company Name Pvt. Ltd.',
+                placeholder: l10n.companyNamePlaceholder,
                 iconAsset: 'assets/icons/building.svg',
               ),
               const SizedBox(height: 16),
 
               // City Field
               _buildInputField(
-                label: 'City',
+                label: l10n.cityLabel,
                 controller: _cityController,
-                placeholder: 'City',
+                placeholder: l10n.cityLabel,
                 iconAsset: 'assets/icons/building.svg',
               ),
               const SizedBox(height: 16),
 
               // GST Field
               _buildInputField(
-                label: 'GST / NTN Number (Optional)',
+                label: l10n.gstNtnOptional,
                 controller: _gstController,
                 placeholder: '22AAAAA0000A1Z5',
                 iconAsset: 'assets/icons/building.svg',
@@ -473,9 +481,9 @@ class _SellerEditProfileScreenState extends State<SellerEditProfileScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
-                          'Save Changes',
-                          style: TextStyle(
+                      : Text(
+                          l10n.saveChanges,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,

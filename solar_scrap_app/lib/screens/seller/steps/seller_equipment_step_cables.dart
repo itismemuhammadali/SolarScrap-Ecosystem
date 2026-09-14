@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/listing_draft.dart';
+import '../../../utils/rtl_helper.dart';
 import '../seller_upload_images_screen.dart';
 import 'seller_equipment_step_structure.dart';
 
@@ -78,6 +80,7 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
     required String value,
     required List<String> items,
     required Function(String?) onChanged,
+    String Function(String)? labelBuilder,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,7 +115,7 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         child: Text(
-                          item,
+                          labelBuilder != null ? labelBuilder(item) : item,
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF18181B),
@@ -136,6 +139,7 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
     required List<String> options,
     required String selectedValue,
     required Function(String) onChanged,
+    String Function(String)? labelBuilder,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,6 +156,7 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
         Row(
           children: options.map((option) {
             final isSelected = selectedValue == option;
+            final displayText = labelBuilder != null ? labelBuilder(option) : option;
             return Expanded(
               child: GestureDetector(
                 onTap: () {
@@ -177,7 +182,7 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
                   ),
                   child: Center(
                     child: Text(
-                      option,
+                      displayText,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -199,6 +204,8 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -213,8 +220,8 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -224,9 +231,9 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Equipment Details',
-          style: TextStyle(
+        title: Text(
+          l10n.equipmentDetails,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -249,8 +256,8 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
                   final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 7 : 6) : 6;
                   final int currentStep = widget.isCompleteSolarSystem ? (isHybrid ? 5 : 4) : 2;
                   final String stepText = widget.isCompleteSolarSystem
-                      ? 'Step $currentStep of $totalSteps (Cables)'
-                      : 'Step 2 of 6';
+                      ? l10n.stepXOfYWithDetail(currentStep, totalSteps, l10n.stepDetailCables)
+                      : l10n.stepXOfY(2, 6);
                   final String percentText =
                       '${((currentStep / totalSteps) * 100).round()}%';
 
@@ -321,8 +328,8 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
                     const SizedBox(width: 8),
                     Text(
                       widget.isCompleteSolarSystem
-                          ? 'Complete System · Cables'
-                          : 'Cables',
+                          ? l10n.completeSystemBannerCables
+                          : l10n.categoryCables,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -336,49 +343,63 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
 
                     // Cable Type
                     _buildOptionButtons(
-                      label: 'Cable Type',
+                      label: l10n.cableType,
                       options: ['AC', 'DC'],
                       selectedValue: _selectedCableType,
                       onChanged: (val) => _selectedCableType = val,
+                      labelBuilder: (t) => t == 'AC' ? l10n.cableTypeAC : l10n.cableTypeDC,
                     ),
 
                     // Cable Conductor
                     _buildOptionButtons(
-                      label: 'Cable Conductor',
+                      label: l10n.cableConductor,
                       options: ['Copper', 'AL'],
                       selectedValue: _selectedConductor,
                       onChanged: (val) => _selectedConductor = val,
+                      labelBuilder: (c) => c == 'Copper' ? l10n.conductorCopper : l10n.conductorAL,
                     ),
 
                     // Insulation Type
                     _buildDropdown(
-                      label: 'Insulation Type',
+                      label: l10n.insulationType,
                       value: _selectedInsulation,
                       items: ['PVC', 'Rubber', 'Thermoplastic'],
                       onChanged: (val) => setState(() {
                         if (val != null) _selectedInsulation = val;
                       }),
+                      labelBuilder: (i) {
+                        switch (i) {
+                          case 'PVC':
+                            return l10n.insulationPVC;
+                          case 'Rubber':
+                            return l10n.insulationRubber;
+                          case 'Thermoplastic':
+                            return l10n.insulationThermoplastic;
+                          default:
+                            return i;
+                        }
+                      },
                     ),
 
                     // Cable Size
                     _buildTextField(
-                      label: 'Cable size',
-                      hint: 'e.g 12 meter',
+                      label: l10n.cableSize,
+                      hint: l10n.cableSizeHint,
                       controller: _cableSizeController,
                     ),
 
                     // Price Demand (only if not Complete Solar System)
                     if (!widget.isCompleteSolarSystem)
                       _buildTextField(
-                        label: 'Price Demand',
+                        label: l10n.priceDemand,
                         hint: 'Rs, 64,00000',
                         controller: _priceDemandController,
                       ),
 
               // Comments
               _buildTextField(
-                label: 'Comments (optional)',
-                hint: 'Describe in details ......',
+                label: l10n.commentsOptional,
+                hint: l10n.commentsHint,
                 controller: _commentsController,
                 isMultiline: true,
               ),
@@ -402,9 +423,9 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -473,9 +494,9 @@ class _SellerEquipmentStepCablesState extends State<SellerEquipmentStepCables> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.continueButton,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/registration_data.dart';
 import '../../services/auth_service.dart';
 import '../../services/profile_service.dart';
+import '../../utils/rtl_helper.dart';
 import 'seller_account_created_screen.dart';
 
 class SellerCreateAccountVerifyOtpScreen extends StatefulWidget {
@@ -70,11 +72,12 @@ class _SellerCreateAccountVerifyOtpScreenState
   }
 
   void _sendSmsCode() async {
+    final l10n = AppLocalizations.of(context);
     final rawPhone = _phoneController.text.trim();
     if (rawPhone.isEmpty || rawPhone.length < 9) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid mobile number.'),
+        SnackBar(
+          content: Text(l10n.enterValidMobileNumber),
           backgroundColor: Colors.red,
         ),
       );
@@ -98,7 +101,7 @@ class _SellerCreateAccountVerifyOtpScreenState
         _startTimer();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Verification code sent to $phone'),
+            content: Text(l10n.codeSentTo(phone)),
             backgroundColor: const Color(0xFF00A63E),
           ),
         );
@@ -130,11 +133,12 @@ class _SellerCreateAccountVerifyOtpScreenState
   }
 
   void _verifyOtpAndRegister() async {
+    final l10n = AppLocalizations.of(context);
     final enteredOtp = _otpControllers.map((c) => c.text).join();
     if (enteredOtp.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the complete 6-digit OTP code.'),
+        SnackBar(
+          content: Text(l10n.enterCompleteOtpCode),
           backgroundColor: Colors.red,
         ),
       );
@@ -154,8 +158,8 @@ class _SellerCreateAccountVerifyOtpScreenState
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid code. Please enter the correct code or 000000.'),
+        SnackBar(
+          content: Text(l10n.invalidOtpCode),
           backgroundColor: Colors.red,
         ),
       );
@@ -163,6 +167,7 @@ class _SellerCreateAccountVerifyOtpScreenState
   }
 
   Future<void> _handleVerificationSuccess() async {
+    final l10n = AppLocalizations.of(context);
     widget.data.phoneNumber = _phoneController.text.trim();
     widget.data.phoneVerified = true;
     widget.data.twoFactorEnabled = true;
@@ -203,7 +208,7 @@ class _SellerCreateAccountVerifyOtpScreenState
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.message ?? 'Registration failed. Try again.'),
+          content: Text(result.message ?? l10n.registrationFailed),
           backgroundColor: Colors.red,
         ),
       );
@@ -212,6 +217,8 @@ class _SellerCreateAccountVerifyOtpScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -231,14 +238,13 @@ class _SellerCreateAccountVerifyOtpScreenState
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back,
-                          color: Colors.black, size: 20),
+                      icon: RTLHelper.backIcon(context, color: Colors.black, size: 20),
                       onPressed: () => Navigator.pop(context),
                       padding: EdgeInsets.zero,
                     ),
                   ),
                   Text(
-                    'Mobile Verification',
+                    l10n.mobileVerification,
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -255,7 +261,7 @@ class _SellerCreateAccountVerifyOtpScreenState
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Step 3 of 3 · Mobile Verification (2FA)',
+                    l10n.step3Of3MobileVerification,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -331,7 +337,7 @@ class _SellerCreateAccountVerifyOtpScreenState
               const SizedBox(height: 24),
 
               Text(
-                'Verify Mobile Number',
+                l10n.verifyMobileNumber,
                 style: GoogleFonts.poppins(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -340,7 +346,7 @@ class _SellerCreateAccountVerifyOtpScreenState
               ),
               const SizedBox(height: 8),
               Text(
-                'Verify your mobile phone with two-factor authentication (2FA) to securely publish scrap listings and receive buyer quotations.',
+                l10n.protectAccount2FADesc,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 13,
@@ -356,14 +362,14 @@ class _SellerCreateAccountVerifyOtpScreenState
                 keyboardType: TextInputType.phone,
                 style: GoogleFonts.poppins(fontSize: 14),
                 decoration: InputDecoration(
-                  labelText: 'Mobile Number',
+                  labelText: l10n.mobileNumberLabel,
                   hintText: '+92 300 1234567',
                   prefixIcon: const Icon(Icons.phone_iphone_outlined,
                       color: Color(0xFF00A63E), size: 20),
                   suffixIcon: TextButton(
                     onPressed: _isLoading ? null : _sendSmsCode,
                     child: Text(
-                      _isCodeSent ? 'Resend' : 'Send Code',
+                      _isCodeSent ? l10n.resend : l10n.sendCode,
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -391,7 +397,7 @@ class _SellerCreateAccountVerifyOtpScreenState
 
               if (_isCodeSent) ...[
                 Text(
-                  'Enter 6-Digit Code',
+                  l10n.enter6DigitCode,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -459,8 +465,8 @@ class _SellerCreateAccountVerifyOtpScreenState
                     const SizedBox(width: 6),
                     Text(
                       _secondsRemaining > 0
-                          ? 'Resend code in 00:${_secondsRemaining.toString().padLeft(2, '0')}'
-                          : 'Didn\'t get the code?',
+                          ? '${l10n.resendCode} 00:${_secondsRemaining.toString().padLeft(2, '0')}'
+                          : l10n.didntGetCode,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: const Color(0xFF64748B),
@@ -471,7 +477,7 @@ class _SellerCreateAccountVerifyOtpScreenState
                       GestureDetector(
                         onTap: _sendSmsCode,
                         child: Text(
-                          'Resend Now',
+                          l10n.resendNow,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -508,7 +514,7 @@ class _SellerCreateAccountVerifyOtpScreenState
                             ),
                           )
                         : Text(
-                            'Verify & Complete Registration',
+                            l10n.verifyAndCompleteRegistration,
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,

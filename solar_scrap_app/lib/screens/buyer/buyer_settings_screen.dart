@@ -6,6 +6,8 @@ import '../role_selection_screen.dart';
 import 'buyer_privacy_policy_screen.dart';
 import 'buyer_terms_conditions_screen.dart';
 import 'buyer_help_center_screen.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 
 class BuyerSettingsScreen extends StatefulWidget {
   const BuyerSettingsScreen({super.key});
@@ -55,6 +57,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
   }
 
   void _showLanguagePicker() {
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -69,18 +72,18 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Select Language',
-                  style: TextStyle(
+                Text(
+                  l10n.selectLanguage,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF0F172A),
                   ),
                 ),
                 const SizedBox(height: 16),
-                _buildLanguageOption('English', 'English (Default)'),
+                _buildLanguageOption('English', l10n.languageEnglish),
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                _buildLanguageOption('Urdu', 'اردو (Urdu)'),
+                _buildLanguageOption('Urdu', l10n.languageUrdu),
                 const SizedBox(height: 12),
               ],
             ),
@@ -99,9 +102,10 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
           UserPreferencesService.instance.setLanguage(langCode);
         });
         Navigator.pop(context);
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Language changed to $langCode'),
+            content: Text(l10n.languageChanged(langCode == 'Urdu' ? 'اردو' : 'English')),
             duration: const Duration(seconds: 1),
           ),
         );
@@ -134,6 +138,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
   }
 
   void _showDeleteAccountDialog() {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -141,17 +146,17 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Delete Account',
-            style: TextStyle(
+          title: Text(
+            l10n.deleteAccount,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
-          content: const Text(
-            'Are you sure you want to delete your account? This action cannot be undone and all your profile data and bid history will be permanently deleted.',
-            style: TextStyle(
+          content: Text(
+            l10n.deleteAccountConfirm,
+            style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF6B7280),
               height: 1.4,
@@ -160,9 +165,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
+              child: Text(
+                l10n.cancel,
+                style: const TextStyle(
                   color: Color(0xFF6B7280),
                   fontWeight: FontWeight.w600,
                 ),
@@ -201,7 +206,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Delete'),
+              child: Text(l10n.delete),
             ),
           ],
         );
@@ -358,22 +363,28 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                                 final code = otpControllers.map((c) => c.text).join();
                                 setModalState(() => modalLoading = true);
                                 final ok = await AuthService.instance.verifySmsCode(verificationId: verId, smsCode: code);
+                                if (!context.mounted) return;
                                 if (ok) {
                                   await AuthService.instance.toggle2FA(true);
+                                  if (!context.mounted) return;
                                   setState(() {
                                     _phoneNumber = phoneCtrl.text.trim();
                                     _phoneVerified = true;
                                     _twoFactorEnabled = true;
                                   });
-                                  Navigator.pop(ctx);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Two-factor phone authentication verified successfully!'), backgroundColor: Color(0xFF00A63E)),
-                                  );
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Two-factor phone authentication verified successfully!'), backgroundColor: Color(0xFF00A63E)),
+                                    );
+                                  }
                                 } else {
                                   setModalState(() => modalLoading = false);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Invalid OTP code. Try 000000.'), backgroundColor: Colors.red),
-                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Invalid OTP code. Try 000000.'), backgroundColor: Colors.red),
+                                    );
+                                  }
                                 }
                               },
                         style: ElevatedButton.styleFrom(
@@ -396,6 +407,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -416,8 +428,8 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                     color: Color(0xFFF3F4F6),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.arrow_back,
+                  child: RTLHelper.backIcon(
+                    context,
                     color: Colors.black87,
                     size: 20,
                   ),
@@ -426,9 +438,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
               const SizedBox(height: 16),
 
               // Title
-              const Text(
-                'Settings',
-                style: TextStyle(
+              Text(
+                l10n.settingsTitle,
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -438,9 +450,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
               const SizedBox(height: 24),
 
               // Notifications Section Header
-              const Text(
-                'Notifications',
-                style: TextStyle(
+              Text(
+                l10n.notificationsTitle,
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -461,7 +473,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                 child: Column(
                   children: [
                     _buildSwitchRow(
-                      title: 'New Auctions',
+                      title: l10n.newAuctions,
                       value: _newAuctions,
                       onChanged: (val) {
                         setState(() {
@@ -472,7 +484,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _buildSwitchRow(
-                      title: 'Bid Updates',
+                      title: l10n.bidUpdates,
                       value: _bidUpdates,
                       onChanged: (val) {
                         setState(() {
@@ -483,7 +495,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _buildSwitchRow(
-                      title: 'Closing Soon Alerts',
+                      title: l10n.closingSoonAlerts,
                       value: _closingSoonAlerts,
                       onChanged: (val) {
                         setState(() {
@@ -494,7 +506,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _buildSwitchRow(
-                      title: 'Winning Notifications',
+                      title: l10n.winningNotifications,
                       value: _winningNotifications,
                       onChanged: (val) {
                         setState(() {
@@ -509,9 +521,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
               const SizedBox(height: 24),
 
               // Security & 2FA Section Header
-              const Text(
-                'Security & Two-Factor Authentication',
-                style: TextStyle(
+              Text(
+                l10n.securitySection,
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -532,7 +544,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                 child: Column(
                   children: [
                     _buildSwitchRow(
-                      title: 'Two-Factor Authentication (2FA)',
+                      title: l10n.twoFA,
                       value: _twoFactorEnabled,
                       onChanged: (val) async {
                         if (val && !_phoneVerified) {
@@ -556,7 +568,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Email Address', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(l10n.emailLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   Text(_email ?? 'Registered Email', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                                 ],
                               ),
@@ -572,7 +584,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                               children: [
                                 Icon(_emailVerified ? Icons.check_circle : Icons.warning_amber_rounded, size: 14, color: _emailVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B)),
                                 const SizedBox(width: 4),
-                                Text(_emailVerified ? 'Verified' : 'Unverified', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _emailVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B))),
+                                Text(_emailVerified ? l10n.verified : l10n.unverified, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _emailVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B))),
                               ],
                             ),
                           ),
@@ -610,7 +622,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                                 children: [
                                   Icon(_phoneVerified ? Icons.check_circle : Icons.warning_amber_rounded, size: 14, color: _phoneVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B)),
                                   const SizedBox(width: 4),
-                                  Text(_phoneVerified ? 'Verified' : 'Verify Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _phoneVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B))),
+                                  Text(_phoneVerified ? l10n.verified : l10n.verifyNow, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: _phoneVerified ? const Color(0xFF00A63E) : const Color(0xFFF59E0B))),
                                 ],
                               ),
                             ),
@@ -624,9 +636,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
               const SizedBox(height: 24),
 
               // General Section Header
-              const Text(
-                'General',
-                style: TextStyle(
+              Text(
+                l10n.preferencesSection,
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0F172A),
@@ -647,15 +659,17 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                 child: Column(
                   children: [
                     _buildOptionRow(
+                      context: context,
                       icon: Icons.language,
-                      title: 'Language',
-                      trailingText: _language,
+                      title: l10n.languageLabel,
+                      trailingText: _language == 'Urdu' ? l10n.languageUrdu : l10n.languageEnglish,
                       onTap: _showLanguagePicker,
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _buildOptionRow(
+                      context: context,
                       icon: Icons.shield_outlined,
-                      title: 'Privacy Policy',
+                      title: l10n.privacyPolicy,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -668,8 +682,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _buildOptionRow(
+                      context: context,
                       icon: Icons.description_outlined,
-                      title: 'Terms & Conditions',
+                      title: l10n.termsConditions,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -682,8 +697,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                     ),
                     const Divider(height: 1, color: Color(0xFFF3F4F6)),
                     _buildOptionRow(
+                      context: context,
                       icon: Icons.help_outline,
-                      title: 'Help Center',
+                      title: l10n.helpCenter,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -716,16 +732,16 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(
+                    children: [
+                      const Icon(
                         Icons.delete_outline,
                         color: Color(0xFFEF4444),
                         size: 20,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'Delete Account',
-                        style: TextStyle(
+                        l10n.deleteAccount,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFFEF4444),
@@ -772,6 +788,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
   }
 
   Widget _buildOptionRow({
+    required BuildContext context,
     required IconData icon,
     required String title,
     String? trailingText,
@@ -810,9 +827,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
               ),
               const SizedBox(width: 4),
             ],
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFFD1D5DB),
+            RTLHelper.chevronIcon(
+              context,
+              color: const Color(0xFFD1D5DB),
               size: 18,
             ),
           ],

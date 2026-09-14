@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../l10n/app_localizations.dart';
+import '../../utils/rtl_helper.dart';
 import 'seller_reset_success_screen.dart';
 
 class SellerVerifyOtpScreen extends StatefulWidget {
@@ -56,6 +58,8 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -69,9 +73,9 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.arrow_back,
-              color: Color(0xFF151516),
+            child: RTLHelper.backIcon(
+              context,
+              color: const Color(0xFF151516),
               size: 20,
             ),
           ),
@@ -81,7 +85,7 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'Verify OTP',
+          l10n.verifyOtpTitle,
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -120,7 +124,7 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
 
               // Title
               Text(
-                'Verification Code',
+                l10n.verificationCode,
                 style: GoogleFonts.poppins(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
@@ -130,25 +134,13 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
               const SizedBox(height: 10),
 
               // Description with phone number
-              RichText(
+              Text(
+                l10n.enterOtpSentToPhone(widget.phoneNumber),
                 textAlign: TextAlign.center,
-                text: TextSpan(
-                  text: 'Enter the 6-digit code sent to your mobile number\nending in ',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: const Color(0xFF6B7280),
-                    height: 1.5,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: widget.phoneNumber,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: const Color(0xFF151516),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: const Color(0xFF6B7280),
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 32),
@@ -212,8 +204,8 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
                   const SizedBox(width: 4),
                   Text(
                     _canResend
-                        ? 'Resend now'
-                        : 'Resend in 00:${_secondsRemaining.toString().padLeft(2, '0')}',
+                        ? l10n.resendNow
+                        : l10n.resendInSeconds(_secondsRemaining.toString().padLeft(2, '0')),
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       color: _canResend ? const Color(0xFF00A63E) : const Color(0xFF9CA3AF),
@@ -251,8 +243,8 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter all 6 digits'),
+                        SnackBar(
+                          content: Text(l10n.pleaseEnterAll6Digits),
                         ),
                       );
                     }
@@ -266,7 +258,7 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
                     ),
                   ),
                   child: Text(
-                    'Verify Account',
+                    l10n.verifyAccount,
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -279,7 +271,7 @@ class _SellerVerifyOtpScreenState extends State<SellerVerifyOtpScreen> {
 
               // Help Text
               Text(
-                "Didn't receive the code? Check your spam folder or try resending.",
+                l10n.didntReceiveCodeCheckSpam,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: const Color(0xFF9CA3AF),

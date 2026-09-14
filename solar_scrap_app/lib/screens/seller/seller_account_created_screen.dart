@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/auth_service.dart';
+import '../../utils/rtl_helper.dart';
 import '../role_selection_screen.dart';
 import 'seller_dashboard_screen.dart';
 import 'seller_new_listing_screen.dart';
@@ -70,17 +72,18 @@ class _SellerAccountCreatedScreenState
       if (status == 'approved') {
         _pollTimer?.cancel();
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           setState(() {
             _isApproved = true;
             _isChecking = false;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🎉 Account Verified! Admin has approved your account.'),
-              backgroundColor: Color(0xFF00A63E),
+            SnackBar(
+              content: Text(l10n.accountVerifiedSuccess),
+              backgroundColor: const Color(0xFF00A63E),
               behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ),
           );
 
@@ -93,12 +96,13 @@ class _SellerAccountCreatedScreenState
         }
         return;
       } else if (!silent && mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Status: Pending Admin Approval. Please approve from the web portal.'),
-            backgroundColor: Color(0xFFD97706),
+          SnackBar(
+            content: Text(l10n.statusPendingApprovalDesc),
+            backgroundColor: const Color(0xFFD97706),
             behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -124,6 +128,8 @@ class _SellerAccountCreatedScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -187,8 +193,8 @@ class _SellerAccountCreatedScreenState
                 // Title
                 Text(
                   _isApproved
-                      ? 'Account Approved & Active!'
-                      : 'Account Request Submitted',
+                      ? l10n.sellerAccountApprovedTitle
+                      : l10n.accountRequestSubmittedTitle,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -201,8 +207,8 @@ class _SellerAccountCreatedScreenState
                 // Description
                 Text(
                   _isApproved
-                      ? 'Your seller profile has been verified and approved by the Solar Scrap Admin team. You now have full access to create listings and manage sales.'
-                      : 'Your seller registration request has been submitted for admin review. Once verified and approved by the admin team, your account will unlock automatically.',
+                      ? l10n.sellerApprovedDesc
+                      : l10n.accountPendingReviewDesc,
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF6B7280),
@@ -239,8 +245,8 @@ class _SellerAccountCreatedScreenState
                       const SizedBox(width: 6),
                       Text(
                         _isApproved
-                            ? 'Status: Approved & Verified'
-                            : 'Status: Pending Admin Approval',
+                            ? l10n.statusApprovedVerified
+                            : l10n.statusPendingAdminApproval,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -298,8 +304,8 @@ class _SellerAccountCreatedScreenState
                             const SizedBox(height: 3),
                             Text(
                               _isApproved
-                                  ? 'Verified Seller Account · ${widget.location}'
-                                  : 'Pending Verification · ${widget.location}',
+                                  ? l10n.verifiedSellerAccountAt(widget.location)
+                                  : l10n.pendingVerificationAt(widget.location),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _isApproved
@@ -353,18 +359,18 @@ class _SellerAccountCreatedScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Go To Dashboard',
-                            style: TextStyle(
+                            l10n.goToDashboard,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded, size: 20),
+                          const SizedBox(width: 8),
+                          RTLHelper.forwardIcon(context, size: 20, color: Colors.white),
                         ],
                       ),
                     ),
@@ -394,9 +400,9 @@ class _SellerAccountCreatedScreenState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Create First Listing',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.createFirstListing,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -440,14 +446,14 @@ class _SellerAccountCreatedScreenState
                                 strokeWidth: 2.5,
                               ),
                             )
-                          : const Row(
+                          : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.refresh_rounded, size: 20),
-                                SizedBox(width: 8),
+                                const Icon(Icons.refresh_rounded, size: 20),
+                                const SizedBox(width: 8),
                                 Text(
-                                  'Check Approval Status',
-                                  style: TextStyle(
+                                  l10n.checkApprovalStatus,
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -466,18 +472,18 @@ class _SellerAccountCreatedScreenState
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.info_outline_rounded,
                           size: 18,
                           color: Color(0xFF6B7280),
                         ),
-                        SizedBox(width: 10),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'App is actively monitoring for admin approval. Once approved on the web portal, access unlocks automatically.',
-                            style: TextStyle(
+                            l10n.monitoringAdminApprovalDesc,
+                            style: const TextStyle(
                               fontSize: 12,
                               color: Color(0xFF6B7280),
                               height: 1.3,
@@ -506,9 +512,9 @@ class _SellerAccountCreatedScreenState
                       size: 18,
                       color: Color(0xFF6B7280),
                     ),
-                    label: const Text(
-                      'Switch Account / Return to Sign In',
-                      style: TextStyle(
+                    label: Text(
+                      l10n.switchAccountReturnSignIn,
+                      style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF6B7280),
                         fontWeight: FontWeight.w500,

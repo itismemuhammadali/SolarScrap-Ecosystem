@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../models/listing_draft.dart';
+import '../../../utils/rtl_helper.dart';
 import '../seller_upload_images_screen.dart';
 import 'seller_equipment_step_others.dart';
 
@@ -74,6 +76,7 @@ class _SellerEquipmentStepStructureState
     required List<String> options,
     required String selectedValue,
     required Function(String) onChanged,
+    String Function(String)? labelBuilder,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,6 +93,7 @@ class _SellerEquipmentStepStructureState
         Row(
           children: options.map((option) {
             final isSelected = selectedValue == option;
+            final displayText = labelBuilder != null ? labelBuilder(option) : option;
             return Expanded(
               child: GestureDetector(
                 onTap: () {
@@ -115,7 +119,7 @@ class _SellerEquipmentStepStructureState
                   ),
                   child: Center(
                     child: Text(
-                      option,
+                      displayText,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -137,6 +141,8 @@ class _SellerEquipmentStepStructureState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -151,8 +157,8 @@ class _SellerEquipmentStepStructureState
               color: const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.arrow_back,
+            child: RTLHelper.backIcon(
+              context,
               color: Colors.black,
               size: 18,
             ),
@@ -162,9 +168,9 @@ class _SellerEquipmentStepStructureState
           },
         ),
         centerTitle: true,
-        title: const Text(
-          'Structure Details',
-          style: TextStyle(
+        title: Text(
+          l10n.structureDetails,
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.black,
@@ -187,8 +193,8 @@ class _SellerEquipmentStepStructureState
                   final int totalSteps = widget.isCompleteSolarSystem ? (isHybrid ? 7 : 6) : 6;
                   final int currentStep = widget.isCompleteSolarSystem ? (isHybrid ? 6 : 5) : 2;
                   final String stepText = widget.isCompleteSolarSystem
-                      ? 'Step $currentStep of $totalSteps (Structure)'
-                      : 'Step 2 of 6';
+                      ? l10n.stepXOfYWithDetail(currentStep, totalSteps, l10n.stepDetailStructure)
+                      : l10n.stepXOfY(2, 6);
                   final String percentText =
                       '${((currentStep / totalSteps) * 100).round()}%';
 
@@ -259,8 +265,8 @@ class _SellerEquipmentStepStructureState
                     const SizedBox(width: 8),
                     Text(
                       widget.isCompleteSolarSystem
-                          ? 'Complete System · Structure'
-                          : 'Structure',
+                          ? l10n.completeSystemBannerStructure
+                          : l10n.structure,
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -274,24 +280,37 @@ class _SellerEquipmentStepStructureState
 
                     // Structure Type
                     _buildOptionButtons(
-                      label: 'Structure Type',
+                      label: l10n.structureType,
                       options: ['Elevated', 'Non Elevated'],
                       selectedValue: _selectedStructureType,
                       onChanged: (val) => _selectedStructureType = val,
+                      labelBuilder: (t) => t == 'Elevated' ? l10n.structureElevated : l10n.structureNonElevated,
                     ),
 
                     // Structure Metal
                     _buildOptionButtons(
-                      label: 'Structure Metal',
+                      label: l10n.structureMetal,
                       options: ['AL', 'GL', 'Hot dip'],
                       selectedValue: _selectedStructureMetal,
                       onChanged: (val) => _selectedStructureMetal = val,
+                      labelBuilder: (m) {
+                        switch (m) {
+                          case 'AL':
+                            return l10n.metalAL;
+                          case 'GL':
+                            return l10n.metalGL;
+                          case 'Hot dip':
+                            return l10n.metalHotDip;
+                          default:
+                            return m;
+                        }
+                      },
                     ),
 
               // Price Demand (only if not Complete Solar System)
               if (!widget.isCompleteSolarSystem)
                 _buildTextField(
-                  label: 'Price Demand',
+                  label: l10n.priceDemand,
                   hint: 'Rs, 64,00000',
                   controller: _priceDemandController,
                 ),
@@ -315,9 +334,9 @@ class _SellerEquipmentStepStructureState
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Back',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.back,
+                        style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF00A63E),
@@ -383,9 +402,9 @@ class _SellerEquipmentStepStructureState
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.continueButton,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                           ),

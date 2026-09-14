@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/bid.dart';
 import '../../models/listing.dart';
 import '../../services/bid_service.dart';
@@ -28,6 +29,7 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
   }
 
   Future<void> _handleConfirmReject() async {
+    final l10n = AppLocalizations.of(context);
     if (widget.bid != null) {
       setState(() => _isProcessing = true);
       showDialog(
@@ -41,29 +43,33 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
       final updated = await BidService.instance.rejectBid(widget.bid!.id);
 
       if (!mounted) return;
-      Navigator.pop(context); // Close loading dialog
+      if (context.mounted) Navigator.pop(context); // Close loading dialog
       setState(() => _isProcessing = false);
 
       if (updated != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Offer rejected.'),
-            backgroundColor: Color(0xFFDC2626),
-          ),
-        );
-        Navigator.pop(context, true);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.offerRejectedSnackbar),
+              backgroundColor: const Color(0xFFDC2626),
+            ),
+          );
+          Navigator.pop(context, true);
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to reject offer.'),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.failedToRejectOffer),
+              backgroundColor: Colors.red.shade700,
+            ),
+          );
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Offer rejected successfully!'),
+        SnackBar(
+          content: Text(l10n.offerRejectedSnackbar),
         ),
       );
       Navigator.pop(context, true);
@@ -72,6 +78,7 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -104,9 +111,9 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
                 const SizedBox(height: 24),
 
                 // Title
-                const Text(
-                  'Reject this offer?',
-                  style: TextStyle(
+                Text(
+                  l10n.rejectOfferPrompt,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -117,7 +124,7 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
 
                 // Description
                 Text(
-                  'The buyer will be notified that their bid of $_offeredPrice was declined.',
+                  l10n.rejectOfferDesc(_offeredPrice),
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey.shade600,
@@ -141,9 +148,9 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
                           ),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.cancel,
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: Color(0xFF00A63E),
@@ -174,9 +181,9 @@ class _SellerRejectOfferScreenState extends State<SellerRejectOfferScreen> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: const Text(
-                            'Confirm Reject',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.confirmReject,
+                            style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
