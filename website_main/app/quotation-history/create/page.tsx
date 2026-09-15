@@ -286,12 +286,12 @@ export default function CreateQuotationPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-6">
+      <main className="flex-1 p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-6 print:p-0 print:m-0 print:max-w-none print:w-full print:space-y-0">
         {/* Back Button */}
-        <div>
+        <div className="no-print print:hidden">
           <button
             onClick={() => router.push("/quotation-history")}
-            className="inline-flex items-center gap-2 px-6 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-lg text-sm font-semibold shadow-xs transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-lg text-sm font-semibold shadow-xs transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 text-gray-500" />
             <span>Back</span>
@@ -299,9 +299,9 @@ export default function CreateQuotationPage() {
         </div>
 
         {/* 2-Column Builder Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start print:block print:w-full">
           {/* Left Column: Input Form Card */}
-          <div className="lg:col-span-6 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 shadow-xs space-y-8">
+          <div className="lg:col-span-6 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 shadow-xs space-y-8 print:hidden">
             {/* Customer Header Tag (Exact as Screenshot 3) */}
             <div className="flex items-center justify-between pb-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
@@ -550,24 +550,24 @@ export default function CreateQuotationPage() {
             </div>
           </div>
 
-          {/* Right Column: Live Quotation Document & Actions (Exact as Screenshot 3) */}
-          <div className="lg:col-span-6 space-y-4">
-            {/* The Isolated Printable Slip matching Screenshot Exactly */}
+          {/* Right Column: Live Quotation Document & Actions */}
+          <div className="lg:col-span-6 space-y-4 print:w-full print:space-y-0">
+            {/* The Isolated Printable Slip matching Figma Exactly */}
             <div
               id="printable-quotation"
-              className="bg-white rounded-3xl border border-gray-200/70 p-4 sm:p-5 shadow-sm flex flex-col gap-3 select-none"
+              className="bg-white rounded-3xl border border-gray-200/70 p-4 sm:p-5 shadow-sm flex flex-col gap-3 select-none print:border-none print:shadow-none print:p-0 print:m-0 print:w-full print:max-w-none print:gap-4"
             >
               {/* ===================== BOX 1: HEADER & RECIPIENT METADATA ===================== */}
-              <div className="print-card bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/60">
+              <div className="print-card bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 print:p-6 print:rounded-2xl border border-gray-200/60">
                 {/* Logo & Quotation Heading */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center">
                     <Image
                       src="/images/solar-scrap-img.png"
                       alt="Solar Scrap"
-                      width={120}
-                      height={55}
-                      className="w-[110px] sm:w-[120px] h-auto object-contain"
+                      width={140}
+                      height={65}
+                      className="w-[110px] sm:w-[120px] print:w-[140px] h-auto object-contain"
                       priority
                     />
                   </div>
@@ -576,23 +576,23 @@ export default function CreateQuotationPage() {
                     {isInvoice ? (
                       <div>
                         <div className="flex items-center justify-end gap-1.5 mb-1">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F9ED] text-[#009845] border border-[#009845]/40 uppercase tracking-wider">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F9ED] text-[#009845] border border-[#009845]/40 uppercase tracking-wider print:text-xs">
                             Paid / Issued
                           </span>
                         </div>
-                        <h2 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
+                        <h2 className="text-xl print:text-2xl font-black text-gray-900 tracking-tight leading-tight">
                           Commercial Invoice
                         </h2>
-                        <p className="text-[11px] font-mono text-gray-500 mt-0.5">
+                        <p className="text-[11px] print:text-xs font-mono text-gray-500 mt-0.5">
                           #INV-2024-005
                         </p>
                       </div>
                     ) : (
                       <div>
-                        <h2 className="text-xl font-black text-gray-900 tracking-tight leading-tight">
+                        <h2 className="text-xl print:text-2xl font-black text-gray-900 tracking-tight leading-tight">
                           Quotation
                         </h2>
-                        <p className="text-[11px] font-mono text-gray-500 mt-0.5">
+                        <p className="text-[11px] print:text-xs font-mono text-gray-500 mt-0.5">
                           #Qt-2024-005
                         </p>
                       </div>
@@ -600,24 +600,26 @@ export default function CreateQuotationPage() {
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200/70 my-3" />
+                <div className="border-t border-gray-200/70 my-3 print:my-4" />
 
                 {/* Details Row */}
-                <div className="flex justify-between items-start gap-4 text-xs">
+                <div className="flex justify-between items-start gap-4 text-xs print:text-sm">
                   <div>
-                    <p className="text-xs font-bold text-gray-900">To,</p>
-                    <p className="text-xs font-bold text-gray-900 mt-0.5">
+                    <p className="text-xs print:text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      {isInvoice ? "Invoice To:" : "Quotation To:"}
+                    </p>
+                    <p className="text-xs print:text-sm font-bold text-gray-900 mt-0.5">
                       {customerName || "Ahmed Raza"}
                     </p>
-                    <p className="text-[11px] text-gray-600 mt-0.5">
+                    <p className="text-[11px] print:text-xs text-gray-600 mt-0.5">
                       {phone || "+92 345 9990000"}
                     </p>
-                    <p className="text-[11px] text-gray-600">
+                    <p className="text-[11px] print:text-xs text-gray-600">
                       {location || "Rawalpindi, Bahria Town"}
                     </p>
                   </div>
 
-                  <div className="space-y-1 text-right text-[11px]">
+                  <div className="space-y-1 text-right text-[11px] print:text-xs">
                     <p className="flex justify-end gap-2">
                       <span className="font-bold text-gray-900">
                         {isInvoice ? "Invoice Date:" : "Date:"}
@@ -641,12 +643,12 @@ export default function CreateQuotationPage() {
               </div>
 
               {/* ===================== BOX 2: ITEMS TABLE, TOTALS & TERMS ===================== */}
-              <div className="print-card bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 border border-gray-200/60 space-y-3">
+              <div className="print-card bg-[#F4F6F8] rounded-2xl p-4 sm:p-5 print:p-6 print:rounded-2xl border border-gray-200/60 space-y-3">
                 {/* Table Headers */}
-                <div className="grid grid-cols-12 text-[11px] font-bold text-gray-800 pb-2 border-b border-gray-200/70">
-                  <div className="col-span-6">Items</div>
+                <div className="grid grid-cols-12 text-[11px] print:text-xs font-bold text-gray-700 pb-2 print:pb-2.5 border-b border-gray-200/70 uppercase tracking-wider">
+                  <div className="col-span-6">Items &amp; Description</div>
                   <div className="col-span-2 text-center">QTY</div>
-                  <div className="col-span-2 text-center">Rate ( PKR )</div>
+                  <div className="col-span-2 text-right">Rate ( PKR )</div>
                   <div className="col-span-2 text-right">Amount ( PKR )</div>
                 </div>
 
@@ -655,15 +657,15 @@ export default function CreateQuotationPage() {
                   {items.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="grid grid-cols-12 items-center text-[11px] pb-2 border-b border-gray-200/60"
+                      className="grid grid-cols-12 items-center text-[11px] print:text-xs pb-2 print:py-2 border-b border-gray-200/60"
                     >
-                      <div className="col-span-6 text-gray-800 font-medium truncate pr-1">
-                        {idx + 1}.{item.name}
+                      <div className="col-span-6 text-gray-800 font-medium truncate print:whitespace-normal print:overflow-visible pr-2">
+                        {idx + 1}. {item.name}
                       </div>
-                      <div className="col-span-2 text-center text-gray-700">
+                      <div className="col-span-2 text-center text-gray-700 font-medium">
                         {item.qty}
                       </div>
-                      <div className="col-span-2 text-center text-gray-700">
+                      <div className="col-span-2 text-right text-gray-700">
                         {formatNumber(item.rate)}
                       </div>
                       <div className="col-span-2 text-right font-bold text-gray-900">
@@ -674,48 +676,73 @@ export default function CreateQuotationPage() {
                 </div>
 
                 {/* Subtotal & Adjustment */}
-                <div className="pt-1 space-y-1 text-xs">
-                  <div className="flex justify-between items-center text-gray-900 font-bold text-[11px]">
+                <div className="pt-1.5 print:pt-2 space-y-1 text-xs print:text-sm">
+                  <div className="flex justify-between items-center text-gray-900 font-semibold text-[11px] print:text-xs">
                     <span>Sub total</span>
-                    <span>{formatNumber(subTotal)}</span>
+                    <span>PKR {formatNumber(subTotal)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-gray-900 font-bold text-[11px]">
+                  <div className="flex justify-between items-center text-gray-600 font-medium text-[11px] print:text-xs">
                     <span>Adjustment</span>
-                    <span>{adjustment === 0 ? "00" : formatNumber(adjustment)}</span>
+                    <span>PKR {adjustment === 0 ? "00" : formatNumber(adjustment)}</span>
                   </div>
                 </div>
 
                 {/* Solid Green Total Offer / Total Amount Bar */}
-                <div className="print-highlight bg-[#009845] text-white rounded-xl px-4 py-2.5 flex justify-between items-center font-bold text-xs shadow-xs mt-1">
-                  <span>{isInvoice ? "Total Amount ( PKR )" : "Total Offer ( PKR )"}</span>
-                  <span>{formatNumber(totalOffer)}</span>
+                <div className="print-highlight bg-[#009845] text-white rounded-xl px-4 py-2.5 print:py-3.5 print:px-6 flex justify-between items-center font-bold text-xs print:text-sm shadow-xs mt-1">
+                  <span className="uppercase tracking-wider">{isInvoice ? "Total Amount ( PKR )" : "Total Offer ( PKR )"}</span>
+                  <span className="text-sm print:text-base font-black">PKR {formatNumber(totalOffer)}</span>
                 </div>
 
-                <div className="border-t border-gray-200/70 pt-2" />
+                <div className="border-t border-gray-200/70 pt-2 print:pt-3" />
 
                 {/* Terms & Conditions */}
-                <div className="space-y-1 text-[11px] text-gray-600">
+                <div className="space-y-1 text-[11px] print:text-xs text-gray-600">
                   <p className="font-bold text-gray-900">Terms &amp; Conditions</p>
                   {isInvoice ? (
                     <>
-                      <p className="text-[10px] text-gray-500">
+                      <p className="text-[10px] print:text-xs text-gray-500">
                         • Official commercial invoice for inspected solar scrap &amp; equipment.
                       </p>
-                      <p className="text-[10px] text-gray-500">
+                      <p className="text-[10px] print:text-xs text-gray-500">
                         • Certified transaction and equipment handover.
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="text-[10px] text-gray-500">
+                      <p className="text-[10px] print:text-xs text-gray-500">
                         • This is an estimated offer and valid for the mentioned date only.
                       </p>
-                      <p className="text-[10px] text-gray-500">
-                        • Final price may vary after physical inspection
+                      <p className="text-[10px] print:text-xs text-gray-500">
+                        • Final price may vary after physical inspection.
                       </p>
                     </>
                   )}
-                  <p className="font-bold text-gray-900 pt-1 text-[11px]">Thank you</p>
+                  <p className="font-bold text-gray-900 pt-1 text-[11px] print:text-xs">Thank you for choosing Solar Scrap.</p>
+                </div>
+              </div>
+
+              {/* ===================== OFFICIAL SIGNATURES & CORPORATE FOOTER (PRINT ONLY) ===================== */}
+              <div className="hidden print:block pt-8 space-y-10">
+                <div className="grid grid-cols-2 gap-12 pt-6">
+                  <div className="space-y-14">
+                    <div className="border-b-2 border-gray-400 w-52" />
+                    <div>
+                      <p className="text-xs font-bold text-gray-900">Customer Acceptance</p>
+                      <p className="text-[10px] text-gray-500">Authorized Signature &amp; Date</p>
+                    </div>
+                  </div>
+                  <div className="space-y-14 flex flex-col items-end">
+                    <div className="border-b-2 border-gray-400 w-52" />
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-gray-900">Solar Scrap Representative</p>
+                      <p className="text-[10px] text-gray-500">Official Stamp &amp; Signature</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-300 pt-3 flex justify-between items-center text-[10px] text-gray-500">
+                  <span>Solar Scrap Official • Official Quotation &amp; Commercial Invoice Document</span>
+                  <span>support@solarscrap.pk • Verified Platform System</span>
                 </div>
               </div>
             </div>

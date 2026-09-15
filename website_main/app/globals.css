@@ -38,7 +38,7 @@ body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm 15mm;
+    margin: 10mm 12mm;
   }
 
   *,
@@ -47,6 +47,9 @@ body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
+    animation: none !important;
+    transition: none !important;
+    box-sizing: border-box !important;
   }
 
   /* Reset body and html */
@@ -67,6 +70,18 @@ body {
     visibility: hidden !important;
   }
 
+  /* Reset overlay / modal wrappers if open during print */
+  .fixed.inset-0,
+  div[class*="fixed"] {
+    position: static !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
   /* Only reveal #printable-quotation and its descendants */
   #printable-quotation,
   #printable-quotation * {
@@ -81,7 +96,7 @@ body {
   nav,
   header,
   aside,
-  footer,
+  footer:not(#printable-quotation footer),
   button,
   input,
   select,
@@ -91,25 +106,38 @@ body {
   }
 
   #printable-quotation {
+    display: block !important;
     position: absolute !important;
-    left: 50% !important;
-    top: 20px !important;
-    transform: translateX(-50%) !important;
+    left: 0 !important;
+    top: 0 !important;
+    right: 0 !important;
     width: 100% !important;
-    max-width: 480px !important;
-    margin: 0 auto !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     box-shadow: none !important;
     border: none !important;
+    transform: none !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  /* Ensure text is never cut off or truncated in print */
+  #printable-quotation .truncate,
+  #printable-quotation [class*="truncate"] {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    word-break: break-word !important;
   }
 
   #printable-quotation .print-card {
     background: #F4F6F8 !important;
     border: 1px solid #E5E7EB !important;
     border-radius: 16px !important;
+    width: 100% !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
