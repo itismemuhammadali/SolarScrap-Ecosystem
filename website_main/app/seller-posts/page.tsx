@@ -11,7 +11,6 @@ import {
   MoreVertical,
   Eye,
   Edit3,
-  DollarSign,
   Gavel,
   Trash2,
   MapPin,
@@ -80,7 +79,7 @@ export default function SellerPostsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [adminName, setAdminName] = useState("Admin Platform");
   const [adminPhotoUrl, setAdminPhotoUrl] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState("New");
+  const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [topSearch, setTopSearch] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -236,16 +235,32 @@ export default function SellerPostsPage() {
 
   const filterTabs = [
     {
-      name: "New",
-      count: posts.filter((p) => ["New", "Pending Approval", "pending", "created"].includes(p.status)).length,
+      name: "All",
+      count: posts.length,
     },
     {
-      name: "Under Review",
-      count: posts.filter((p) => ["Under Review", "under_review", "in_review", "Review"].includes(p.status)).length,
+      name: "New",
+      count: posts.filter((p) =>
+        [
+          "New",
+          "Pending Approval",
+          "pending",
+          "created",
+          "Price Offered",
+          "price_offered",
+          "offered",
+          "Under Review",
+          "in_review",
+        ].includes(p.status)
+      ).length,
     },
     {
       name: "Price Offered",
       count: posts.filter((p) => ["Price Offered", "price_offered", "offered"].includes(p.status)).length,
+    },
+    {
+      name: "Under Review",
+      count: posts.filter((p) => ["Under Review", "under_review", "in_review", "Review"].includes(p.status)).length,
     },
     {
       name: "Negotiation",
@@ -263,8 +278,23 @@ export default function SellerPostsPage() {
 
   // Filtering
   const filteredPosts = posts.filter((p) => {
-    if (activeFilter === "New") {
-      if (!["New", "Pending Approval", "pending", "created"].includes(p.status)) return false;
+    if (activeFilter === "All") {
+      // Show all posts in the All tab
+    } else if (activeFilter === "New") {
+      if (
+        ![
+          "New",
+          "Pending Approval",
+          "pending",
+          "created",
+          "Price Offered",
+          "price_offered",
+          "offered",
+          "Under Review",
+          "in_review",
+        ].includes(p.status)
+      )
+        return false;
     } else if (activeFilter === "Under Review") {
       if (!["Under Review", "under_review", "in_review", "Review"].includes(p.status)) return false;
     } else if (activeFilter === "Price Offered") {
@@ -760,8 +790,8 @@ export default function SellerPostsPage() {
                               ? "bg-blue-50 text-blue-600 border border-blue-200"
                               : post.status === "Under Review"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
-                              : post.status === "Price Offered"
-                              ? "bg-purple-50 text-purple-700 border border-purple-200"
+                              : ["Price Offered", "price_offered", "offered"].includes(post.status)
+                              ? "bg-purple-50 text-purple-700 border border-purple-200 font-semibold"
                               : post.status === "Negotiation"
                               ? "bg-orange-50 text-orange-700 border border-orange-200"
                               : post.status === "Auction"
@@ -773,20 +803,38 @@ export default function SellerPostsPage() {
                               : "bg-gray-100 text-gray-700 border border-gray-200"
                           }`}
                         >
-                          {["Pending Approval", "pending", "created"].includes(post.status) ? "New" : post.status}
+                          {["Pending Approval", "pending", "created"].includes(post.status)
+                            ? "New"
+                            : ["Price Offered", "price_offered", "offered"].includes(post.status)
+                            ? post.offeredPrice
+                              ? `Offered: Rs ${post.offeredPrice.toLocaleString()}`
+                              : "Price Offered"
+                            : post.status}
                         </span>
                       </td>
 
-                      {/* Triple Dots Action Menu */}
+                      {/* Triple Dots Action Menu & Quick To Auction Button */}
                       <td className="py-3.5 px-2 text-right relative whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={(e) => toggleActionMenu(e, post.id)}
-                          className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                          aria-label="Actions"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAuction(post)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-white bg-[#009845] hover:bg-[#008230] rounded-lg shadow-xs transition-colors cursor-pointer"
+                            title="Make live on Auction List"
+                          >
+                            <Gavel className="w-3 h-3" />
+                            <span>To Auction</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => toggleActionMenu(e, post.id)}
+                            className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                            aria-label="Actions"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </div>
 
                         {/* Dropdown Menu popping out over all containers */}
                         {actionMenuOpenId === post.id && menuPos && (
@@ -846,7 +894,7 @@ export default function SellerPostsPage() {
                                 onClick={() => handleOpenSharePrice(post)}
                                 className="w-full px-3 py-1.5 text-[12.5px] text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 rounded-lg transition-colors cursor-pointer"
                               >
-                                <DollarSign className="w-4 h-4 text-gray-400 stroke-[1.75] shrink-0" />
+                                <span className="w-4 h-4 text-[10px] font-bold text-gray-500 rounded bg-gray-100 flex items-center justify-center shrink-0">Rs</span>
                                 <span>Share Price</span>
                               </button>
 
@@ -1168,7 +1216,7 @@ export default function SellerPostsPage() {
           <div className="bg-white rounded-2xl max-w-[420px] w-full p-5 sm:p-6 shadow-2xl border border-gray-100">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-[#009845]" />
+                <span className="w-6 h-6 rounded-lg bg-emerald-50 text-[#009845] font-black text-xs flex items-center justify-center border border-[#009845]/20 shadow-2xs">Rs</span>
                 <span>Share Price Offer</span>
               </h3>
               <button
@@ -1185,12 +1233,12 @@ export default function SellerPostsPage() {
                 <p className="font-bold text-gray-800">{selectedPost.title} ({selectedPost.postId})</p>
                 <p className="text-gray-500 mt-0.5">Seller: {selectedPost.sellerName} • {selectedPost.sellerPhone}</p>
                 <p className="text-gray-500 mt-1">
-                  Demand Price: <span className="font-semibold text-gray-800">PKR {selectedPost.priceExpected.toLocaleString()}</span>
+                  Demand Price: <span className="font-semibold text-gray-800">Rs. {selectedPost.priceExpected.toLocaleString()}</span>
                 </p>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-1">Offered Price to Seller (PKR)</label>
+                <label className="block text-gray-700 font-semibold mb-1">Offered Price to Seller (Rs)</label>
                 <input
                   type="number"
                   value={offeredPriceInput}
@@ -1217,7 +1265,7 @@ export default function SellerPostsPage() {
                   onClick={() => {
                     const cleanPhone = selectedPost.sellerPhone.replace(/[^0-9]/g, "");
                     const msg = encodeURIComponent(
-                      `Hello ${selectedPost.sellerName}, Solar Scrap has evaluated your post ${selectedPost.postId} (${selectedPost.title}). Our offered valuation is PKR ${offeredPriceInput.toLocaleString()}.`
+                      `Hello ${selectedPost.sellerName}, Solar Scrap has evaluated your post ${selectedPost.postId} (${selectedPost.title}). Our offered valuation is Rs. ${offeredPriceInput.toLocaleString()}.`
                     );
                     window.open(`https://wa.me/${cleanPhone}?text=${msg}`, "_blank");
                   }}
@@ -1419,7 +1467,7 @@ export default function SellerPostsPage() {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-1">Starting Bid (PKR)</label>
+                <label className="block text-gray-700 font-semibold mb-1">Starting Bid (Rs)</label>
                 <input
                   type="number"
                   value={auctionStartBid}
@@ -1499,7 +1547,7 @@ export default function SellerPostsPage() {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-1">Quoted Purchase Price (PKR)</label>
+                <label className="block text-gray-700 font-semibold mb-1">Quoted Purchase Price (Rs)</label>
                 <input
                   type="number"
                   value={quotationAmount}
