@@ -3011,13 +3011,13 @@ abstract class AppLocalizations {
   /// No description provided for @conditionShatterGlass.
   ///
   /// In en, this message translates to:
-  /// **'Shatter lass'**
+  /// **'Shatter Glass'**
   String get conditionShatterGlass;
 
   /// No description provided for @conditionGood.
   ///
   /// In en, this message translates to:
-  /// **'Good Conditions'**
+  /// **'Good Condition'**
   String get conditionGood;
 
   /// No description provided for @conditionOther.

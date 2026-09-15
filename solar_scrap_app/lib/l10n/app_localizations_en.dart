@@ -1555,10 +1555,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get conditionBulletHit => 'Bullet Hit';
 
   @override
-  String get conditionShatterGlass => 'Shatter lass';
+  String get conditionShatterGlass => 'Shatter Glass';
 
   @override
-  String get conditionGood => 'Good Conditions';
+  String get conditionGood => 'Good Condition';
 
   @override
   String get conditionOther => 'Other';

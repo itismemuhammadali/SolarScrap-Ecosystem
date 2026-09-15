@@ -28,6 +28,28 @@ class _SellerEquipmentStepSolarPanelsState
   final TextEditingController _priceDemandController = TextEditingController();
   String _selectedCondition = 'Scrap';
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.draft != null) {
+      final specs = widget.draft!.specs;
+      if (specs['panels_count'] != null) {
+        _panelsCountController.text = specs['panels_count'].toString();
+      }
+      if (specs['watts_per_panel'] != null) {
+        _wattsController.text = specs['watts_per_panel'].toString();
+      }
+      if (specs['panel_condition'] != null &&
+          specs['panel_condition'].toString().isNotEmpty) {
+        _selectedCondition = specs['panel_condition'].toString();
+      }
+      if (widget.draft!.priceDemand != null && widget.draft!.priceDemand! > 0) {
+        _priceDemandController.text =
+            widget.draft!.priceDemand!.toInt().toString();
+      }
+    }
+  }
+
   Widget _buildTextField({
     required String label,
     required String hint,
@@ -67,13 +89,21 @@ class _SellerEquipmentStepSolarPanelsState
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
       ],
     );
   }
 
-  Widget _buildConditionChip(String label, String value, {bool expand = false}) {
-    final isSelected = _selectedCondition == value;
+  Widget _buildConditionChip(
+    String label,
+    String value, {
+    bool expand = false,
+    int flex = 1,
+  }) {
+    final sel = _selectedCondition.trim().toLowerCase();
+    final val = value.trim().toLowerCase();
+    final isSelected = sel == val || (sel.startsWith('good') && val.startsWith('good'));
+
     final chip = GestureDetector(
       onTap: () {
         setState(() {
@@ -81,8 +111,8 @@ class _SellerEquipmentStepSolarPanelsState
         });
       },
       child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFE6F9ED) : Colors.white,
           border: Border.all(
@@ -94,15 +124,19 @@ class _SellerEquipmentStepSolarPanelsState
           borderRadius: BorderRadius.circular(14),
         ),
         child: Center(
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected
-                  ? const Color(0xFF00A63E)
-                  : const Color(0xFF71717A),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? const Color(0xFF00A63E)
+                    : const Color(0xFF71717A),
+              ),
             ),
           ),
         ),
@@ -110,7 +144,7 @@ class _SellerEquipmentStepSolarPanelsState
     );
 
     if (expand) {
-      return Expanded(child: chip);
+      return Expanded(flex: flex, child: chip);
     }
     return chip;
   }
@@ -139,14 +173,12 @@ class _SellerEquipmentStepSolarPanelsState
           ],
         ),
         const SizedBox(height: 10),
-        // Row 2: 2 buttons matching width of Row 1
+        // Row 2: 2 buttons (Good Condition takes flex 2 width to fit comfortably on 1 line, Other takes flex 1)
         Row(
           children: [
-            _buildConditionChip(l10n.conditionGood, 'Good Conditions', expand: true),
+            _buildConditionChip(l10n.conditionGood, 'Good Condition', expand: true, flex: 2),
             const SizedBox(width: 8),
-            _buildConditionChip(l10n.conditionOther, 'Other', expand: true),
-            const SizedBox(width: 8),
-            const Expanded(child: SizedBox()),
+            _buildConditionChip(l10n.conditionOther, 'Other', expand: true, flex: 1),
           ],
         ),
         const SizedBox(height: 16),

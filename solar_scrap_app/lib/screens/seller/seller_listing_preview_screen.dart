@@ -69,6 +69,7 @@ class _SellerListingPreviewScreenState
       case 'shatter lass':
         return l10n.conditionShatterGlass;
       case 'good':
+      case 'good condition':
       case 'good conditions':
         return l10n.conditionGood;
       case 'working':
