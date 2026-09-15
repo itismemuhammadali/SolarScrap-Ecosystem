@@ -79,6 +79,18 @@ const panelConditions = [
 const inverterConditions = ["Working", "Non working"];
 const batteryConditions = ["Working", "Non working", "Good Conditions", "Scrap"];
 
+export interface AuctionLotItem {
+  id: string;
+  category: string;
+  title: string;
+  qty: string;
+  condition: string;
+  priceDemand: number;
+  specs: Record<string, any>;
+  images: string[];
+  icon: string;
+}
+
 export default function CreateAuctionPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -204,6 +216,7 @@ export default function CreateAuctionPage() {
   }
 
   const [uploadedImages, setUploadedImages] = useState<UploadedImageItem[]>([]);
+  const [combinedItems, setCombinedItems] = useState<AuctionLotItem[]>([]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -337,7 +350,134 @@ export default function CreateAuctionPage() {
     showToast("Form details cleared.");
   };
 
-  const handleSubmitAuction = async (createAnother: boolean = false) => {
+  const buildCurrentLotItem = (): AuctionLotItem => {
+    const rawPrice = Number(contactInfo.priceDemand.replace(/[^0-9]/g, "")) || 0;
+    const catIcons: Record<string, string> = {
+      "Solar Panels": "☀️",
+      "Inverters": "⚡",
+      "Batteries": "🔋",
+      "Cables": "⚡",
+      "Structure": "☀️",
+      "Complete Solar System": "⚡",
+    };
+
+    let specsObj: Record<string, any> = {};
+    let qtyStr = "1 Lot";
+    let conditionStr = "Good";
+
+    if (selectedCategory === "Solar Panels") {
+      specsObj = {
+        panels_count: solarPanels.panelsCount,
+        watts_per_panel: solarPanels.wattsPerPanel,
+        condition: solarPanels.condition,
+        brand: solarPanels.brand,
+        purchase_year: solarPanels.purchaseYear,
+      };
+      qtyStr = `${solarPanels.panelsCount || "200"} Panels`;
+      conditionStr = solarPanels.condition;
+    } else if (selectedCategory === "Inverters") {
+      specsObj = {
+        inverter_type: inverters.type,
+        rated_power: inverters.ratedPower,
+        inverter_brand: inverters.brand,
+        condition: inverters.condition,
+      };
+      qtyStr = `${inverters.ratedPower || "1 Unit"}`;
+      conditionStr = inverters.condition;
+    } else if (selectedCategory === "Batteries") {
+      specsObj = {
+        battery_count: batteries.count,
+        brand: batteries.brand,
+        capacity: batteries.capacity,
+        battery_type: batteries.type,
+        purchase_year: batteries.purchaseYear,
+        years_used: batteries.yearsUsed,
+        condition: batteries.condition,
+      };
+      qtyStr = `${batteries.count || "16"} Units`;
+      conditionStr = batteries.condition;
+    } else if (selectedCategory === "Cables") {
+      specsObj = {
+        cable_type: cables.type,
+        conductor: cables.conductor,
+        insulation: cables.insulation,
+        size: cables.size,
+        comments: cables.comments,
+      };
+      qtyStr = cables.size || "1 Lot";
+      conditionStr = "Good";
+    } else if (selectedCategory === "Structure") {
+      specsObj = {
+        structure_type: structure.type,
+        metal: structure.metal,
+        comments: structure.comments,
+      };
+      qtyStr = structure.type || "1 Lot";
+      conditionStr = "Good";
+    } else {
+      specsObj = {
+        system_capacity: completeSystem.systemCapacity,
+        comments: completeSystem.comments,
+      };
+      qtyStr = completeSystem.systemCapacity || "1 System";
+      conditionStr = "Good";
+    }
+
+    const uploadedServerUrls = uploadedImages
+      .map((img) => img.serverUrl)
+      .filter((url): url is string => Boolean(url));
+
+    const defaultImages: Record<string, string> = {
+      "Solar Panels": "assets/images/solar-panel.jpg",
+      "Inverters": "assets/images/inverter.png",
+      "Batteries": "assets/images/battery.jpg",
+      "Cables": "assets/images/cables.jpg",
+      "Structure": "assets/images/structure.png",
+      "Complete Solar System": "assets/images/complete-solar-system.jpg",
+    };
+
+    const finalImages =
+      uploadedServerUrls.length > 0
+        ? uploadedServerUrls
+        : [defaultImages[selectedCategory] || "assets/images/buyer-solar.jpg"];
+
+    return {
+      id: `lot-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      category: selectedCategory,
+      title: getPreviewTitle(),
+      qty: qtyStr,
+      condition: conditionStr,
+      priceDemand: rawPrice,
+      specs: specsObj,
+      images: finalImages,
+      icon: catIcons[selectedCategory] || "☀️",
+    };
+  };
+
+  const handleAddAnotherItem = () => {
+    if (uploadedImages.some((img) => img.isUploading)) {
+      showToast("Please wait for images to finish uploading.");
+      return;
+    }
+
+    const currentLot = buildCurrentLotItem();
+    setCombinedItems((prev) => [...prev, currentLot]);
+    resetFormDetails();
+    showToast(
+      `Added Lot #${combinedItems.length + 1} (${currentLot.title}) to this combined auction! Select category and configure details for the next item.`
+    );
+
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 120, behavior: "smooth" });
+    }
+  };
+
+  const handleRemoveCombinedLot = (lotId: string) => {
+    setCombinedItems((prev) => prev.filter((it) => it.id !== lotId));
+    showToast("Lot removed from combined auction.");
+  };
+
+  const handleSubmitAuction = async () => {
     if (uploadedImages.some((img) => img.isUploading)) {
       showToast("Please wait for images to finish uploading.");
       return;
@@ -345,93 +485,60 @@ export default function CreateAuctionPage() {
 
     setIsSubmitting(true);
     try {
-      const rawPrice = Number(contactInfo.priceDemand.replace(/[^0-9]/g, "")) || 500000;
-      const catIcons: Record<string, string> = {
-        "Solar Panels": "☀️",
-        "Inverters": "⚡",
-        "Batteries": "🔋",
-        "Cables": "⚡",
-        "Structure": "☀️",
-        "Complete Solar System": "⚡",
-      };
+      const hasActiveForm = Boolean(
+        solarPanels.panelsCount ||
+          inverters.ratedPower ||
+          batteries.count ||
+          cables.size ||
+          structure.comments ||
+          completeSystem.systemCapacity ||
+          contactInfo.priceDemand
+      );
 
-      // Category specific specs
-      let specsObj: Record<string, any> = {};
-      if (selectedCategory === "Solar Panels") {
-        specsObj = {
-          panels_count: solarPanels.panelsCount,
-          watts_per_panel: solarPanels.wattsPerPanel,
-          condition: solarPanels.condition,
-          brand: solarPanels.brand,
-          purchase_year: solarPanels.purchaseYear,
-        };
-      } else if (selectedCategory === "Inverters") {
-        specsObj = {
-          inverter_type: inverters.type,
-          rated_power: inverters.ratedPower,
-          inverter_brand: inverters.brand,
-          condition: inverters.condition,
-        };
-      } else if (selectedCategory === "Batteries") {
-        specsObj = {
-          battery_count: batteries.count,
-          brand: batteries.brand,
-          capacity: batteries.capacity,
-          battery_type: batteries.type,
-          purchase_year: batteries.purchaseYear,
-          years_used: batteries.yearsUsed,
-          condition: batteries.condition,
-        };
-      } else if (selectedCategory === "Cables") {
-        specsObj = {
-          cable_type: cables.type,
-          conductor: cables.conductor,
-          insulation: cables.insulation,
-          size: cables.size,
-          comments: cables.comments,
-        };
-      } else if (selectedCategory === "Structure") {
-        specsObj = {
-          structure_type: structure.type,
-          metal: structure.metal,
-          comments: structure.comments,
-        };
-      } else {
-        specsObj = {
-          system_capacity: completeSystem.systemCapacity,
-          comments: completeSystem.comments,
-        };
+      let allLots: AuctionLotItem[] = [...combinedItems];
+      if (hasActiveForm || combinedItems.length === 0) {
+        const currentLot = buildCurrentLotItem();
+        allLots.push(currentLot);
       }
 
-      const uploadedServerUrls = uploadedImages
-        .map((img) => img.serverUrl)
-        .filter((url): url is string => Boolean(url));
+      if (allLots.length === 0) {
+        showToast("Please add at least one item/lot to this auction.");
+        setIsSubmitting(false);
+        return;
+      }
 
-      const defaultImages: Record<string, string> = {
-        "Solar Panels": "assets/images/solar-panel.jpg",
-        "Inverters": "assets/images/inverter.png",
-        "Batteries": "assets/images/battery.jpg",
-        "Cables": "assets/images/cables.jpg",
-        "Structure": "assets/images/structure.png",
-        "Complete Solar System": "assets/images/complete-solar-system.jpg",
-      };
+      const totalDemand =
+        allLots.reduce((acc, it) => acc + (it.priceDemand || 0), 0) || 500000;
+      const allImages = Array.from(new Set(allLots.flatMap((it) => it.images)));
+      const uniqueCats = Array.from(new Set(allLots.map((it) => it.category)));
+      const isCombined = allLots.length > 1;
 
-      const finalImages =
-        uploadedServerUrls.length > 0
-          ? uploadedServerUrls
-          : [defaultImages[selectedCategory] || "assets/images/buyer-solar.jpg"];
+      const combinedTitle = isCombined
+        ? `Combined Solar Auction (${allLots.length} Lots: ${uniqueCats.join(", ")})`
+        : allLots[0].title;
+
+      const combinedQty = isCombined
+        ? `${allLots.length} Lots (${allLots.map((it) => it.qty).join(" + ")})`
+        : allLots[0].qty;
+
+      const combinedIcons = allLots.map((it) => it.icon).join(" ");
 
       let createdListingId = `auc-${Date.now()}`;
-      // 1. Post to Backend API (FastAPI -> Firestore) so buyers on mobile app receive it!
       try {
         const createdRes = await createAdminListing({
-          category: selectedCategory,
-          price_demand: rawPrice,
-          specs: specsObj,
-          image_urls: finalImages,
+          category: isCombined ? "Complete Solar System" : allLots[0].category,
+          price_demand: totalDemand,
+          specs: {
+            is_combined: isCombined,
+            total_lots: allLots.length,
+            lots: allLots,
+          },
+          image_urls: allImages,
           pickup_city: contactInfo.city || "Karachi",
           pickup_area: contactInfo.locality || "Industrial Area",
-          pickup_address: contactInfo.completeAddress || `${contactInfo.locality || "Industrial Area"}, ${contactInfo.city || "Karachi"}`,
+          pickup_address:
+            contactInfo.completeAddress ||
+            `${contactInfo.locality || "Industrial Area"}, ${contactInfo.city || "Karachi"}`,
           contact_name: contactInfo.fullName || "Solar Scrap Admin",
           contact_phone: contactInfo.phoneNumber || "+92 300 1234567",
           contact_email: contactInfo.email || "admin@solarscrap.com",
@@ -446,31 +553,25 @@ export default function CreateAuctionPage() {
       const newAuction = {
         id: createdListingId,
         auctionId: `AUC-${createdListingId.slice(0, 6).toUpperCase()}`,
-        title: getPreviewTitle(),
-        icon: catIcons[selectedCategory] || "☀️",
-        category: selectedCategory as any,
-        categoryColor:
-          selectedCategory === "Solar Panels"
-            ? "bg-blue-50 text-blue-700 border-blue-200"
-            : selectedCategory === "Inverters"
-            ? "bg-amber-50 text-amber-700 border-amber-200"
-            : selectedCategory === "Batteries"
-            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-            : "bg-purple-50 text-purple-700 border-purple-200",
-        qty:
-          selectedCategory === "Solar Panels"
-            ? `${solarPanels.panelsCount || "200"} Panels`
-            : selectedCategory === "Inverters"
-            ? `${inverters.ratedPower || "1 Unit"}`
-            : selectedCategory === "Batteries"
-            ? `${batteries.count || "16"} Units`
-            : "1 Lot",
+        title: combinedTitle,
+        icon: isCombined ? "📦" : allLots[0].icon,
+        category: (isCombined ? "Complete System" : allLots[0].category) as any,
+        categoryColor: isCombined
+          ? "bg-purple-50 text-purple-700 border-purple-200"
+          : allLots[0].category === "Solar Panels"
+          ? "bg-blue-50 text-blue-700 border-blue-200"
+          : allLots[0].category === "Inverters"
+          ? "bg-amber-50 text-amber-700 border-amber-200"
+          : allLots[0].category === "Batteries"
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : "bg-purple-50 text-purple-700 border-purple-200",
+        qty: combinedQty,
         sellerName: contactInfo.fullName || "Solar Scrap Admin",
         sellerCompany: contactInfo.locality || "EPC Trading Co.",
         sellerCity: contactInfo.city || "Karachi",
-        startingPrice: rawPrice,
-        priceDemand: Math.round(rawPrice * 1.15),
-        startingBid: rawPrice,
+        startingPrice: totalDemand,
+        priceDemand: Math.round(totalDemand * 1.15),
+        startingBid: totalDemand,
         currentHighBid: 0,
         highestBidderName: "No Bids Yet",
         highestBidderCompany: "Awaiting Verified Dealers",
@@ -480,8 +581,9 @@ export default function CreateAuctionPage() {
         createdAt: "Today, Just now",
         endsIn: "3d 00h",
         endDate: "10 Mar 2026",
-        reservePrice: rawPrice,
-        images: finalImages,
+        reservePrice: totalDemand,
+        images: allImages,
+        items: allLots,
       };
 
       try {
@@ -496,18 +598,14 @@ export default function CreateAuctionPage() {
         console.error("Failed to save new auction to storage", err);
       }
 
-      if (createAnother) {
-        showToast("Auction listing saved! You can now create another listing.");
-        resetFormDetails();
-        if (typeof window !== "undefined") {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      } else {
-        showToast("Auction listing created & published live to marketplace!");
-        setTimeout(() => {
-          router.push("/auctions");
-        }, 1200);
-      }
+      showToast(
+        isCombined
+          ? `Combined Auction with ${allLots.length} items created & published live!`
+          : "Auction listing created & published live to marketplace!"
+      );
+      setTimeout(() => {
+        router.push("/auctions");
+      }, 1200);
     } catch (err) {
       console.error("Error submitting auction:", err);
       showToast("An error occurred while saving the auction.");
@@ -709,9 +807,92 @@ export default function CreateAuctionPage() {
                 Create Auction
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                Select the Equipment and configure auction parameters.
+                Select the Equipment and configure auction parameters. Add multiple equipment items to sell them together in one combined auction.
               </p>
             </div>
+
+            {/* Combined Auction Tray - displays all added lots in this auction */}
+            {combinedItems.length > 0 && (
+              <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl border-2 border-[#009845]/40 p-4 sm:p-5 shadow-sm space-y-3 animate-fadeIn">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-emerald-200/60">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#009845] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-bold text-gray-900 flex items-center gap-2">
+                        <span>Combined Auction ({combinedItems.length} {combinedItems.length === 1 ? "Lot" : "Lots"} Added)</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#009845] text-white shadow-2xs">
+                          Single Combined Auction
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-gray-600">
+                        All items added here will be bundled and listed together in ONE combined auction.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right pl-10 sm:pl-0">
+                    <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider block">Combined Demand</span>
+                    <span className="text-sm sm:text-base font-extrabold text-[#009845]">
+                      Rs {combinedItems.reduce((acc, it) => acc + (it.priceDemand || 0), 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* List of Added Lots */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {combinedItems.map((lot, idx) => (
+                    <div
+                      key={lot.id}
+                      className="bg-white rounded-xl p-3 border border-emerald-100 shadow-2xs flex items-start justify-between gap-2 hover:border-[#009845]/40 transition-all"
+                    >
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <span className="text-xl shrink-0 mt-0.5">{lot.icon}</span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                              Lot #{idx + 1}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-medium">
+                              {lot.category}
+                            </span>
+                          </div>
+                          <p className="font-bold text-xs text-gray-900 truncate mt-0.5" title={lot.title}>
+                            {lot.title}
+                          </p>
+                          <p className="text-[11px] text-gray-500">
+                            {lot.qty} • {lot.condition}
+                          </p>
+                          {lot.priceDemand > 0 && (
+                            <p className="text-xs font-semibold text-[#009845] mt-1">
+                              Rs {lot.priceDemand.toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCombinedLot(lot.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                        title="Remove lot from combined auction"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-2.5 bg-white/80 rounded-xl border border-emerald-200/50 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs text-gray-700">
+                  <span className="flex items-center gap-1.5 font-medium text-emerald-800">
+                    <span className="w-2 h-2 rounded-full bg-[#009845] animate-pulse" />
+                    Currently configuring Lot #{combinedItems.length + 1} below:
+                  </span>
+                  <span className="text-[11px] text-gray-500">
+                    Fill out equipment details below, then click &ldquo;Add Another Item to this Auction&rdquo; or &ldquo;Publish Combined Auction&rdquo;.
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Equipment Category Selection Cards - Matching Mobile App Categories */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
@@ -1920,20 +2101,27 @@ export default function CreateAuctionPage() {
               <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={() => handleSubmitAuction(true)}
+                onClick={handleAddAnotherItem}
                 className="w-full sm:w-auto px-6 py-3 border-2 border-[#009845] text-[#009845] hover:bg-[#E6F9ED] active:bg-[#d0f4dc] rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs disabled:opacity-50"
+                title="Add this item as a lot to the combined auction and add another equipment"
               >
                 <Plus className="w-4 h-4 text-[#009845]" />
-                <span>Save &amp; Create Another Listing</span>
+                <span>Save &amp; Add Another Item to this Auction</span>
               </button>
 
               <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={() => handleSubmitAuction(false)}
+                onClick={handleSubmitAuction}
                 className="w-full sm:w-auto px-8 py-3 bg-[#009845] hover:bg-[#008230] text-white rounded-xl text-xs font-bold shadow-2xs transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <span>{isSubmitting ? "Submitting..." : "Submit Listing"}</span>
+                <span>
+                  {isSubmitting
+                    ? "Submitting..."
+                    : combinedItems.length > 0
+                    ? `Publish Combined Auction (${combinedItems.length + 1} Lots)`
+                    : "Submit Listing"}
+                </span>
               </button>
             </div>
           </div>

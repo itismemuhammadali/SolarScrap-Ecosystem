@@ -52,6 +52,18 @@ export interface BidRecord {
   referenceNumber?: string;
 }
 
+export interface AuctionLotItem {
+  id: string;
+  category: string;
+  title: string;
+  qty: string;
+  condition: string;
+  priceDemand: number;
+  specs?: Record<string, any>;
+  images: string[];
+  icon: string;
+}
+
 interface AuctionItem {
   id: string;
   auctionId: string;
@@ -81,6 +93,7 @@ interface AuctionItem {
   images: string[];
   bids?: BidRecord[];
   specs?: Record<string, any>;
+  items?: AuctionLotItem[];
 }
 
 
@@ -114,11 +127,11 @@ const INITIAL_AUCTIONS: AuctionItem[] = [
   {
     id: "auc-002",
     auctionId: "AUC002",
-    title: "Complete Solar System",
-    icon: "⚡",
+    title: "Combined Solar Lot (Panels + Inverter + Structure)",
+    icon: "📦",
     category: "Complete System",
     categoryColor: "bg-purple-50 text-purple-700 border-purple-200",
-    qty: "1 units",
+    qty: "3 Lots (203 Units)",
     sellerName: "Sana Malik",
     sellerCompany: "Sana Solar Enterprise",
     sellerCity: "Karachi",
@@ -135,7 +148,39 @@ const INITIAL_AUCTIONS: AuctionItem[] = [
     endsIn: "3d 10h",
     endDate: "10 Dec 2024",
     reservePrice: 7200000,
-    images: ["/images/complete-solar-system.jpg"],
+    images: ["/images/complete-solar-system.jpg", "/images/solar-panel.png", "/images/inverter.png"],
+    items: [
+      {
+        id: "lot-1",
+        category: "Solar Panels",
+        title: "200x Longi Solar Panels 400W",
+        qty: "200 Units",
+        condition: "Good Conditions",
+        priceDemand: 4500000,
+        images: ["/images/solar-panel.png"],
+        icon: "☀️",
+      },
+      {
+        id: "lot-2",
+        category: "Inverters",
+        title: "2x Huawei 20kW On-Grid Inverter",
+        qty: "2 Units",
+        condition: "Working",
+        priceDemand: 2500000,
+        images: ["/images/inverter.png"],
+        icon: "⚡",
+      },
+      {
+        id: "lot-3",
+        category: "Structure",
+        title: "L2 Elevated Aluminum Channel Frames",
+        qty: "1 Lot",
+        condition: "Good",
+        priceDemand: 1500000,
+        images: ["/images/structure.png"],
+        icon: "☀️",
+      },
+    ],
   },
   {
     id: "auc-003",
@@ -661,9 +706,16 @@ export default function AuctionsPage() {
                             <div className="flex items-center gap-2.5">
                               {renderEquipmentIcon(auction)}
                               <div>
-                                <p className="font-bold text-gray-900 hover:text-[#009845] transition-colors">
-                                  {auction.title}
-                                </p>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="font-bold text-gray-900 hover:text-[#009845] transition-colors">
+                                    {auction.title}
+                                  </p>
+                                  {auction.items && auction.items.length > 1 && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs">
+                                      Combined ({auction.items.length} Lots)
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="text-[11px] text-gray-400 font-normal">{auction.qty}</p>
                               </div>
                             </div>
@@ -909,6 +961,56 @@ export default function AuctionsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Combined Auction Lots Breakdown */}
+            {selectedAuction.items && selectedAuction.items.length > 0 && (
+              <div className="mt-4 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    COMBINED EQUIPMENT LOTS ({selectedAuction.items.length} LOTS)
+                  </p>
+                  <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+                    Sold Together as 1 Auction
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {selectedAuction.items.map((lot, lIdx) => (
+                    <div
+                      key={lot.id || lIdx}
+                      className="p-3 bg-gray-50/80 rounded-xl border border-gray-200 hover:border-[#009845]/40 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2.5">
+                          <span className="text-xl shrink-0 mt-0.5">{lot.icon || "☀️"}</span>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                                Lot #{lIdx + 1}
+                              </span>
+                              <span className="text-[10px] text-gray-400 font-medium">
+                                {lot.category}
+                              </span>
+                            </div>
+                            <p className="font-bold text-gray-900 text-xs mt-0.5">{lot.title}</p>
+                            <p className="text-[11px] text-gray-500">
+                              Qty: {lot.qty} • Condition: {lot.condition}
+                            </p>
+                          </div>
+                        </div>
+                        {lot.priceDemand > 0 && (
+                          <div className="text-right shrink-0">
+                            <span className="text-[10px] text-gray-400 block">Demand</span>
+                            <span className="font-bold text-xs text-gray-900">
+                              Rs {lot.priceDemand.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Seller & Highest Bidder Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 text-xs">
