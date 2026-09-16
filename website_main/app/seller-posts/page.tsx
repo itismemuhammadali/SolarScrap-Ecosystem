@@ -264,7 +264,9 @@ export default function SellerPostsPage() {
     },
     {
       name: "Negotiation",
-      count: posts.filter((p) => ["Negotiation", "negotiation", "in_negotiation"].includes(p.status)).length,
+      count: posts.filter((p) =>
+        ["Negotiation", "negotiation", "in_negotiation", "Offer Rejected", "offer_rejected"].includes(p.status)
+      ).length,
     },
     {
       name: "Auction",
@@ -300,7 +302,10 @@ export default function SellerPostsPage() {
     } else if (activeFilter === "Price Offered") {
       if (!["Price Offered", "price_offered", "offered"].includes(p.status)) return false;
     } else if (activeFilter === "Negotiation") {
-      if (!["Negotiation", "negotiation", "in_negotiation"].includes(p.status)) return false;
+      if (
+        !["Negotiation", "negotiation", "in_negotiation", "Offer Rejected", "offer_rejected"].includes(p.status)
+      )
+        return false;
     } else if (activeFilter === "Auction") {
       if (!["Auction", "auction", "in_auction"].includes(p.status)) return false;
     } else if (activeFilter === "Closed") {
@@ -449,6 +454,9 @@ export default function SellerPostsPage() {
     try {
       await updateAdminSellerPost(selectedPost.id, {
         status: "Auction",
+        starting_price: auctionStartBid,
+        duration: auctionDuration,
+        ends_in: auctionDuration,
         admin_notes: `Auction start bid: PKR ${auctionStartBid.toLocaleString()}, duration: ${auctionDuration}`,
       });
 
@@ -458,9 +466,13 @@ export default function SellerPostsPage() {
         "Batteries": "🔋",
       };
 
+      const customAucId = selectedPost.postId
+        ? `AUC-${selectedPost.postId.replace(/[^A-Za-z0-9]/g, "")}`
+        : `AUC${Math.floor(100 + Math.random() * 900)}`;
+
       const newAuction = {
-        id: `auc-${Date.now()}`,
-        auctionId: `AUC${Math.floor(100 + Math.random() * 900)}`,
+        id: selectedPost.id,
+        auctionId: customAucId,
         title: selectedPost.title,
         icon: catIcons[selectedPost.category] || "☀️",
         category: selectedPost.category,
@@ -487,20 +499,21 @@ export default function SellerPostsPage() {
         status: "Active" as const,
         createdAt: "Today, Just now",
         endsIn: auctionDuration,
-        endDate: "10 Mar 2026",
+        endDate: "Live",
         reservePrice: auctionStartBid,
         images: selectedPost.images && selectedPost.images.length > 0 ? selectedPost.images : ["/images/solar-panel.png"],
       };
 
       try {
         const stored = localStorage.getItem("solar_scrap_auctions");
-        let list = [];
+        let list: any[] = [];
         if (stored) {
           try {
             list = JSON.parse(stored);
+            if (!Array.isArray(list)) list = [];
           } catch {}
         }
-        list = [newAuction, ...list];
+        list = [newAuction, ...list.filter((it: any) => it.id !== selectedPost.id)];
         localStorage.setItem("solar_scrap_auctions", JSON.stringify(list));
       } catch (errLocal) {
         console.error("Failed to store auction in localStorage:", errLocal);
@@ -792,6 +805,8 @@ export default function SellerPostsPage() {
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
                               : ["Price Offered", "price_offered", "offered"].includes(post.status)
                               ? "bg-purple-50 text-purple-700 border border-purple-200 font-semibold"
+                              : ["Offer Rejected", "offer_rejected"].includes(post.status)
+                              ? "bg-rose-50 text-rose-700 border border-rose-200 font-semibold"
                               : post.status === "Negotiation"
                               ? "bg-orange-50 text-orange-700 border border-orange-200"
                               : post.status === "Auction"
@@ -809,6 +824,8 @@ export default function SellerPostsPage() {
                             ? post.offeredPrice
                               ? `Offered: Rs ${post.offeredPrice.toLocaleString()}`
                               : "Price Offered"
+                            : ["Offer Rejected", "offer_rejected"].includes(post.status)
+                            ? "Offer Rejected"
                             : post.status}
                         </span>
                       </td>
@@ -816,15 +833,26 @@ export default function SellerPostsPage() {
                       {/* Triple Dots Action Menu & Quick To Auction Button */}
                       <td className="py-3.5 px-2 text-right relative whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenAuction(post)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-white bg-[#009845] hover:bg-[#008230] rounded-lg shadow-xs transition-colors cursor-pointer"
-                            title="Make live on Auction List"
-                          >
-                            <Gavel className="w-3 h-3" />
-                            <span>To Auction</span>
-                          </button>
+                          {["Auction", "auction"].includes(post.status) ? (
+                            <Link
+                              href="/auctions"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg shadow-xs transition-colors cursor-pointer"
+                              title="View in Live Auctions"
+                            >
+                              <Gavel className="w-3 h-3 text-[#009845]" />
+                              <span>In Auction</span>
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAuction(post)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold text-white bg-[#009845] hover:bg-[#008230] rounded-lg shadow-xs transition-colors cursor-pointer"
+                              title="Make live on Auction List"
+                            >
+                              <Gavel className="w-3 h-3" />
+                              <span>To Auction</span>
+                            </button>
+                          )}
 
                           <button
                             type="button"
@@ -920,17 +948,27 @@ export default function SellerPostsPage() {
                                 </span>
                               </button>
 
-                              {/* 5. Convert to Auction (2 lines) */}
-                              <button
-                                type="button"
-                                onClick={() => handleOpenAuction(post)}
-                                className="w-full px-3 py-1.5 text-[12.5px] text-gray-700 hover:bg-gray-50 flex items-start gap-2.5 rounded-lg transition-colors cursor-pointer text-left"
-                              >
-                                <Gavel className="w-4 h-4 text-gray-400 stroke-[1.75] shrink-0 mt-0.5" />
-                                <span className="leading-tight">
-                                  Convert to<br />Auction
-                                </span>
-                              </button>
+                              {/* 5. Convert to Auction / View in Auctions */}
+                              {["Auction", "auction"].includes(post.status) ? (
+                                <Link
+                                  href="/auctions"
+                                  className="w-full px-3 py-1.5 text-[12.5px] text-[#009845] hover:bg-emerald-50 flex items-center gap-2.5 rounded-lg transition-colors cursor-pointer text-left font-semibold"
+                                >
+                                  <Gavel className="w-4 h-4 text-[#009845] stroke-[1.75] shrink-0" />
+                                  <span>View in Auctions</span>
+                                </Link>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenAuction(post)}
+                                  className="w-full px-3 py-1.5 text-[12.5px] text-gray-700 hover:bg-gray-50 flex items-start gap-2.5 rounded-lg transition-colors cursor-pointer text-left"
+                                >
+                                  <Gavel className="w-4 h-4 text-gray-400 stroke-[1.75] shrink-0 mt-0.5" />
+                                  <span className="leading-tight">
+                                    Convert to<br />Auction
+                                  </span>
+                                </button>
+                              )}
 
                               {/* 6. Send Quotation */}
                               <button

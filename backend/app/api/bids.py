@@ -5,7 +5,7 @@ from firebase_admin import firestore
 from app.schemas.auth import UserProfile
 from app.schemas.bids import PlaceBidRequest, BidResponse, UpdateBidStatusRequest
 from app.api.auth import get_current_user
-from app.api.notifications import create_user_notification
+from app.api.notifications import create_user_notification, create_admin_notification
 from app.core.firebase import get_firestore_db
 
 router = APIRouter(prefix="/bids", tags=["Bids"])
@@ -343,11 +343,15 @@ async def accept_bid(
         listing_ref = db.collection("listings").document(listing_id)
         listing_ref.update({
             "status": "closed",
+            "post_status": "Closed",
+            "winning_bid_id": bid_id,
+            "winning_bid_amount": amount,
+            "winning_buyer_id": buyer_id,
             "updated_at": firestore.SERVER_TIMESTAMP,
         })
 
-    # Notify buyer
-    if buyer_id:
+    # Notify buyer (skip if admin_system since admin receives admin notification)
+    if buyer_id and buyer_id != "admin_system":
         create_user_notification(
             db=db,
             user_id=buyer_id,
@@ -366,6 +370,28 @@ async def accept_bid(
         description=f"You accepted the bid of PKR {int(amount):,} on {title}.",
         listing_id=listing_id,
     )
+
+    # Notify admin in admin_notifications
+    seller_name = current_user.display_name or getattr(current_user, "company_name", None) or "Seller"
+    if buyer_id == "admin_system":
+        create_admin_notification(
+            db=db,
+            notif_type="offer_accepted",
+            title="Quotation Offer Accepted!",
+            description=f"Seller {seller_name} accepted your price offer of PKR {int(amount):,} on '{title}'. Deal closed!",
+            entity_id=listing_id or bid_id,
+            entity_type="listing",
+        )
+    else:
+        buyer_name = bid_data.get("buyer_name") or "Buyer"
+        create_admin_notification(
+            db=db,
+            notif_type="deal_closed",
+            title="Deal Closed - Bid Accepted",
+            description=f"Seller {seller_name} accepted {buyer_name}'s bid of PKR {int(amount):,} on '{title}'.",
+            entity_id=listing_id or bid_id,
+            entity_type="listing",
+        )
 
     doc = bid_ref.get()
     updated = doc.to_dict() or {}
@@ -417,7 +443,21 @@ async def reject_bid(
         "updated_at": firestore.SERVER_TIMESTAMP,
     })
 
-    if buyer_id:
+    # If this was an admin quotation offer or listing was in Price Offered, update listing
+    if listing_id:
+        listing_ref = db.collection("listings").document(listing_id)
+        l_doc = listing_ref.get()
+        if l_doc.exists:
+            l_dict = l_doc.to_dict() or {}
+            if l_dict.get("post_status") == "Price Offered" or buyer_id == "admin_system":
+                listing_ref.update({
+                    "post_status": "Offer Rejected",
+                    "admin_notes": f"Quotation offer of PKR {int(amount):,} was rejected by seller.",
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                })
+
+    # Notify buyer (skip if admin_system since admin receives admin notification)
+    if buyer_id and buyer_id != "admin_system":
         create_user_notification(
             db=db,
             user_id=buyer_id,
@@ -425,6 +465,28 @@ async def reject_bid(
             title="Bid Declined",
             description=f"Your bid of PKR {int(amount):,} on {title} was declined.",
             listing_id=listing_id,
+        )
+
+    # Notify admin in admin_notifications
+    seller_name = current_user.display_name or getattr(current_user, "company_name", None) or "Seller"
+    if buyer_id == "admin_system":
+        create_admin_notification(
+            db=db,
+            notif_type="offer_rejected",
+            title="Quotation Offer Rejected",
+            description=f"Seller {seller_name} rejected your price offer of PKR {int(amount):,} on '{title}'.",
+            entity_id=listing_id or bid_id,
+            entity_type="listing",
+        )
+    else:
+        buyer_name = bid_data.get("buyer_name") or "Buyer"
+        create_admin_notification(
+            db=db,
+            notif_type="bid_rejected",
+            title="Bid Rejected by Seller",
+            description=f"Seller {seller_name} rejected {buyer_name}'s bid of PKR {int(amount):,} on '{title}'.",
+            entity_id=listing_id or bid_id,
+            entity_type="listing",
         )
 
     doc = bid_ref.get()

@@ -150,6 +150,9 @@ export interface UpdateSellerPostRequest {
   status?: string;
   offered_price?: number;
   admin_notes?: string;
+  starting_price?: number;
+  duration?: string;
+  ends_in?: string;
 }
 
 export interface AdminNotificationItem {

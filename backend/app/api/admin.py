@@ -91,9 +91,10 @@ async def get_dashboard_stats(
     for doc in listings_docs:
         data = doc.to_dict() or {}
         listing_status = str(data.get("status", "active")).lower()
-        if listing_status in ("pending", "under_review", "new"):
+        post_status = str(data.get("post_status", "")).lower()
+        if listing_status in ("pending", "under_review", "new") or post_status in ("pending", "under review", "new"):
             pending_posts += 1
-        elif listing_status == "active":
+        elif listing_status in ("active", "auction") or post_status in ("auction", "active", "approved"):
             active_auctions += 1
 
         category = data.get("category", "Equipment")
@@ -619,6 +620,13 @@ async def update_seller_post(
         elif payload.status in ("Rejected", "rejected"):
             updates["status"] = "rejected"
             updates["post_status"] = "Rejected"
+        elif payload.status in ("Auction", "auction"):
+            updates["status"] = "auction"
+            updates["post_status"] = "Auction"
+            updates["is_auction"] = True
+            if not data.get("auction_id"):
+                import random
+                updates["auction_id"] = f"AUC{random.randint(100, 999)}"
         else:
             updates["status"] = payload.status
             updates["post_status"] = payload.status
@@ -626,6 +634,14 @@ async def update_seller_post(
         updates["offered_price"] = payload.offered_price
     if payload.admin_notes is not None:
         updates["admin_notes"] = payload.admin_notes
+    if payload.starting_price is not None:
+        updates["starting_price"] = float(payload.starting_price)
+        updates["starting_bid"] = float(payload.starting_price)
+    if payload.duration is not None:
+        updates["duration"] = payload.duration
+        updates["ends_in"] = payload.duration
+    if payload.ends_in is not None:
+        updates["ends_in"] = payload.ends_in
 
     updates["updated_at"] = firestore.SERVER_TIMESTAMP
     doc_ref.update(updates)
@@ -854,17 +870,30 @@ async def get_admin_auctions(
             highest_bidder_email = top_bid.get("buyer_email") or ""
 
         price_demand = float(l_data.get("price_demand", 0.0))
-        starting_price = float(l_data.get("starting_price", price_demand * 0.85 if price_demand > 0 else 100000))
+        starting_price = float(
+            l_data.get("starting_price")
+            or l_data.get("starting_bid")
+            or (price_demand * 0.85 if price_demand > 0 else 100000)
+        )
         starting_bid = starting_price
         reserve_price = float(l_data.get("reserve_price", price_demand * 0.9 if price_demand > 0 else starting_price))
 
         status_val = str(l_data.get("status", "active")).lower()
-        if status_val in ("active", "approved"):
+        post_status_val = str(l_data.get("post_status", "")).lower()
+
+        if (
+            status_val in ("active", "approved", "auction", "live")
+            or post_status_val in ("auction", "active", "approved", "live")
+            or l_data.get("is_auction") is True
+        ):
             ui_status = "Active"
-        elif status_val in ("closed", "sold"):
+        elif status_val in ("closed", "sold") or post_status_val in ("closed", "sold"):
             ui_status = "Closed"
         else:
             ui_status = "Draft"
+
+        ends_in = l_data.get("ends_in") or l_data.get("duration") or "3d 12h"
+        end_date = l_data.get("end_date") or "Live"
 
         # Format individual bids list
         formatted_bids = []
@@ -934,8 +963,8 @@ async def get_admin_auctions(
             "totalBids": total_bids,
             "status": ui_status,
             "createdAt": _format_dt(l_data.get("created_at")) or "Recent",
-            "endsIn": "3d 12h",
-            "endDate": "Live",
+            "endsIn": ends_in,
+            "endDate": end_date,
             "reservePrice": int(reserve_price),
             "images": image_urls,
             "bids": formatted_bids,
@@ -975,7 +1004,27 @@ async def get_admin_auction_detail(
     if doc.exists:
         l_data = doc.to_dict() or {}
         price_demand = float(l_data.get("price_demand", 0.0))
-        starting_price = float(l_data.get("starting_price", price_demand * 0.85 if price_demand > 0 else 100000))
+        starting_price = float(
+            l_data.get("starting_price")
+            or l_data.get("starting_bid")
+            or (price_demand * 0.85 if price_demand > 0 else 100000)
+        )
+        status_val = str(l_data.get("status", "active")).lower()
+        post_status_val = str(l_data.get("post_status", "")).lower()
+        if (
+            status_val in ("active", "approved", "auction", "live")
+            or post_status_val in ("auction", "active", "approved", "live")
+            or l_data.get("is_auction") is True
+        ):
+            ui_status = "Active"
+        elif status_val in ("closed", "sold") or post_status_val in ("closed", "sold"):
+            ui_status = "Closed"
+        else:
+            ui_status = "Draft"
+
+        ends_in = l_data.get("ends_in") or l_data.get("duration") or "3d 12h"
+        end_date = l_data.get("end_date") or "Live"
+
         return {
             "id": doc.id,
             "auctionId": clean,
@@ -997,10 +1046,10 @@ async def get_admin_auction_detail(
             "highestBidderPhone": "",
             "highestBidderEmail": "",
             "totalBids": int(l_data.get("total_bids", 0)),
-            "status": str(l_data.get("status", "Active")).capitalize(),
+            "status": ui_status,
             "createdAt": _format_dt(l_data.get("created_at")) or "Recent",
-            "endsIn": "3d 12h",
-            "endDate": "Live",
+            "endsIn": ends_in,
+            "endDate": end_date,
             "reservePrice": int(l_data.get("reserve_price", starting_price)),
             "images": l_data.get("image_urls") or ["/images/solar-panel.png"],
             "bids": [],

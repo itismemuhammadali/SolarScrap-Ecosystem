@@ -181,8 +181,8 @@ async def get_all_active_listings(
             st = str(data.get("status", "")).lower()
             pst = str(data.get("post_status", "")).lower()
 
-            # Include if active, approved, or price offered (live on marketplace)
-            if st in ("active", "approved") or pst in ("approved", "active", "price offered"):
+            # Include if active, approved, auction, or price offered (live on marketplace)
+            if st in ("active", "approved", "auction") or pst in ("approved", "active", "price offered", "auction") or data.get("is_auction") is True:
                 results.append(
                     ListingResponse(
                         id=doc.id,

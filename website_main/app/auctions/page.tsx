@@ -251,14 +251,35 @@ export default function AuctionsPage() {
     try {
       const liveAuctions = await getAdminAuctions();
       if (Array.isArray(liveAuctions) && liveAuctions.length > 0) {
-        setAuctions(liveAuctions);
+        // Also check if there are local-only auctions not yet in liveAuctions
+        const stored = localStorage.getItem("solar_scrap_auctions");
+        let localOnly: AuctionItem[] = [];
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+              localOnly = parsed.filter(
+                (loc: any) => !liveAuctions.some((live: any) => live.id === loc.id)
+              );
+            }
+          } catch {}
+        }
+        const merged = [...localOnly, ...liveAuctions];
+        setAuctions(merged);
         try {
-          localStorage.setItem("solar_scrap_auctions", JSON.stringify(liveAuctions));
+          localStorage.setItem("solar_scrap_auctions", JSON.stringify(merged));
         } catch (_) {}
       } else {
         const stored = localStorage.getItem("solar_scrap_auctions");
-        if (stored) setAuctions(JSON.parse(stored));
-        else setAuctions(INITIAL_AUCTIONS);
+        if (stored) {
+          try {
+            setAuctions(JSON.parse(stored));
+          } catch {
+            setAuctions(INITIAL_AUCTIONS);
+          }
+        } else {
+          setAuctions(INITIAL_AUCTIONS);
+        }
       }
     } catch (err) {
       console.error("Failed to load live auctions from backend:", err);
@@ -431,12 +452,18 @@ export default function AuctionsPage() {
 
   const filterTabs = [
     { name: "Draft", count: auctions.filter((a) => a.status === "Draft").length },
-    { name: "Active", count: auctions.filter((a) => a.status === "Active").length },
+    { name: "Active", count: auctions.filter((a) => a.status === "Active" || (a.status as any) === "Auction").length },
     { name: "Closed", count: auctions.filter((a) => a.status === "Closed").length },
   ];
 
   const filteredAuctions = auctions.filter((a) => {
-    if (activeFilter !== "All" && a.status !== activeFilter) return false;
+    if (activeFilter !== "All" && a.status !== activeFilter) {
+      if (activeFilter === "Active" && (a.status as any) === "Auction") {
+        // Match active auctions
+      } else {
+        return false;
+      }
+    }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const match =

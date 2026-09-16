@@ -124,4 +124,7 @@ class UpdateSellerPostRequest(BaseModel):
     status: Optional[str] = None
     offered_price: Optional[float] = None
     admin_notes: Optional[str] = None
+    starting_price: Optional[float] = None
+    duration: Optional[str] = None
+    ends_in: Optional[str] = None
 

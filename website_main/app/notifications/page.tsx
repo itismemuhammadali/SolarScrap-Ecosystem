@@ -16,6 +16,8 @@ import {
   ExternalLink,
   RefreshCw,
   X,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import { getSession, getAvatarUrl } from "@/lib/auth";
@@ -94,6 +96,23 @@ function getNotificationVisuals(type: string) {
         iconBg: "bg-rose-50 border-rose-100",
         iconColor: "text-rose-600",
         defaultLink: "/bids",
+      };
+    case "offer_rejected":
+    case "bid_rejected":
+    case "bid_declined":
+      return {
+        icon: XCircle,
+        iconBg: "bg-rose-50 border-rose-100",
+        iconColor: "text-rose-600",
+        defaultLink: "/seller-posts",
+      };
+    case "offer_accepted":
+    case "deal_closed":
+      return {
+        icon: CheckCircle,
+        iconBg: "bg-emerald-50 border-emerald-100",
+        iconColor: "text-[#009845]",
+        defaultLink: "/seller-posts",
       };
     case "lead":
       return {
