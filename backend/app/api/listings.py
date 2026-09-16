@@ -31,8 +31,14 @@ async def create_listing(
     listing_ref = db.collection("listings").document()
 
     is_admin = current_user.role == UserRole.ADMIN
-    initial_status = "active" if is_admin else "pending"
-    initial_post_status = "Approved" if is_admin else "New"
+    is_auction_flag = bool(payload.is_auction or payload.status == "auction" or (is_admin and payload.is_auction is not False and payload.duration is not None))
+
+    if is_auction_flag:
+        initial_status = "auction"
+        initial_post_status = "Auction"
+    else:
+        initial_status = "active" if is_admin else "pending"
+        initial_post_status = "Approved" if is_admin else "New"
 
     listing_data = {
         "seller_id": current_user.user_id,
@@ -54,34 +60,49 @@ async def create_listing(
         "updated_at": firestore.SERVER_TIMESTAMP,
     }
 
+    if payload.title:
+        listing_data["title"] = payload.title
+    if is_auction_flag:
+        listing_data["is_auction"] = True
+        listing_data["auction_id"] = payload.auction_id or f"AUC-{listing_ref.id[:6].upper()}"
+        listing_data["starting_price"] = payload.starting_price or payload.price_demand
+        listing_data["starting_bid"] = payload.starting_bid or payload.starting_price or payload.price_demand
+        listing_data["reserve_price"] = payload.reserve_price or payload.starting_price or payload.price_demand
+        listing_data["duration"] = payload.duration or "3 Days"
+        listing_data["ends_in"] = payload.ends_in or "3d 00h"
+        if is_admin:
+            listing_data["created_by"] = "admin"
+            listing_data["created_by_admin"] = True
+
     try:
         listing_ref.set(listing_data)
         doc = listing_ref.get()
         data = doc.to_dict() or {}
 
         # Create in-app notification for listing creation
-        display_title = payload.category
-        if payload.category == "Solar Panels" and "panels_count" in payload.specs:
-            display_title = f"{payload.specs.get('panels_count')}x Solar Panels {payload.specs.get('watts_per_panel', '')}W"
-        elif payload.category == "Batteries" and "battery_count" in payload.specs:
-            display_title = f"{payload.specs.get('battery_count')}x {payload.specs.get('battery_type', '')} Batteries"
-        elif payload.category == "Inverters" and "inverter_brand" in payload.specs:
-            display_title = f"{payload.specs.get('inverter_brand', '')} Inverter"
+        display_title = payload.title or payload.category
+        if not payload.title:
+            if payload.category == "Solar Panels" and "panels_count" in payload.specs:
+                display_title = f"{payload.specs.get('panels_count')}x Solar Panels {payload.specs.get('watts_per_panel', '')}W"
+            elif payload.category == "Batteries" and "battery_count" in payload.specs:
+                display_title = f"{payload.specs.get('battery_count')}x {payload.specs.get('battery_type', '')} Batteries"
+            elif payload.category == "Inverters" and "inverter_brand" in payload.specs:
+                display_title = f"{payload.specs.get('inverter_brand', '')} Inverter"
 
         create_user_notification(
             db=db,
             user_id=current_user.user_id,
-            notif_type="auction_created" if is_admin else "listing_created",
-            title="Listing Published Live!" if is_admin else "Listing Submitted for Review",
+            notif_type="auction_created" if (is_admin or is_auction_flag) else "listing_created",
+            title="Listing Published Live!" if (is_admin or is_auction_flag) else "Listing Submitted for Review",
             description=(
                 f"Your {display_title} listing is now active on the Solar Scrap marketplace."
-                if is_admin
+                if (is_admin or is_auction_flag)
                 else f"Your {display_title} listing has been submitted for admin approval. It will go live once accepted."
             ),
             listing_id=listing_ref.id,
         )
 
-        if not is_admin:
+        if not is_admin and not is_auction_flag:
             create_admin_notification(
                 db=db,
                 notif_type="new_pending_post",
@@ -90,6 +111,16 @@ async def create_listing(
                 entity_id=listing_ref.id,
                 entity_type="listing",
             )
+        elif is_admin and is_auction_flag:
+            create_admin_notification(
+                db=db,
+                notif_type="auction_created",
+                title="Auction Created & Live!",
+                description=f"{display_title} is now active in Auctions.",
+                entity_id=listing_ref.id,
+                entity_type="auction",
+            )
+
         
         return ListingResponse(
             id=listing_ref.id,

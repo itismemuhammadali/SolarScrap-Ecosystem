@@ -225,6 +225,25 @@ export async function createAdminListing(data: any): Promise<any> {
 }
 
 /**
+ * Create a live auction directly via admin auctions API (bypasses seller review)
+ */
+export async function createAdminAuction(data: any): Promise<any> {
+  const response = await fetch(`${API_BASE}/admin/auctions`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to create live auction");
+  }
+
+  return response.json();
+}
+
+
+/**
  * Upload a listing equipment image file to backend storage
  */
 export async function uploadListingImageFile(file: File): Promise<string> {

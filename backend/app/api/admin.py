@@ -19,10 +19,12 @@ from app.schemas.admin import (
     UpdateLeadRequest,
     AdminSellerPostItem,
     UpdateSellerPostRequest,
+    CreateAdminAuctionRequest,
 )
 from app.api.auth import get_current_user
-from app.api.notifications import create_user_notification
+from app.api.notifications import create_user_notification, create_admin_notification
 from app.core.firebase import get_firestore_db
+
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -508,10 +510,17 @@ async def get_admin_seller_posts(
 
     for doc in docs:
         data = doc.to_dict() or {}
-        specs = data.get("specs") or {}
         seller_id = data.get("seller_id", "")
 
+        # Exclude auctions created by Admin (they go directly to live Auctions, not Seller Posts)
+        if data.get("created_by") == "admin" or data.get("created_by_admin") is True:
+            continue
+        if data.get("is_auction") is True and not data.get("post_id") and (data.get("contact_name") in ("Solar Scrap Admin", "Admin Platform") or seller_id in ("admin_system", "nZh63CylxzZx40ldIYuP0SQ5cEN2", "n5hyLFINq0WXBRv1pV2oMbhrMz52")):
+            continue
+
+        specs = data.get("specs") or {}
         seller_data = {}
+
         if seller_id:
             if seller_id in users_cache:
                 seller_data = users_cache[seller_id]
@@ -1060,6 +1069,88 @@ async def get_admin_auction_detail(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Auction '{auction_id}' not found",
     )
+
+
+@router.post("/auctions")
+async def create_admin_auction(
+    payload: CreateAdminAuctionRequest,
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    Create a live auction directly from the Admin Portal.
+    Bypasses seller post review/verification and goes directly live to marketplace auctions.
+    """
+    db = get_firestore_db()
+    listing_ref = db.collection("listings").document()
+    auction_code = f"AUC-{listing_ref.id[:6].upper()}"
+
+    start_price = float(payload.starting_price or payload.starting_bid or payload.price_demand or 0.0)
+    demand_price = float(payload.price_demand or start_price)
+    reserve_price = float(payload.reserve_price or start_price)
+
+    display_title = payload.title
+    if not display_title:
+        specs = payload.specs or {}
+        category = payload.category
+        if specs.get("is_combined"):
+            display_title = f"Combined Solar Auction ({specs.get('total_lots', 1)} Lots)"
+        elif category == "Solar Panels" and "panels_count" in specs:
+            display_title = f"{specs.get('panels_count')}x Solar Panels {specs.get('watts_per_panel', '')}W"
+        elif category == "Batteries" and "battery_count" in specs:
+            display_title = f"{specs.get('battery_count')}x {specs.get('battery_type', '')} Batteries"
+        elif category == "Inverters" and "inverter_brand" in specs:
+            display_title = f"{specs.get('inverter_brand', '')} Inverter"
+        else:
+            display_title = f"{category} Auction"
+
+    auction_data = {
+        "title": display_title,
+        "category": payload.category,
+        "is_auction": True,
+        "status": "auction",
+        "post_status": "Auction",
+        "auction_id": auction_code,
+        "price_demand": demand_price,
+        "starting_price": start_price,
+        "starting_bid": start_price,
+        "reserve_price": reserve_price,
+        "duration": payload.duration or "3 Days",
+        "ends_in": payload.ends_in or "3d 00h",
+        "specs": payload.specs,
+        "image_urls": payload.image_urls,
+        "pickup_city": payload.pickup_city or "Karachi",
+        "pickup_area": payload.pickup_area or "Industrial Area",
+        "pickup_address": payload.pickup_address or f"{payload.pickup_city or 'Karachi'}, Pakistan",
+        "contact_name": payload.contact_name or "Solar Scrap Admin",
+        "contact_phone": payload.contact_phone or "+92 300 1234567",
+        "contact_email": payload.contact_email or "admin@solarscrap.com",
+        "seller_id": current_user.user_id if current_user else "admin_system",
+        "created_by": "admin",
+        "created_by_admin": True,
+        "created_at": firestore.SERVER_TIMESTAMP,
+        "updated_at": firestore.SERVER_TIMESTAMP,
+    }
+
+    listing_ref.set(auction_data)
+
+    create_admin_notification(
+        db=db,
+        notif_type="auction_created",
+        title="Auction Published Live!",
+        description=f"'{display_title}' is now live for dealer bidding.",
+        entity_id=listing_ref.id,
+        entity_type="auction",
+    )
+
+    return {
+        "id": listing_ref.id,
+        "auction_id": auction_code,
+        "title": display_title,
+        "status": "Active",
+        "starting_price": start_price,
+        "ends_in": payload.ends_in or "3d 00h",
+        "message": "Auction created and published live successfully",
+    }
 
 
 @router.post("/auctions/{listing_id}/close")

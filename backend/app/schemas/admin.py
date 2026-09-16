@@ -128,3 +128,23 @@ class UpdateSellerPostRequest(BaseModel):
     duration: Optional[str] = None
     ends_in: Optional[str] = None
 
+
+class CreateAdminAuctionRequest(BaseModel):
+    title: Optional[str] = None
+    category: str = Field(..., description="Category: Solar Panels, Batteries, Inverters, Cables, Structure, Complete Solar System")
+    price_demand: float = Field(default=0.0)
+    starting_price: Optional[float] = None
+    starting_bid: Optional[float] = None
+    reserve_price: Optional[float] = None
+    duration: Optional[str] = "3 Days"
+    ends_in: Optional[str] = "3d 00h"
+    specs: Dict[str, Any] = Field(default_factory=dict)
+    image_urls: List[str] = Field(default_factory=list)
+    pickup_city: str = "Karachi"
+    pickup_area: Optional[str] = None
+    pickup_address: str = "Karachi"
+    contact_name: str = "Solar Scrap Admin"
+    contact_phone: str = "+92 300 1234567"
+    contact_email: str = "admin@solarscrap.com"
+
+

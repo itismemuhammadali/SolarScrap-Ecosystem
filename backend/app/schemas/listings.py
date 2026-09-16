@@ -24,6 +24,16 @@ class CreateListingRequest(BaseModel):
     contact_email: str = Field(..., description="Contact Email Address")
     latitude: Optional[float] = Field(None, description="Pickup GPS Latitude")
     longitude: Optional[float] = Field(None, description="Pickup GPS Longitude")
+    title: Optional[str] = None
+    is_auction: Optional[bool] = None
+    status: Optional[str] = None
+    post_status: Optional[str] = None
+    starting_price: Optional[float] = None
+    starting_bid: Optional[float] = None
+    reserve_price: Optional[float] = None
+    duration: Optional[str] = None
+    ends_in: Optional[str] = None
+    auction_id: Optional[str] = None
 
 
 class ListingResponse(BaseModel):

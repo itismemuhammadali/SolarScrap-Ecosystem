@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createAdminListing, uploadListingImageFile } from "@/lib/admin-api";
+import { createAdminAuction, createAdminListing, uploadListingImageFile } from "@/lib/admin-api";
 import { getSession, getAvatarUrl } from "@/lib/auth";
 import {
   Search,
@@ -524,10 +524,17 @@ export default function CreateAuctionPage() {
       const combinedIcons = allLots.map((it) => it.icon).join(" ");
 
       let createdListingId = `auc-${Date.now()}`;
+      let createdAuctionCode = `AUC-${createdListingId.slice(0, 6).toUpperCase()}`;
       try {
-        const createdRes = await createAdminListing({
+        const createdRes = await createAdminAuction({
+          title: combinedTitle,
           category: isCombined ? "Complete Solar System" : allLots[0].category,
           price_demand: totalDemand,
+          starting_price: totalDemand,
+          starting_bid: totalDemand,
+          reserve_price: totalDemand,
+          duration: "3 Days",
+          ends_in: "3d 00h",
           specs: {
             is_combined: isCombined,
             total_lots: allLots.length,
@@ -546,14 +553,52 @@ export default function CreateAuctionPage() {
         if (createdRes?.id) {
           createdListingId = createdRes.id;
         }
+        if (createdRes?.auction_id) {
+          createdAuctionCode = createdRes.auction_id;
+        }
       } catch (apiErr) {
-        console.error("Failed to post auction to backend API:", apiErr);
+        console.error("Failed to post auction to backend API, falling back:", apiErr);
+        try {
+          const fallbackRes = await createAdminListing({
+            title: combinedTitle,
+            is_auction: true,
+            status: "auction",
+            post_status: "Auction",
+            starting_price: totalDemand,
+            starting_bid: totalDemand,
+            duration: "3 Days",
+            ends_in: "3d 00h",
+            category: isCombined ? "Complete Solar System" : allLots[0].category,
+            price_demand: totalDemand,
+            specs: {
+              is_combined: isCombined,
+              total_lots: allLots.length,
+              lots: allLots,
+            },
+            image_urls: allImages,
+            pickup_city: contactInfo.city || "Karachi",
+            pickup_area: contactInfo.locality || "Industrial Area",
+            pickup_address:
+              contactInfo.completeAddress ||
+              `${contactInfo.locality || "Industrial Area"}, ${contactInfo.city || "Karachi"}`,
+            contact_name: contactInfo.fullName || "Solar Scrap Admin",
+            contact_phone: contactInfo.phoneNumber || "+92 300 1234567",
+            contact_email: contactInfo.email || "admin@solarscrap.com",
+          });
+          if (fallbackRes?.id) {
+            createdListingId = fallbackRes.id;
+            createdAuctionCode = `AUC-${fallbackRes.id.slice(0, 6).toUpperCase()}`;
+          }
+        } catch (fErr) {
+          console.error("Fallback creation also failed:", fErr);
+        }
       }
 
       const newAuction = {
         id: createdListingId,
-        auctionId: `AUC-${createdListingId.slice(0, 6).toUpperCase()}`,
+        auctionId: createdAuctionCode,
         title: combinedTitle,
+
         icon: isCombined ? "📦" : allLots[0].icon,
         category: (isCombined ? "Complete System" : allLots[0].category) as any,
         categoryColor: isCombined
