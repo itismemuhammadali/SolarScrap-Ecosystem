@@ -37,6 +37,7 @@ import {
   User,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import DoubleScrollContainer from "@/components/DoubleScrollContainer";
 import { getSession, getAvatarUrl } from "@/lib/auth";
 import { getAdminSellerPosts, updateAdminSellerPost } from "@/lib/admin-api";
 
@@ -719,8 +720,8 @@ export default function SellerPostsPage() {
 
             </div>
 
-            {/* Seller Posts Data Table */}
-            <div className="overflow-x-auto pt-1">
+            {/* Seller Posts Data Table with Dual Synced Scrollbars */}
+            <DoubleScrollContainer className="pt-1">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
@@ -1006,7 +1007,7 @@ export default function SellerPostsPage() {
                   )}
                 </tbody>
               </table>
-            </div>
+            </DoubleScrollContainer>
 
           </div>
 

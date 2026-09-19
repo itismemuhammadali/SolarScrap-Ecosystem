@@ -1777,7 +1777,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get timelineTab => 'ٹائم لائن';
 
   @override
-  String get sellerContactDetailsTitle => 'فروخت کنندہ / رابطے کی تفصیلات';
+  String get sellerContactDetailsTitle => 'فروخت کنندہ کی تفصیلات';
 
   @override
   String get placeYourBid => 'اپنی بولی لگائیں';
@@ -1834,7 +1834,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get equipmentSpecifications => 'سامان کی خصوصیات';
 
   @override
-  String get sellerContactInformation => 'فروخت کنندہ کے رابطے کی معلومات';
+  String get sellerContactInformation => 'فروخت کنندہ کی معلومات';
 
   @override
   String get viewFullAuctionListing => 'مکمل نیلامی لسٹنگ دیکھیں';

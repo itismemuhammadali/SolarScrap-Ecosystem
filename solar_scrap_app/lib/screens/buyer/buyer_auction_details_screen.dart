@@ -258,8 +258,6 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
     final auctionId = _auction['id'] ?? 'A001';
 
     final contactName = _auction['contactName']?.toString();
-    final contactPhone = _auction['contactPhone']?.toString();
-    final contactEmail = _auction['contactEmail']?.toString();
 
     final imagesToDisplay = _imageUrls.isNotEmpty
         ? _imageUrls
@@ -618,34 +616,13 @@ class _BuyerAuctionDetailsScreenState extends State<BuyerAuctionDetailsScreen> {
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            contactName,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF111827),
-                                            ),
-                                          ),
-                                          if (contactPhone != null && contactPhone.isNotEmpty)
-                                            Text(
-                                              contactPhone,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Color(0xFF6B7280),
-                                              ),
-                                            ),
-                                          if (contactEmail != null && contactEmail.isNotEmpty)
-                                            Text(
-                                              contactEmail,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Color(0xFF6B7280),
-                                              ),
-                                            ),
-                                        ],
+                                      child: Text(
+                                        contactName,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF111827),
+                                        ),
                                       ),
                                     ),
                                   ],

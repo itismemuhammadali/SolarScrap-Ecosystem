@@ -3443,7 +3443,7 @@ abstract class AppLocalizations {
   /// No description provided for @sellerContactDetailsTitle.
   ///
   /// In en, this message translates to:
-  /// **'SELLER / CONTACT DETAILS'**
+  /// **'SELLER DETAILS'**
   String get sellerContactDetailsTitle;
 
   /// No description provided for @placeYourBid.
@@ -3551,7 +3551,7 @@ abstract class AppLocalizations {
   /// No description provided for @sellerContactInformation.
   ///
   /// In en, this message translates to:
-  /// **'Seller Contact Information'**
+  /// **'Seller Information'**
   String get sellerContactInformation;
 
   /// No description provided for @viewFullAuctionListing.

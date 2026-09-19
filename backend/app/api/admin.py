@@ -1307,6 +1307,10 @@ async def get_admin_bids(
     else:
         bids_docs = list(db.collection("bids").stream())
 
+    # Cache users for quick lookup of buyer profile details
+    users_docs = list(db.collection("users").stream())
+    users_by_id = {u.id: (u.to_dict() or {}) for u in users_docs}
+
     results = []
     for b in bids_docs:
         bd = b.to_dict() or {}
@@ -1324,14 +1328,24 @@ async def get_admin_bids(
         if "LISTIN" in str(resolved_auc_id).upper():
             resolved_auc_id = listing_id_to_auc_id.get(lid_val, clean_filter or "AUC001")
 
+        buyer_id_val = bd.get("buyer_id") or bd.get("user_id") or ""
+        user_info = users_by_id.get(buyer_id_val, {})
+
+        bidder_name = bd.get("buyer_name") or user_info.get("display_name") or user_info.get("company_name") or "Verified Buyer"
+        bidder_phone = bd.get("buyer_phone") or user_info.get("phone_number") or ""
+        bidder_email = bd.get("buyer_email") or user_info.get("email") or ""
+        bidder_company = bd.get("buyer_company") or user_info.get("company_name") or "Scrap Trading Co."
+        bidder_city = bd.get("buyer_city") or user_info.get("city") or "Karachi"
+
         results.append({
             "id": b.id,
-            "bidderName": bd.get("buyer_name") or "Verified Buyer",
-            "bidderAvatar": bd.get("buyer_avatar") or None,
-            "bidderCity": bd.get("buyer_city") or "Karachi",
-            "bidderCompany": bd.get("buyer_company") or "Scrap Trading Co.",
-            "bidderEmail": bd.get("buyer_email") or "",
-            "bidderPhone": bd.get("buyer_phone") or "",
+            "bidderId": buyer_id_val,
+            "bidderName": bidder_name,
+            "bidderAvatar": bd.get("buyer_avatar") or user_info.get("profile_photo_url") or None,
+            "bidderCity": bidder_city,
+            "bidderCompany": bidder_company,
+            "bidderEmail": bidder_email,
+            "bidderPhone": bidder_phone,
             "bidAmount": float(bd.get("amount", 0.0)),
             "auctionId": resolved_auc_id,
             "listingId": lid_val,

@@ -57,7 +57,9 @@ export default function CreateQuotationPage() {
     }
   }, []);
 
-  // Form State
+  const [quoteId] = useState(() => `QT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+
+  // Form State - Starts completely blank for new data entry
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
@@ -71,19 +73,13 @@ export default function CreateQuotationPage() {
   const [adjustment, setAdjustment] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Line items state
+  // Line items state - Blank and ready for new data entry
   const [items, setItems] = useState<LineItem[]>([
     {
       id: "1",
-      name: "Longi 550W Tier-1 Mono PERC Panel (Used)",
-      qty: 24,
-      rate: 11500,
-    },
-    {
-      id: "2",
-      name: "GoodWe 10kW On-Grid Inverter (Working Scrap)",
+      name: "",
       qty: 1,
-      rate: 185000,
+      rate: 0,
     },
   ]);
 
@@ -103,15 +99,28 @@ export default function CreateQuotationPage() {
   ];
 
   const addPresetItem = (preset: { name: string; qty: number; rate: number }) => {
-    setItems((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        name: preset.name,
-        qty: preset.qty,
-        rate: preset.rate,
-      },
-    ]);
+    setItems((prev) => {
+      // If the only line item is blank, replace it with the selected preset
+      if (prev.length === 1 && !prev[0].name.trim() && prev[0].rate === 0) {
+        return [
+          {
+            id: Date.now().toString(),
+            name: preset.name,
+            qty: preset.qty,
+            rate: preset.rate,
+          },
+        ];
+      }
+      return [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          name: preset.name,
+          qty: preset.qty,
+          rate: preset.rate,
+        },
+      ];
+    });
     showToast(`Added ${preset.name}!`);
   };
 
@@ -120,9 +129,9 @@ export default function CreateQuotationPage() {
       ...items,
       {
         id: Date.now().toString(),
-        name: "New Solar Item",
+        name: "",
         qty: 1,
-        rate: 10000,
+        rate: 0,
       },
     ]);
   };
@@ -160,22 +169,22 @@ export default function CreateQuotationPage() {
       return;
     }
     setIsSaving(true);
-    const newId = `QT-${Date.now().toString().slice(-5)}`;
+    const validItems = items.filter((it) => it.name.trim() || it.rate > 0);
     const newQuote = {
-      id: newId,
-      quotationNumber: `#${newId}`,
+      id: quoteId,
+      quotationNumber: `#${quoteId}`,
       name: customerName.trim(),
       avatarLetter: customerName.trim().charAt(0).toUpperCase(),
       company: companyName || "Solar Scrap Client",
       email: `${customerName.trim().toLowerCase().replace(/\s+/g, ".")}@gmail.com`,
-      phone: phone || "+92 300 1234567",
+      phone: phone.trim() || "N/A",
       status: "Approved",
       date: date,
       validTill: validTill,
       totalAmount: totalOffer,
-      itemsCount: items.length,
-      items: items,
-      location: location || "Pakistan",
+      itemsCount: validItems.length || 1,
+      items: validItems.length > 0 ? validItems : items,
+      location: location.trim() || "Pakistan",
     };
 
     try {
@@ -198,22 +207,23 @@ export default function CreateQuotationPage() {
 
   const handleWhatsAppShare = () => {
     const cleanPhone = phone.replace(/[^0-9]/g, "");
-    const lines = items
+    const validItems = items.filter((it) => it.name.trim() || it.rate > 0);
+    const lines = (validItems.length > 0 ? validItems : items)
       .map(
         (it, idx) =>
-          `${idx + 1}. ${it.name} x ${it.qty} = PKR ${formatNumber(it.qty * it.rate)}`
+          `${idx + 1}. ${it.name || "Item"} x ${it.qty} = PKR ${formatNumber(it.qty * it.rate)}`
       )
       .join("\n");
 
     const header = isInvoice
       ? "*SOLAR SCRAP OFFICIAL COMMERCIAL INVOICE*"
       : "*SOLAR SCRAP OFFICIAL ESTIMATED QUOTATION*";
-    const ref = isInvoice ? "Invoice No: #INV-2024-005" : "Quote No: #QT-2024-005";
+    const ref = isInvoice ? `Invoice No: #INV-${quoteId.replace("QT-", "")}` : `Quote No: #${quoteId}`;
     const dateLine = isInvoice
       ? `Invoice Date: ${date}\nDue Date: Upon Receipt / Settled`
       : `Date: ${date}\nValid Till: ${validTill}`;
 
-    const message = `${header}\n${ref}\n${dateLine}\nCustomer: ${customerName || "Valued Client"}\nLocation: ${location || "Pakistan"}\n\n*Line Items:*\n${lines}\n\n*Total Amount:* PKR ${formatNumber(totalOffer)}\n\nThank you for choosing Solar Scrap!`;
+    const message = `${header}\n${ref}\n${dateLine}\nCustomer: ${customerName.trim() || "Valued Client"}\nLocation: ${location.trim() || "Pakistan"}\n\n*Line Items:*\n${lines}\n\n*Total Amount:* PKR ${formatNumber(totalOffer)}\n\nThank you for choosing Solar Scrap!`;
 
     const url = cleanPhone
       ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
@@ -225,7 +235,7 @@ export default function CreateQuotationPage() {
     const originalTitle = document.title;
     const cleanCustomer = (customerName || "Customer").trim().replace(/[^a-zA-Z0-9_-]/g, "_");
     const docType = isInvoice ? "Invoice" : "Quotation";
-    const refId = isInvoice ? "INV-2024-005" : "QT-2024-005";
+    const refId = isInvoice ? `INV-${quoteId.replace("QT-", "")}` : quoteId;
     document.title = `Solar_Scrap_${docType}_${cleanCustomer}_${refId}`;
     window.print();
     setTimeout(() => {
@@ -302,17 +312,17 @@ export default function CreateQuotationPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start print:block print:w-full">
           {/* Left Column: Input Form Card */}
           <div className="lg:col-span-6 bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 shadow-xs space-y-8 print:hidden">
-            {/* Customer Header Tag (Exact as Screenshot 3) */}
+            {/* Customer Header Tag */}
             <div className="flex items-center justify-between pb-6 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-[#009845] text-white flex items-center justify-center font-bold text-sm select-none">
-                  <span>{(customerName.trim() || "Kamran Sheikh").charAt(0).toUpperCase()}</span>
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-[#009845] text-white flex items-center justify-center font-bold text-sm select-none shadow-2xs">
+                  <span>{customerName.trim() ? customerName.trim().charAt(0).toUpperCase() : "Q"}</span>
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-gray-900">
-                    {customerName.trim() || "Kamran Sheikh"}
+                    {customerName.trim() || <span className="text-gray-400 font-normal">New Quotation</span>}
                   </h3>
-                  <span className="text-xs text-gray-400 font-medium">QT ID: FB001</span>
+                  <span className="text-xs text-gray-400 font-medium">ID: {quoteId}</span>
                 </div>
               </div>
               <span className="px-3 py-1 bg-emerald-50 text-[#009845] border border-emerald-200 rounded-full text-xs font-semibold">
@@ -336,7 +346,7 @@ export default function CreateQuotationPage() {
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845]"
-                    placeholder="Kamran sheikh"
+                    placeholder="Enter customer name"
                   />
                 </div>
 
@@ -349,7 +359,7 @@ export default function CreateQuotationPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845]"
-                    placeholder="+92 301 0000 000"
+                    placeholder="e.g. +92 300 1234567"
                   />
                 </div>
 
@@ -362,7 +372,7 @@ export default function CreateQuotationPage() {
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845]"
-                    placeholder="DD-MM-YYYY"
+                    placeholder="YYYY-MM-DD"
                   />
                 </div>
 
@@ -375,7 +385,7 @@ export default function CreateQuotationPage() {
                     value={validTill}
                     onChange={(e) => setValidTill(e.target.value)}
                     className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845]"
-                    placeholder="DD-MM-YYYY"
+                    placeholder="YYYY-MM-DD"
                   />
                 </div>
 
@@ -388,7 +398,7 @@ export default function CreateQuotationPage() {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845]"
-                    placeholder="Town-City-Country"
+                    placeholder="Enter city / address"
                   />
                 </div>
 
@@ -401,7 +411,7 @@ export default function CreateQuotationPage() {
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845]"
-                    placeholder="Solar scrap"
+                    placeholder="Solar Scrap Official"
                   />
                 </div>
               </div>
@@ -447,7 +457,7 @@ export default function CreateQuotationPage() {
                             updateItem(item.id, "name", e.target.value)
                           }
                           className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#009845]"
-                          placeholder="Solar Panel"
+                          placeholder="Enter equipment / item description"
                         />
                       </div>
 
@@ -458,7 +468,7 @@ export default function CreateQuotationPage() {
                         <input
                           type="number"
                           min="1"
-                          value={item.qty}
+                          value={item.qty || ""}
                           onChange={(e) =>
                             updateItem(
                               item.id,
@@ -467,7 +477,7 @@ export default function CreateQuotationPage() {
                             )
                           }
                           className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#009845]"
-                          placeholder="20"
+                          placeholder="1"
                         />
                       </div>
 
@@ -478,7 +488,7 @@ export default function CreateQuotationPage() {
                         <input
                           type="number"
                           min="0"
-                          value={item.rate}
+                          value={item.rate === 0 ? "" : item.rate}
                           onChange={(e) =>
                             updateItem(
                               item.id,
@@ -487,7 +497,7 @@ export default function CreateQuotationPage() {
                             )
                           }
                           className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#009845]"
-                          placeholder="000,000"
+                          placeholder="0"
                         />
                       </div>
 
@@ -527,12 +537,12 @@ export default function CreateQuotationPage() {
                   </label>
                   <input
                     type="number"
-                    value={adjustment}
+                    value={adjustment === 0 ? "" : adjustment}
                     onChange={(e) =>
                       setAdjustment(parseFloat(e.target.value) || 0)
                     }
                     className="w-full px-3.5 py-2 bg-white border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#009845]/20 focus:border-[#009845]"
-                    placeholder="00"
+                    placeholder="0"
                   />
                 </div>
               </div>
@@ -584,7 +594,7 @@ export default function CreateQuotationPage() {
                           Commercial Invoice
                         </h2>
                         <p className="text-[11px] print:text-xs font-mono text-gray-500 mt-0.5">
-                          #INV-2024-005
+                          #INV-{quoteId.replace("QT-", "")}
                         </p>
                       </div>
                     ) : (
@@ -593,7 +603,7 @@ export default function CreateQuotationPage() {
                           Quotation
                         </h2>
                         <p className="text-[11px] print:text-xs font-mono text-gray-500 mt-0.5">
-                          #Qt-2024-005
+                          #{quoteId}
                         </p>
                       </div>
                     )}
@@ -609,13 +619,25 @@ export default function CreateQuotationPage() {
                       {isInvoice ? "Invoice To:" : "Quotation To:"}
                     </p>
                     <p className="text-xs print:text-sm font-bold text-gray-900 mt-0.5">
-                      {customerName || "Ahmed Raza"}
+                      {customerName.trim() || (
+                        <span className="text-gray-400 font-normal italic">
+                          Customer Name
+                        </span>
+                      )}
                     </p>
                     <p className="text-[11px] print:text-xs text-gray-600 mt-0.5">
-                      {phone || "+92 345 9990000"}
+                      {phone.trim() || (
+                        <span className="text-gray-400 italic font-normal">
+                          Phone number
+                        </span>
+                      )}
                     </p>
                     <p className="text-[11px] print:text-xs text-gray-600">
-                      {location || "Rawalpindi, Bahria Town"}
+                      {location.trim() || (
+                        <span className="text-gray-400 italic font-normal">
+                          City / Address
+                        </span>
+                      )}
                     </p>
                   </div>
 
@@ -624,14 +646,14 @@ export default function CreateQuotationPage() {
                       <span className="font-bold text-gray-900">
                         {isInvoice ? "Invoice Date:" : "Date:"}
                       </span>
-                      <span className="text-gray-700 font-medium">{date || "03 Dec 2024"}</span>
+                      <span className="text-gray-700 font-medium">{date || "—"}</span>
                     </p>
                     <p className="flex justify-end gap-2">
                       <span className="font-bold text-gray-900">
                         {isInvoice ? "Due Date:" : "Valid Till:"}
                       </span>
                       <span className="text-gray-700 font-medium">
-                        {isInvoice ? "Upon Receipt / Settled" : (validTill || "10 Dec 2024")}
+                        {isInvoice ? "Upon Receipt / Settled" : (validTill || "—")}
                       </span>
                     </p>
                     <p className="flex justify-end gap-2">
@@ -660,16 +682,23 @@ export default function CreateQuotationPage() {
                       className="grid grid-cols-12 items-center text-[11px] print:text-xs pb-2 print:py-2 border-b border-gray-200/60"
                     >
                       <div className="col-span-6 text-gray-800 font-medium truncate print:whitespace-normal print:overflow-visible pr-2">
-                        {idx + 1}. {item.name}
+                        {idx + 1}.{" "}
+                        {item.name.trim() || (
+                          <span className="text-gray-400 font-normal italic">
+                            Item description...
+                          </span>
+                        )}
                       </div>
                       <div className="col-span-2 text-center text-gray-700 font-medium">
-                        {item.qty}
+                        {item.qty || 1}
                       </div>
                       <div className="col-span-2 text-right text-gray-700">
-                        {formatNumber(item.rate)}
+                        {item.rate > 0 ? formatNumber(item.rate) : "0"}
                       </div>
                       <div className="col-span-2 text-right font-bold text-gray-900">
-                        {formatNumber(item.qty * item.rate)}
+                        {item.qty * item.rate > 0
+                          ? formatNumber(item.qty * item.rate)
+                          : "0"}
                       </div>
                     </div>
                   ))}

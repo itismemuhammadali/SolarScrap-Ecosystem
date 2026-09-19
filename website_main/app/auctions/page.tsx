@@ -32,6 +32,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import DoubleScrollContainer from "@/components/DoubleScrollContainer";
 import { getSession, getAvatarUrl } from "@/lib/auth";
 import {
   getAdminAuctions,
@@ -694,8 +695,8 @@ export default function AuctionsPage() {
 
               </div>
 
-              {/* Auctions Data Table */}
-              <div className="overflow-x-auto">
+              {/* Auctions Data Table with Dual Synced Scrollbars */}
+              <DoubleScrollContainer>
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-gray-100 bg-transparent text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
@@ -879,7 +880,7 @@ export default function AuctionsPage() {
                     )}
                   </tbody>
                 </table>
-              </div>
+              </DoubleScrollContainer>
 
               {/* Table Footer */}
               <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">

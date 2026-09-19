@@ -12,6 +12,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import DoubleScrollContainer from "@/components/DoubleScrollContainer";
 import { getSession, getAvatarUrl } from "@/lib/auth";
 import QuotationModal from "@/components/QuotationModal";
 
@@ -289,8 +290,8 @@ export default function MyInventoryPage() {
                 </div>
               </div>
 
-              {/* Table with All Columns & Narrow/Compact Row Heights matching Figma 1:1 */}
-              <div className="overflow-x-auto">
+              {/* Table with Dual Synced Scrollbars */}
+              <DoubleScrollContainer>
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-gray-100 bg-gray-50/50 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
@@ -377,7 +378,7 @@ export default function MyInventoryPage() {
                     )}
                   </tbody>
                 </table>
-              </div>
+              </DoubleScrollContainer>
 
               {/* Table Footer / Pagination matching Figma */}
               <div className="py-3 px-4 sm:px-6 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">

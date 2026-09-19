@@ -22,11 +22,15 @@ import {
   Gavel,
   ArrowLeft,
   Loader2,
+  MessageSquare,
+  ExternalLink,
+  User,
 } from "lucide-react";
 import { getAdminBids, getAdminAuctionDetail, acceptAdminBid } from "@/lib/admin-api";
 
 interface BidItem {
   id: string;
+  bidderId?: string;
   bidderName: string;
   bidderAvatar?: string;
   bidderCity: string;
@@ -98,12 +102,22 @@ function BidsPageContent() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isWinnerModalOpen, setIsWinnerModalOpen] = useState(false);
   const [bidToSelectWinner, setBidToSelectWinner] = useState<BidItem | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profileBuyer, setProfileBuyer] = useState<BidItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  const handleOpenBuyerProfile = (bid: BidItem) => {
+    setProfileBuyer(bid);
+    setIsProfileModalOpen(true);
+  };
+
+  // Sort all bids descending by bidAmount so highest bids come first
+  const sortedBids = [...bids].sort((a, b) => b.bidAmount - a.bidAmount);
 
   const filterTabs = [
     { name: "All", count: bids.length, icon: null },
@@ -112,21 +126,25 @@ function BidsPageContent() {
     { name: "Lost", count: bids.filter((b) => b.status === "Lost").length, icon: null },
   ];
 
-  // Filtered Bids
-  const filteredBids = bids.filter((bid) => {
-    if (activeFilter !== "All" && bid.status !== activeFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const match =
-        bid.bidderName.toLowerCase().includes(q) ||
-        (bid.bidderCompany && bid.bidderCompany.toLowerCase().includes(q)) ||
-        bid.auctionId.toLowerCase().includes(q) ||
-        bid.equipment.toLowerCase().includes(q) ||
-        bid.bidderCity.toLowerCase().includes(q);
-      if (!match) return false;
-    }
-    return true;
-  });
+  // Filtered Bids - STRICTLY TOP 3 BIDS
+  const filteredBids = sortedBids
+    .filter((bid) => {
+      if (activeFilter !== "All" && bid.status !== activeFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const match =
+          bid.bidderName.toLowerCase().includes(q) ||
+          (bid.bidderCompany && bid.bidderCompany.toLowerCase().includes(q)) ||
+          bid.auctionId.toLowerCase().includes(q) ||
+          bid.equipment.toLowerCase().includes(q) ||
+          bid.bidderCity.toLowerCase().includes(q) ||
+          (bid.bidderPhone && bid.bidderPhone.toLowerCase().includes(q)) ||
+          (bid.bidderEmail && bid.bidderEmail.toLowerCase().includes(q));
+        if (!match) return false;
+      }
+      return true;
+    })
+    .slice(0, 3); // Requirement: Only the top 3 bids should be displayed
 
   const handleOpenWinnerModal = (bid: BidItem) => {
     setBidToSelectWinner(bid);
@@ -358,30 +376,61 @@ function BidsPageContent() {
             </div>
           )}
 
-          {/* Bids Grid (3 Columns) */}
+          {/* Top 3 Bids Header Banner */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#009845]/10 text-[#009845] border border-[#009845]/20 shadow-2xs">
+                <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                <span>Top 3 Highest Bids</span>
+              </span>
+              <span className="text-xs text-gray-500 hidden sm:inline">
+                Ranked by offer amount • Click buyer or contact buttons to reach out directly
+              </span>
+            </div>
+            {bids.length > 3 && (
+              <span className="text-[11px] text-gray-400 font-medium">
+                Showing top 3 of {bids.length} total bids
+              </span>
+            )}
+          </div>
+
+          {/* Bids Grid (3 Columns) - Displays ONLY Top 3 */}
           {filteredBids.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredBids.map((bid) => {
+              {filteredBids.map((bid, index) => {
                 const isWinner = bid.status === "Winner";
                 const isLost = bid.status === "Lost";
                 const isPending = bid.status === "Pending";
+                const rank = index + 1;
+                const cleanPhone = bid.bidderPhone ? bid.bidderPhone.replace(/[^0-9]/g, "") : "";
 
                 return (
                   <div
                     key={bid.id}
-                    className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-2xs hover:shadow-md transition-shadow flex flex-col justify-between"
+                    className="bg-white rounded-2xl p-5 border border-gray-200/80 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
                   >
                     <div>
                       {/* Top Row: Avatar, Name, Location & Badges */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-full bg-[#009845] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs select-none">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBuyerProfile(bid)}
+                            className="w-10 h-10 rounded-full bg-[#009845] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs select-none hover:opacity-90 transition-opacity cursor-pointer ring-2 ring-transparent hover:ring-[#009845]/30"
+                            title="Click to view Buyer Profile"
+                          >
                             {bid.bidderName ? bid.bidderName.charAt(0).toUpperCase() : "B"}
-                          </div>
+                          </button>
                           <div>
-                            <h3 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
-                              {bid.bidderName}
-                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenBuyerProfile(bid)}
+                              className="text-xs sm:text-sm font-bold text-gray-900 leading-tight hover:text-[#009845] transition-colors cursor-pointer text-left flex items-center gap-1 group"
+                              title="Click to view Buyer Profile"
+                            >
+                              <span>{bid.bidderName}</span>
+                              <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-[#009845] opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
                             <p className="text-[11px] text-gray-400 flex items-center gap-1 mt-0.5">
                               <MapPin className="w-2.5 h-2.5 text-gray-400" />
                               <span>{bid.bidderCity}</span>
@@ -395,29 +444,37 @@ function BidsPageContent() {
                           </div>
                         </div>
 
-                        {/* Badges */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {bid.isHighest && !isWinner && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
-                              Highest
-                            </span>
-                          )}
+                        {/* Badges: Rank & Status */}
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          {/* Top 3 Rank Badge */}
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs ${
+                              rank === 1
+                                ? "bg-amber-50 text-amber-700 border border-amber-300"
+                                : rank === 2
+                                ? "bg-slate-100 text-slate-700 border border-slate-300"
+                                : "bg-amber-900/10 text-amber-900 border border-amber-900/20"
+                            }`}
+                          >
+                            <span>{rank === 1 ? "🥇 #1 Highest" : rank === 2 ? "🥈 #2 Bid" : "🥉 #3 Bid"}</span>
+                          </span>
 
+                          {/* Status Badge */}
                           {isPending && (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-200">
+                            <span className="px-2 py-0.2 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-200">
                               Pending
                             </span>
                           )}
 
                           {isWinner && (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-[#009845] border border-[#009845]/40 bg-emerald-50/50 flex items-center gap-1">
-                              <Trophy className="w-3 h-3 text-amber-500" />
+                            <span className="px-2 py-0.2 rounded-full text-[10px] font-semibold text-[#009845] border border-[#009845]/40 bg-emerald-50/50 flex items-center gap-1">
+                              <Trophy className="w-2.5 h-2.5 text-amber-500" />
                               <span>Winner</span>
                             </span>
                           )}
 
                           {isLost && (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-500 border border-red-200">
+                            <span className="px-2 py-0.2 rounded-full text-[10px] font-semibold bg-red-50 text-red-500 border border-red-200">
                               Lost
                             </span>
                           )}
@@ -431,7 +488,7 @@ function BidsPageContent() {
                         </p>
                         <p
                           className={`text-xl sm:text-2xl font-bold tracking-tight mt-1 ${
-                            isWinner ? "text-[#F59E0B]" : "text-gray-900"
+                            isWinner || rank === 1 ? "text-[#009845]" : "text-gray-900"
                           }`}
                         >
                           PKR {bid.bidAmount.toLocaleString()}
@@ -456,42 +513,129 @@ function BidsPageContent() {
                         </div>
                         <div className="flex items-center justify-between text-gray-400">
                           <span>Phone</span>
-                          <span className="text-gray-600 flex items-center gap-1">
-                            <Phone className="w-2.5 h-2.5 text-gray-400" />
-                            <span>{bid.bidderPhone || "N/A"}</span>
-                          </span>
+                          {bid.bidderPhone ? (
+                            <a
+                              href={`tel:${bid.bidderPhone}`}
+                              className="font-medium text-gray-800 hover:text-[#009845] hover:underline flex items-center gap-1 transition-colors"
+                              title="Click to call"
+                            >
+                              <Phone className="w-2.5 h-2.5 text-[#009845]" />
+                              <span>{bid.bidderPhone}</span>
+                            </a>
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
                         </div>
+                        {bid.bidderEmail && (
+                          <div className="flex items-center justify-between text-gray-400">
+                            <span>Email</span>
+                            <a
+                              href={`mailto:${bid.bidderEmail}?subject=${encodeURIComponent(`Regarding your bid on ${bid.equipment} (${bid.auctionId})`)}`}
+                              className="font-medium text-gray-800 hover:text-[#009845] hover:underline truncate max-w-[170px] text-right transition-colors"
+                              title="Click to email"
+                            >
+                              <span>{bid.bidderEmail}</span>
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Card Footer: Select Winner button on left, Eye and More on right */}
-                    <div className="pt-3.5 mt-3 border-t border-gray-100 flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenWinnerModal(bid)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/60 hover:bg-amber-100/80 text-[#D97706] border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
-                      >
-                        <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Select Winner</span>
-                      </button>
+                    {/* Quick Contact & Action Buttons */}
+                    <div className="pt-3.5 mt-3 border-t border-gray-100 space-y-2.5">
+                      {/* Direct Quick Contact Buttons (WhatsApp, Call, Email, Profile) */}
+                      <div className="flex items-center gap-1.5">
+                        {/* WhatsApp Button */}
+                        {bid.bidderPhone ? (
+                          <a
+                            href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+                              `Hello ${bid.bidderName}, I am contacting you from Solar Scrap regarding your bid of PKR ${bid.bidAmount.toLocaleString()} on ${bid.equipment} (${bid.auctionId}).`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#009845] border border-emerald-200/90 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                            title="Chat on WhatsApp"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
+                            <span>WhatsApp</span>
+                          </a>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 py-1.5 px-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-300 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-not-allowed"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>WhatsApp</span>
+                          </button>
+                        )}
 
-                      <div className="flex items-center gap-1">
+                        {/* Call Phone Button */}
+                        {bid.bidderPhone && (
+                          <a
+                            href={`tel:${bid.bidderPhone}`}
+                            className="py-1.5 px-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                            title="Call Phone"
+                          >
+                            <Phone className="w-3.5 h-3.5 text-gray-600" />
+                            <span>Call</span>
+                          </a>
+                        )}
+
+                        {/* Email Button */}
+                        {bid.bidderEmail && (
+                          <a
+                            href={`mailto:${bid.bidderEmail}?subject=${encodeURIComponent(
+                              `Regarding your bid on ${bid.equipment} (${bid.auctionId})`
+                            )}`}
+                            className="py-1.5 px-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                            title="Send Email"
+                          >
+                            <Mail className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Email</span>
+                          </a>
+                        )}
+
+                        {/* View Profile Button */}
                         <button
                           type="button"
-                          onClick={() => handleOpenDetails(bid)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                          title="View details"
+                          onClick={() => handleOpenBuyerProfile(bid)}
+                          className="py-1.5 px-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                          title="View Buyer Profile"
                         >
-                          <Eye className="w-4 h-4" />
+                          <User className="w-3.5 h-3.5 text-gray-600" />
+                          <span className="hidden sm:inline">Profile</span>
                         </button>
+                      </div>
+
+                      {/* Card Footer: Select Winner on left, View details on right */}
+                      <div className="flex items-center justify-between pt-1">
                         <button
                           type="button"
-                          onClick={() => handleOpenDetails(bid)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                          title="More options"
+                          onClick={() => handleOpenWinnerModal(bid)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/70 hover:bg-amber-100/90 text-[#D97706] border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
                         >
-                          <MoreVertical className="w-4 h-4" />
+                          <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Select Winner</span>
                         </button>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDetails(bid)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                            title="View full bid details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBuyerProfile(bid)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+                            title="View buyer profile"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -651,12 +795,244 @@ function BidsPageContent() {
               </div>
             </div>
 
+            {/* Quick Contact Options inside Details Modal */}
+            <div className="pt-4 border-t border-gray-100 space-y-2">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Direct Contact Admin Actions
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {selectedBid.bidderPhone ? (
+                  <a
+                    href={`https://wa.me/${selectedBid.bidderPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                      `Hello ${selectedBid.bidderName}, I am contacting you from Solar Scrap regarding your bid of PKR ${selectedBid.bidAmount.toLocaleString()} on ${selectedBid.equipment} (${selectedBid.auctionId}).`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#009845] border border-emerald-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    title="WhatsApp"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
+                    <span>WhatsApp</span>
+                  </a>
+                ) : (
+                  <button disabled className="py-2 px-2.5 rounded-xl bg-gray-100 text-gray-400 text-xs font-medium cursor-not-allowed">
+                    WhatsApp N/A
+                  </button>
+                )}
+
+                {selectedBid.bidderPhone ? (
+                  <a
+                    href={`tel:${selectedBid.bidderPhone}`}
+                    className="py-2 px-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    title="Call"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-gray-600" />
+                    <span>Call</span>
+                  </a>
+                ) : (
+                  <button disabled className="py-2 px-2.5 rounded-xl bg-gray-100 text-gray-400 text-xs font-medium cursor-not-allowed">
+                    Call N/A
+                  </button>
+                )}
+
+                {selectedBid.bidderEmail ? (
+                  <a
+                    href={`mailto:${selectedBid.bidderEmail}?subject=${encodeURIComponent(
+                      `Regarding your bid on ${selectedBid.equipment} (${selectedBid.auctionId})`
+                    )}`}
+                    className="py-2 px-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    title="Email"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Email</span>
+                  </a>
+                ) : (
+                  <button disabled className="py-2 px-2.5 rounded-xl bg-gray-100 text-gray-400 text-xs font-medium cursor-not-allowed">
+                    Email N/A
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Footer Buttons */}
-            <div className="pt-5 flex items-center justify-end">
+            <div className="pt-4 flex items-center justify-between gap-3">
+              <Link
+                href={`/scrap-dealers?search=${encodeURIComponent(selectedBid.bidderName)}`}
+                className="text-xs font-semibold text-[#009845] hover:underline flex items-center gap-1"
+              >
+                <span>View in Scrap Dealers</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
               <button
                 type="button"
                 onClick={() => setIsDetailsOpen(false)}
-                className="w-full h-9 px-4 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center whitespace-nowrap"
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Buyer Profile Modal */}
+      {isProfileModalOpen && profileBuyer && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-[480px] w-full p-6 sm:p-7 shadow-2xl border border-gray-100">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-[#009845]" />
+                <h2 className="text-base font-bold text-gray-900">Buyer Profile</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProfileModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Buyer Identity */}
+            <div className="flex items-center justify-between py-4 border-b border-gray-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-xl bg-[#009845] text-white font-bold text-lg flex items-center justify-center shrink-0 shadow-xs select-none">
+                  {profileBuyer.bidderName ? profileBuyer.bidderName.charAt(0).toUpperCase() : "B"}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900 leading-tight">
+                    {profileBuyer.bidderName}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {profileBuyer.bidderCompany || "Verified Scrap Dealer / Buyer"}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Verified Buyer
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                      {profileBuyer.bidderCity}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Contact Actions Box */}
+            <div className="my-4 p-4 rounded-2xl bg-[#EAF7EE]/60 border border-[#009845]/20 space-y-2.5">
+              <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+                Direct Contact Options
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* WhatsApp */}
+                {profileBuyer.bidderPhone ? (
+                  <a
+                    href={`https://wa.me/${profileBuyer.bidderPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                      `Hello ${profileBuyer.bidderName}, I am contacting you from Solar Scrap regarding your bid of PKR ${profileBuyer.bidAmount.toLocaleString()} on ${profileBuyer.equipment} (${profileBuyer.auctionId}).`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 px-3 rounded-xl bg-[#009845] hover:bg-[#008230] text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-white" />
+                    <span>WhatsApp</span>
+                  </a>
+                ) : (
+                  <button disabled className="py-2 px-3 rounded-xl bg-gray-200 text-gray-400 text-xs font-medium cursor-not-allowed">
+                    WhatsApp N/A
+                  </button>
+                )}
+
+                {/* Call */}
+                {profileBuyer.bidderPhone ? (
+                  <a
+                    href={`tel:${profileBuyer.bidderPhone}`}
+                    className="py-2 px-3 rounded-xl bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-gray-600" />
+                    <span>Call</span>
+                  </a>
+                ) : (
+                  <button disabled className="py-2 px-3 rounded-xl bg-gray-200 text-gray-400 text-xs font-medium cursor-not-allowed">
+                    Phone N/A
+                  </button>
+                )}
+
+                {/* Email */}
+                {profileBuyer.bidderEmail ? (
+                  <a
+                    href={`mailto:${profileBuyer.bidderEmail}?subject=${encodeURIComponent(
+                      `Regarding your bid on ${profileBuyer.equipment} (${profileBuyer.auctionId})`
+                    )}`}
+                    className="py-2 px-3 rounded-xl bg-white hover:bg-gray-50 text-blue-700 border border-blue-200 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Email</span>
+                  </a>
+                ) : (
+                  <button disabled className="py-2 px-3 rounded-xl bg-gray-200 text-gray-400 text-xs font-medium cursor-not-allowed">
+                    Email N/A
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Profile Key Values */}
+            <div className="text-xs space-y-2.5 border-b border-gray-100 pb-4">
+              <div className="flex items-center justify-between text-gray-500">
+                <span>Phone</span>
+                {profileBuyer.bidderPhone ? (
+                  <a href={`tel:${profileBuyer.bidderPhone}`} className="font-semibold text-gray-900 hover:text-[#009845] hover:underline">
+                    {profileBuyer.bidderPhone}
+                  </a>
+                ) : (
+                  <span className="text-gray-400">Not provided</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-gray-500">
+                <span>Email</span>
+                {profileBuyer.bidderEmail ? (
+                  <a href={`mailto:${profileBuyer.bidderEmail}`} className="font-semibold text-gray-900 hover:text-[#009845] hover:underline">
+                    {profileBuyer.bidderEmail}
+                  </a>
+                ) : (
+                  <span className="text-gray-400">Not provided</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-gray-500">
+                <span>Company</span>
+                <span className="font-semibold text-gray-900">{profileBuyer.bidderCompany || "—"}</span>
+              </div>
+              <div className="flex items-center justify-between text-gray-500">
+                <span>City</span>
+                <span className="font-semibold text-gray-900">{profileBuyer.bidderCity}</span>
+              </div>
+              <div className="flex items-center justify-between text-gray-500">
+                <span>Current Bid Placed</span>
+                <span className="font-bold text-sm text-[#009845]">
+                  PKR {profileBuyer.bidAmount.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-gray-500">
+                <span>Auction</span>
+                <span className="font-mono font-semibold text-gray-900">{profileBuyer.auctionId}</span>
+              </div>
+            </div>
+
+            {/* Footer Navigation */}
+            <div className="pt-4 flex items-center justify-between gap-3">
+              <Link
+                href={`/scrap-dealers?search=${encodeURIComponent(profileBuyer.bidderName)}`}
+                className="text-xs font-semibold text-[#009845] hover:underline flex items-center gap-1"
+              >
+                <span>Open in Scrap Dealers Directory</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsProfileModalOpen(false)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
               >
                 Close
               </button>

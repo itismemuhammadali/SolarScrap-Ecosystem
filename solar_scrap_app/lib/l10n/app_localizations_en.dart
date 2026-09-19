@@ -1774,7 +1774,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timelineTab => 'Timeline';
 
   @override
-  String get sellerContactDetailsTitle => 'SELLER / CONTACT DETAILS';
+  String get sellerContactDetailsTitle => 'SELLER DETAILS';
 
   @override
   String get placeYourBid => 'Place Your Bid';
@@ -1830,7 +1830,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get equipmentSpecifications => 'Equipment Specifications';
 
   @override
-  String get sellerContactInformation => 'Seller Contact Information';
+  String get sellerContactInformation => 'Seller Information';
 
   @override
   String get viewFullAuctionListing => 'View Full Auction Listing';

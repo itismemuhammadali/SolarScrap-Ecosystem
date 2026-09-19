@@ -22,6 +22,7 @@ import {
   Check,
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
+import DoubleScrollContainer from "@/components/DoubleScrollContainer";
 import { getAdminUsers, updateUserStatus } from "@/lib/admin-api";
 import { getSession, getAvatarUrl } from "@/lib/auth";
 
@@ -337,8 +338,8 @@ export default function ScrapDealersPage() {
 
               </div>
 
-              {/* Dealers Data Table */}
-              <div className="overflow-x-auto">
+              {/* Dealers Data Table with Dual Synced Scrollbars */}
+              <DoubleScrollContainer>
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-t border-b border-gray-100 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-transparent">
@@ -489,7 +490,7 @@ export default function ScrapDealersPage() {
                     ) : null}
                   </tbody>
                 </table>
-              </div>
+              </DoubleScrollContainer>
 
               {/* Table Footer */}
               <div className="px-5 sm:px-6 py-3.5 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 bg-white">
