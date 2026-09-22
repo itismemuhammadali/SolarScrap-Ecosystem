@@ -363,6 +363,8 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
         : address;
 
     final contactName = _bid['contactName']?.toString() ?? '';
+    final contactPhone = _bid['contactPhone']?.toString() ?? '';
+    final contactEmail = _bid['contactEmail']?.toString() ?? '';
     final hasContactInfo = contactName.isNotEmpty;
     final l10n = AppLocalizations.of(context);
 
@@ -804,18 +806,57 @@ class _BuyerBidDetailsScreenState extends State<BuyerBidDetailsScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: const Color(0xFFBBF7D0)),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.person, size: 18, color: Color(0xFF00A63E)),
-                      const SizedBox(width: 10),
-                      Text(
-                        contactName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: Color(0xFF0F172A),
-                        ),
+                      Row(
+                        children: [
+                          const Icon(Icons.person, size: 18, color: Color(0xFF00A63E)),
+                          const SizedBox(width: 10),
+                          Text(
+                            contactName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
                       ),
+                      if (contactPhone.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(Icons.phone, size: 18, color: Color(0xFF00A63E)),
+                            const SizedBox(width: 10),
+                            Text(
+                              contactPhone,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (contactEmail.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            const Icon(Icons.email, size: 18, color: Color(0xFF00A63E)),
+                            const SizedBox(width: 10),
+                            Text(
+                              contactEmail,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

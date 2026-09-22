@@ -240,10 +240,16 @@ export default function QuotationModal({
             ) : (
               <>
                 <p className="text-[10px] print:text-xs text-gray-500">
-                  • This is an estimated offer and valid for the mentioned date only.
+                  • Payment Terms : 100 percent advance.
                 </p>
                 <p className="text-[10px] print:text-xs text-gray-500">
-                  • Final price may vary after physical inspection.
+                  • Tax : Prices are quoted with out tax.
+                </p>
+                <p className="text-[10px] print:text-xs text-gray-500">
+                  • Delivery : 3-5 days after approval from client.
+                </p>
+                <p className="text-[10px] print:text-xs text-gray-500">
+                  • Pick up : Included in our offer
                 </p>
               </>
             )}

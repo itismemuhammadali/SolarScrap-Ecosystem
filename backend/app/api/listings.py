@@ -267,9 +267,17 @@ async def get_listing_by_id(
         )
 
     data = doc.to_dict() or {}
+    user_id = getattr(current_user, "user_id", "")
     is_owner_or_admin = (
-        current_user.role == "admin" or current_user.id == data.get("seller_id", "")
+        current_user.role == "admin" or user_id == data.get("seller_id", "")
     )
+    is_winning_buyer = (
+        data.get("winning_buyer_id") is not None
+        and data.get("winning_buyer_id") == user_id
+        and str(data.get("status", "")).lower() in ("closed", "sold", "completed")
+    )
+    show_contact = is_owner_or_admin or is_winning_buyer
+
     return ListingResponse(
         id=doc.id,
         seller_id=data.get("seller_id", ""),
@@ -282,8 +290,8 @@ async def get_listing_by_id(
         pickup_area=data.get("pickup_area"),
         pickup_address=data.get("pickup_address", ""),
         contact_name=data.get("contact_name", ""),
-        contact_phone=data.get("contact_phone", "") if is_owner_or_admin else "",
-        contact_email=data.get("contact_email", "") if is_owner_or_admin else "",
+        contact_phone=data.get("contact_phone", "") if show_contact else "",
+        contact_email=data.get("contact_email", "") if show_contact else "",
         latitude=data.get("latitude"),
         longitude=data.get("longitude"),
         created_at=_format_datetime(data.get("created_at")),

@@ -270,10 +270,12 @@ function QuotationViewContent() {
           <div className="space-y-2 pt-2 text-xs print:text-sm text-gray-500">
             <h3 className="font-bold text-gray-800">Terms &amp; Conditions</h3>
             <ul className="list-disc pl-4 space-y-1">
-              <li>This is an official valuation offer and valid for the mentioned date only.</li>
-              <li>Final price and payment release may vary after on-site physical inspection.</li>
+              <li>Payment Terms : 100 percent advance.</li>
+              <li>Tax : Prices are quoted with out tax.</li>
+              <li>Delivery : 3-5 days after approval from client.</li>
+              <li>Pick up : Included in our offer</li>
             </ul>
-            <p className="font-bold text-gray-800 pt-2">Thank you for working with Solar Scrap.</p>
+            <p className="font-bold text-gray-800 pt-2">Thank you for choosing Solar Scrap.</p>
           </div>
 
           {/* ===================== OFFICIAL SIGNATURES & CORPORATE FOOTER (PRINT ONLY) ===================== */}

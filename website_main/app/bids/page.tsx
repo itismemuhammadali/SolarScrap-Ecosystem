@@ -78,7 +78,27 @@ function BidsPageContent() {
         getAdminAuctionDetail(currentAuctionId),
       ]);
       if (liveBids.status === "fulfilled" && Array.isArray(liveBids.value)) {
-        setBids(liveBids.value);
+        const enrichedBids: BidItem[] = liveBids.value.map((b: any) => {
+          const isAdmin =
+            b.bidderId === "admin_system" ||
+            (b.bidderName && b.bidderName.toLowerCase().includes("admin")) ||
+            (b.bidderName && b.bidderName.toLowerCase().includes("quotation"));
+
+          return {
+            ...b,
+            bidderName: b.bidderName || (isAdmin ? "SolarScrap Admin (Quotation)" : "Verified Buyer"),
+            bidderPhone: b.bidderPhone || (isAdmin ? "+92 300 1234567" : ""),
+            bidderEmail: b.bidderEmail || (isAdmin ? "admin@solarscrap.com" : ""),
+            bidderCompany:
+              b.bidderCompany && b.bidderCompany !== "Scrap Trading Co."
+                ? b.bidderCompany
+                : isAdmin
+                ? "Solar Scrap Admin HQ"
+                : b.bidderCompany || "Scrap Trading Co.",
+            bidderCity: b.bidderCity || "Karachi",
+          };
+        });
+        setBids(enrichedBids);
       }
       if (detail.status === "fulfilled" && detail.value) {
         setAuctionDetail(detail.value);
@@ -112,7 +132,22 @@ function BidsPageContent() {
   };
 
   const handleOpenBuyerProfile = (bid: BidItem) => {
-    setProfileBuyer(bid);
+    const isAdmin =
+      bid.bidderId === "admin_system" ||
+      (bid.bidderName && bid.bidderName.toLowerCase().includes("admin")) ||
+      (bid.bidderName && bid.bidderName.toLowerCase().includes("quotation"));
+
+    setProfileBuyer({
+      ...bid,
+      bidderPhone: bid.bidderPhone || (isAdmin ? "+92 300 1234567" : ""),
+      bidderEmail: bid.bidderEmail || (isAdmin ? "admin@solarscrap.com" : ""),
+      bidderCompany:
+        bid.bidderCompany && bid.bidderCompany !== "Scrap Trading Co."
+          ? bid.bidderCompany
+          : isAdmin
+          ? "Solar Scrap Admin HQ"
+          : bid.bidderCompany || "Verified Scrap Dealer / Buyer",
+    });
     setIsProfileModalOpen(true);
   };
 
@@ -166,7 +201,22 @@ function BidsPageContent() {
   };
 
   const handleOpenDetails = (bid: BidItem) => {
-    setSelectedBid(bid);
+    const isAdmin =
+      bid.bidderId === "admin_system" ||
+      (bid.bidderName && bid.bidderName.toLowerCase().includes("admin")) ||
+      (bid.bidderName && bid.bidderName.toLowerCase().includes("quotation"));
+
+    setSelectedBid({
+      ...bid,
+      bidderPhone: bid.bidderPhone || (isAdmin ? "+92 300 1234567" : ""),
+      bidderEmail: bid.bidderEmail || (isAdmin ? "admin@solarscrap.com" : ""),
+      bidderCompany:
+        bid.bidderCompany && bid.bidderCompany !== "Scrap Trading Co."
+          ? bid.bidderCompany
+          : isAdmin
+          ? "Solar Scrap Admin HQ"
+          : bid.bidderCompany || "Scrap Trading Co.",
+    });
     setIsDetailsOpen(true);
   };
 
@@ -526,9 +576,9 @@ function BidsPageContent() {
                             <span className="text-gray-400">N/A</span>
                           )}
                         </div>
-                        {bid.bidderEmail && (
-                          <div className="flex items-center justify-between text-gray-400">
-                            <span>Email</span>
+                        <div className="flex items-center justify-between text-gray-400">
+                          <span>Email</span>
+                          {bid.bidderEmail ? (
                             <a
                               href={`mailto:${bid.bidderEmail}?subject=${encodeURIComponent(`Regarding your bid on ${bid.equipment} (${bid.auctionId})`)}`}
                               className="font-medium text-gray-800 hover:text-[#009845] hover:underline truncate max-w-[170px] text-right transition-colors"
@@ -536,8 +586,10 @@ function BidsPageContent() {
                             >
                               <span>{bid.bidderEmail}</span>
                             </a>
-                          </div>
-                        )}
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -561,8 +613,10 @@ function BidsPageContent() {
                           </a>
                         ) : (
                           <button
+                            type="button"
                             disabled
                             className="flex-1 py-1.5 px-2 rounded-xl bg-gray-50 border border-gray-200 text-gray-300 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-not-allowed"
+                            title="Phone number not available"
                           >
                             <MessageSquare className="w-3.5 h-3.5" />
                             <span>WhatsApp</span>
@@ -570,7 +624,7 @@ function BidsPageContent() {
                         )}
 
                         {/* Call Phone Button */}
-                        {bid.bidderPhone && (
+                        {bid.bidderPhone ? (
                           <a
                             href={`tel:${bid.bidderPhone}`}
                             className="py-1.5 px-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs"
@@ -579,10 +633,20 @@ function BidsPageContent() {
                             <Phone className="w-3.5 h-3.5 text-gray-600" />
                             <span>Call</span>
                           </a>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            className="py-1.5 px-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-300 text-xs font-semibold flex items-center justify-center gap-1 cursor-not-allowed"
+                            title="Phone number not available"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            <span>Call</span>
+                          </button>
                         )}
 
                         {/* Email Button */}
-                        {bid.bidderEmail && (
+                        {bid.bidderEmail ? (
                           <a
                             href={`mailto:${bid.bidderEmail}?subject=${encodeURIComponent(
                               `Regarding your bid on ${bid.equipment} (${bid.auctionId})`
@@ -593,6 +657,16 @@ function BidsPageContent() {
                             <Mail className="w-3.5 h-3.5 text-blue-600" />
                             <span>Email</span>
                           </a>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            className="py-1.5 px-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-300 text-xs font-semibold flex items-center justify-center gap-1 cursor-not-allowed"
+                            title="Email not available"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span>Email</span>
+                          </button>
                         )}
 
                         {/* View Profile Button */}
@@ -609,14 +683,21 @@ function BidsPageContent() {
 
                       {/* Card Footer: Select Winner on left, View details on right */}
                       <div className="flex items-center justify-between pt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenWinnerModal(bid)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/70 hover:bg-amber-100/90 text-[#D97706] border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
-                        >
-                          <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                          <span>Select Winner</span>
-                        </button>
+                        {isWinner ? (
+                          <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-[#009845] border border-[#009845]/30 rounded-xl text-xs font-semibold shadow-2xs select-none">
+                            <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Selected Winner</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenWinnerModal(bid)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/70 hover:bg-amber-100/90 text-[#D97706] border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Select Winner</span>
+                          </button>
+                        )}
 
                         <div className="flex items-center gap-1">
                           <button
@@ -771,23 +852,19 @@ function BidsPageContent() {
               </div>
               <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
                 <span className="text-[#8F9CA9] font-normal">Phone</span>
-                <span className="font-bold text-gray-900 text-right">{selectedBid.bidderPhone}</span>
+                <span className="font-bold text-gray-900 text-right">{selectedBid.bidderPhone || "Not provided"}</span>
               </div>
-              {selectedBid.bidderEmail && (
-                <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
-                  <span className="text-[#8F9CA9] font-normal">Email</span>
-                  <span className="font-bold text-gray-900 text-right">{selectedBid.bidderEmail}</span>
-                </div>
-              )}
-              {selectedBid.bidderCompany && (
-                <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
-                  <span className="text-[#8F9CA9] font-normal">Company</span>
-                  <span className="font-bold text-gray-900 text-right">{selectedBid.bidderCompany}</span>
-                </div>
-              )}
+              <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
+                <span className="text-[#8F9CA9] font-normal">Email</span>
+                <span className="font-bold text-gray-900 text-right">{selectedBid.bidderEmail || "Not provided"}</span>
+              </div>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
+                <span className="text-[#8F9CA9] font-normal">Company</span>
+                <span className="font-bold text-gray-900 text-right">{selectedBid.bidderCompany || "Not provided"}</span>
+              </div>
               <div className="flex items-center justify-between py-3 border-b border-gray-100/80">
                 <span className="text-[#8F9CA9] font-normal">City</span>
-                <span className="font-bold text-gray-900 text-right">{selectedBid.bidderCity}</span>
+                <span className="font-bold text-gray-900 text-right">{selectedBid.bidderCity || "Karachi"}</span>
               </div>
               <div className="flex items-center justify-between py-3">
                 <span className="text-[#8F9CA9] font-normal">Submitted Date</span>

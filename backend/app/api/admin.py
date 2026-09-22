@@ -695,6 +695,10 @@ async def update_seller_post(
                 "seller_id": seller_id or "",
                 "buyer_id": "admin_system",
                 "buyer_name": "SolarScrap Admin (Quotation)",
+                "buyer_phone": current_user.phone_number or "+92 300 1234567",
+                "buyer_email": current_user.email or "admin@solarscrap.com",
+                "buyer_company": current_user.company_name or "Solar Scrap Admin HQ",
+                "buyer_city": current_user.city or "Karachi",
                 "amount": float(offered_amt),
                 "status": "pending",
                 "reference_number": ref_id,
@@ -1200,6 +1204,17 @@ async def accept_admin_bid(
     })
 
     if listing_id:
+        try:
+            other_bids = list(db.collection("bids").where("listing_id", "==", listing_id).stream())
+            for ob in other_bids:
+                if ob.id != bid_id:
+                    db.collection("bids").document(ob.id).update({
+                        "status": "lost",
+                        "updated_at": firestore.SERVER_TIMESTAMP,
+                    })
+        except Exception as e:
+            print(f"[accept_admin_bid] Error updating other bids: {e}")
+
         db.collection("listings").document(listing_id).update({
             "status": "closed",
             "winning_bid_id": bid_id,
@@ -1331,10 +1346,33 @@ async def get_admin_bids(
         buyer_id_val = bd.get("buyer_id") or bd.get("user_id") or ""
         user_info = users_by_id.get(buyer_id_val, {})
 
-        bidder_name = bd.get("buyer_name") or user_info.get("display_name") or user_info.get("company_name") or "Verified Buyer"
-        bidder_phone = bd.get("buyer_phone") or user_info.get("phone_number") or ""
-        bidder_email = bd.get("buyer_email") or user_info.get("email") or ""
-        bidder_company = bd.get("buyer_company") or user_info.get("company_name") or "Scrap Trading Co."
+        is_admin_bid = (
+            buyer_id_val == "admin_system"
+            or "admin" in str(bd.get("buyer_name", "")).lower()
+            or "quotation" in str(bd.get("buyer_name", "")).lower()
+        )
+
+        bidder_name = (
+            bd.get("buyer_name")
+            or user_info.get("display_name")
+            or user_info.get("company_name")
+            or ("SolarScrap Admin (Quotation)" if is_admin_bid else "Verified Buyer")
+        )
+        bidder_phone = (
+            bd.get("buyer_phone")
+            or user_info.get("phone_number")
+            or ("+92 300 1234567" if is_admin_bid else "")
+        )
+        bidder_email = (
+            bd.get("buyer_email")
+            or user_info.get("email")
+            or ("admin@solarscrap.com" if is_admin_bid else "")
+        )
+        bidder_company = (
+            bd.get("buyer_company")
+            or user_info.get("company_name")
+            or ("Solar Scrap Admin HQ" if is_admin_bid else "Scrap Trading Co.")
+        )
         bidder_city = bd.get("buyer_city") or user_info.get("city") or "Karachi"
 
         results.append({
