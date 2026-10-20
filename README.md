@@ -1,7 +1,11 @@
 # ☀️ SolarScrap — Renewable Energy Hardware Lifecycle, Photovoltaic Recycling & Metal Yield Valuation Platform
 
 <p align="center">
-  <img src="assets/branding/logo.jpg" alt="SolarScrap Logo" width="180" style="border-radius: 24px; box-shadow: 0 8px 32px rgba(16, 185, 129, 0.25);" />
+  <img src="assets/branding/solarscrap_original_logo.png" alt="SolarScrap Original Production Logo" width="140" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(252, 190, 15, 0.25); margin: 0 12px;" />
+  <img src="assets/branding/logo.jpg" alt="SolarScrap Platform Architectural Logo" width="140" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25); margin: 0 12px;" />
+</p>
+<p align="center">
+  <em>Left: Original Production Hardware Marketplace Mark &bull; Right: Architectural Platform Identity (SolarScrap)</em>
 </p>
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
